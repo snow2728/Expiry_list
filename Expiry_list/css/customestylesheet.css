@@ -1,0 +1,854 @@
+﻿html {
+    scroll-behavior: smooth;
+}
+
+.btn-outline-primary:hover {
+    color: white !important;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background-color: #E6EFFF;
+}
+
+.logo {
+    border-radius: 7% !important;
+    /*background: linear-gradient(to right,#CED1F8,#FFD6EE) !important;*/
+}
+
+.nav-link {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    color: rgba(255,255,255,0.85) !important;
+}
+
+    .nav-link:hover {
+        background-color: rgba(255,255,255,0.1);
+        color: white !important;
+    }
+
+    .nav-link.active {
+        background-color: rgba(255,255,255,0.2);
+        font-weight: 500;
+    }
+
+.nav-text {
+    font-size: 0.95rem;
+}
+
+.user-name {
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.logout-btn {
+    background-color: #a1d6e2;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+    .logout-btn:hover {
+        background-color: #8bc4d0;
+    }
+
+/* Mobile Optimization */
+@media (max-width: 991px) {
+    .navbar-collapse {
+        padding: 1rem;
+        background: #1995AD;
+    }
+
+    .nav-link {
+        margin: 0.25rem 0;
+    }
+
+    .nav-text {
+        font-size: 1rem;
+    }
+
+    .user-name {
+        font-size: 1rem;
+    }
+
+    .logout-btn {
+        width: 100%;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+
+    .navbar-toggler {
+        padding: 0.35rem 0.75rem;
+    }
+}
+
+.pagination-container {
+    position: static !important;
+}
+
+/* Mobile optimization */
+@media (max-width: 576px) {
+    .pagination-container .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .pagination-container .fa-chevron-left,
+    .pagination-container .fa-chevron-right {
+        font-size: 0.75rem;
+    }
+}
+
+#userDropdown + .dropdown-menu .dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+}
+
+/* Default state */
+.dropdown-menu .dropdown-item {
+    color: white !important;
+}
+
+@media (max-width: 768px) {
+    .priority-4 {
+        display: none;
+    }
+
+    .priority-3 {
+        display: none;
+    }
+
+    .table td, .table th {
+        padding: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .priority-2 {
+        display: none;
+    }
+
+    .table-responsive {
+        border: 0;
+    }
+
+    .table thead {
+        display: none;
+    }
+
+    .table, .table tbody, .table tr, .table td {
+        display: block;
+        width: 100%;
+    }
+
+        .table tr {
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .table td {
+            text-align: right;
+            padding-left: 50%;
+            position: relative;
+        }
+
+            .table td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 0;
+                width: 50%;
+                padding-left: 1rem;
+                text-align: left;
+                font-weight: bold;
+            }
+}
+
+@media (min-width: 992px) {
+    .nav-text {
+        white-space: nowrap;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .formContainer {
+        display: block;
+        width: 799px;
+    }
+}
+
+@media (max-width: 768px) {
+    .card {
+        margin: 0.5rem;
+    }
+
+    .form-control, .select2-container {
+        width: 100% !important;
+    }
+
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .table-responsive {
+        border: none;
+    }
+
+    .table td, .table th {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+}
+
+.dropdown-menu {
+    z-index: 1050;
+}
+
+/* Adjust table head styling if required */
+table.dataTable thead th {
+    background-color: #6B696B !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+.admin-only {
+    display: none;
+}
+
+.user-only {
+    display: none;
+}
+
+.viewer-only {
+    display: none;
+}
+
+.custom-header {
+    background-color: #1995ad !important;
+    color: #ffffff;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+.custom-card {
+    background-color: #f1f1f2;
+}
+
+.custom-btn {
+    background-color: #a1d6e2;
+    border-color: #1995ad;
+    color: #fff;
+}
+
+    .custom-btn:hover {
+        background-color: #1995ad;
+        border-color: #1995ad;
+    }
+
+.dataTables_length {
+    margin-right: 485px;
+}
+
+/*table.dataTable {
+    table-layout: fixed;
+    width: 100%;
+}*/
+
+table.dataTable td {
+    word-wrap: break-word;
+    white-space: normal;
+}
+
+.rowCheckbox {
+    margin: 0 auto;
+    display: block;
+    width: 18px;
+    height: 18px;
+}
+
+.dataTable thead th:first-child {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+.dataTable tbody td:first-child {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+table.dataTable tbody td:first-child,
+table.dataTable thead th:first-child {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+.rowCheckbox {
+    width: 18px;
+    height: 18px;
+    margin: 0 auto;
+    display: block;
+}
+/* Prevent column width changes */
+.no-resize-column {
+    min-width: initial !important;
+    max-width: initial !important;
+    width: inherit !important;
+}
+
+.table-responsive1 table thead th {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 100;
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.table-responsive1 {
+    max-height: 777px;
+    overflow-y: auto;
+}
+
+.sticky-header th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+    background-color: #166f7c !important;
+    color: white !important;
+}
+
+
+#<%= GridView2.ClientID % > tr.editing {
+    display: table-row !important;
+}
+
+/* Remove spinners in WebKit browsers (Chrome, Safari) */
+.no-spinners::-webkit-inner-spin-button,
+.no-spinners::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+/* Remove spinners in Firefox */
+.no-spinners {
+    -moz-appearance: textfield;
+}
+/* Remove spinners in Edge, IE */
+input[type=number].no-spinners {
+    -ms-inner-appearance: none;
+}
+
+
+/* Style for Site1.Master */
+.nav-link {
+    color: #e9ecef !important;
+    padding: 0.3rem 1rem !important;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    text-decoration: none !important;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+    .nav-link:hover {
+        background: rgba(255,255,255,0.05);
+        transform: none;
+    }
+
+    .nav-link.active {
+        background: #76bdc9;
+        border-bottom: 3px solid #fff;
+        font-weight: 500;
+        box-shadow: none;
+    }
+
+    .nav-link.active1 {
+        background: #D0C9EA;
+        border-bottom: 3px solid #fff;
+        font-weight: 500;
+        box-shadow: none;
+    }
+
+.nav-group {
+    border-right: 1px solid rgba(255,255,255,0.15);
+    padding-right: 1rem;
+}
+
+.container-fluid {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+
+/* Remove all spacing around DataTable elements */
+.dataTables_wrapper {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Remove table bottom margin */
+table.dataTable {
+    margin-bottom: 0 !important;
+}
+
+/* Compact pagination container */
+.dataTables_paginate {
+    margin-top: 0 !important;
+    padding-top: 2px !important;
+}
+
+    /* Remove spacing in pagination buttons */
+    .dataTables_paginate .paginate_button {
+        margin: 0 1px !important;
+        padding: 2px 6px !important;
+    }
+
+/* Remove wrapper padding */
+.dataTables_scrollBody {
+    padding: 0 !important;
+}
+
+/* Remove border spacing */
+table.dataTable {
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+}
+
+/* Remove any remaining gaps */
+.dataTables_scrollHead + .dataTables_scrollBody {
+    margin-top: -1px !important;
+}
+
+.highlight-row {
+    animation: highlight-flash 1s ease 3;
+    background-color: transparent;
+}
+
+@keyframes highlight-flash {
+    0% {
+        background-color: #fff3cd;
+    }
+
+    50% {
+        background-color: #ffe69c;
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}
+
+.dataTables_scrollBody {
+    scroll-behavior: smooth;
+}
+
+/*grid sticky*/
+/* Fixed header */
+/* Fixed header styling */
+.sticky-header {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: #808080 !important; 
+}
+
+/* Fixed columns styling */
+.fixed-column-1,
+.fixed-column-2,
+.fixed-column-3,
+.fixed-column-4,
+.fixed-column-5,
+.fixed-column-11,
+.fixed-column-22,
+.fixed-column-33,
+.fixed-column-44 {
+    position: sticky;
+    z-index: 2; 
+    background: #F7F6F3 !important;
+    border-right: 1px solid #dee2e6;
+}
+
+/* Alternating rows for fixed columns */
+.table-striped tr:nth-of-type(even) .fixed-column-1,
+.table-striped tr:nth-of-type(even) .fixed-column-2,
+.table-striped tr:nth-of-type(even) .fixed-column-3,
+.table-striped tr:nth-of-type(even) .fixed-column-4,
+.table-striped tr:nth-of-type(even) .fixed-column-5,
+.table-striped tr:nth-of-type(even) .fixed-column-11,
+.table-striped tr:nth-of-type(even) .fixed-column-22,
+.table-striped tr:nth-of-type(even) .fixed-column-33,
+.table-striped tr:nth-of-type(even) .fixed-column-44,
+.table-striped tr:nth-of-type(even) .fixed-column-6,
+.table-striped tr:nth-of-type(even) .fixed-column-7,
+.table-striped tr:nth-of-type(even) .fixed-column-8,
+.table-striped tr:nth-of-type(even) .fixed-column-9,
+.table-striped tr:nth-of-type(even) .fixed-column-10,
+.table-striped tr:nth-of-type(even) .fixed-column-51,
+.table-striped tr:nth-of-type(even) .fixed-column-52,
+.table-striped tr:nth-of-type(even) .fixed-column-53,
+.table-striped tr:nth-of-type(even) .fixed-column-54,
+.table-striped tr:nth-of-type(even) .fixed-column-55,
+.table-striped tr:nth-of-type(even) .fixed-column-56,
+.table-striped tr:nth-of-type(even) .fixed-column-57,
+.table-striped tr:nth-of-type(even) .fixed-column-58,
+.table-striped tr:nth-of-type(even) .fixed-column-59,
+.table-striped tr:nth-of-type(even) .fixed-column-60,
+.table-striped tr:nth-of-type(even) .fixed-column-61 {
+    background: white !important;
+}
+
+
+/* Container styling */
+.gridview-container {
+    max-width: 100%;
+    height: 777px;
+    background: white;
+    position: relative;
+    overflow-x: auto;
+}
+
+/* Positions */
+.fixed-column-1, .sticky-header1 {
+    left: 0;
+    min-width: 30px;
+}
+
+.fixed-column-2, .sticky-header2 {
+    left: 33px;
+    min-width: 30px;
+}
+
+.fixed-column-3, .sticky-header3 {
+    left: 100px;
+    min-width: 77px;
+}
+
+.fixed-column-4, .sticky-header4 {
+    left: 193px;
+    min-width: 50px;
+}
+
+.fixed-column-5, .sticky-header5 {
+    left: 315px;
+    min-width: 217px;
+}
+
+
+
+/* Positions */
+.fixed-column-11, .sticky-header11 {
+    left: 0px;
+    min-width: 30px;
+}
+
+.fixed-column-22, .sticky-header22 {
+    left: 57px;
+    min-width: 77px;
+}
+
+.fixed-column-33, .sticky-header33 {
+    left: 137px;
+    min-width: 50px;
+}
+
+.fixed-column-44, .sticky-header44 {
+    left: 257px;
+    min-width: 217px;
+}
+
+/*select2 css*/
+/* Ensure single-line display with horizontal scrolling */
+.selected-stores-line {
+    display: inline-block !important;
+    white-space: nowrap !important;
+    overflow-x: auto !important;
+    max-width: 100%;
+}
+
+.comma-separator {
+    margin-right: 4px;
+    color: #6c757d;
+}
+
+.select2-selection--multiple {
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    padding: 0 5px !important;
+}
+
+.location-pills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-height: 34px;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.location-pill {
+    display: inline-flex;
+    align-items: center;
+    background-color: #e9ecef;
+    padding: 3px 10px;
+    border-radius: 16px;
+    font-size: 14px;
+    height: 28px;
+}
+
+.pill-text {
+    margin-right: 5px;
+}
+
+.pill-remove {
+    cursor: pointer;
+    font-weight: bold;
+    color: #6c757d;
+}
+
+    .pill-remove:hover {
+        color: #dc3545;
+    }
+
+.filter-buttons {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+
+a[commandname="Edit"] {
+    display: none !important;
+}
+
+
+
+
+/* Ensure Select2 dropdowns maintain styling */
+.select2-container--default .select2-selection--single,
+.select2-container--default .select2-selection--multiple {
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    min-height: 38px;
+    padding: 5px;
+}
+
+.select2-container--default .select2-selection--multiple {
+    min-width: 210px;
+    max-width: 100%;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #495057;
+    line-height: 28px;
+}
+
+.select2-item-text {
+    white-space: normal !important;
+    word-wrap: break-word;
+}
+
+.select2-results__option--loading {
+    display: none !important;
+}
+
+.select2-selection-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    max-width: 100%;
+}
+
+/* Style pagination checkboxes */
+.dataTables_wrapper .form-check {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.dataTables_wrapper .form-check-input {
+    margin: 0;
+    width: 1.2em;
+    height: 1.2em;
+}
+
+.location-pills-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+}
+
+/* Individual pill styling */
+.location-pill {
+    background: #e0e0e0;
+    border-radius: 16px;
+    padding: 4px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+.pill-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 4px;
+}
+
+.pill-remove {
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Fix for Select2 display */
+.select2-selection--multiple .select2-selection__rendered {
+    display: none !important;
+}
+
+.select2-selection--multiple .select2-selection__placeholder {
+    display: block !important;
+    position: static;
+}
+
+.select2-container .select2-selection--multiple {
+    height: 34px;
+    overflow: hidden;
+}
+
+
+
+
+/* style for AdminDashboard.aspx */
+.modern-card {
+    border: none;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease;
+    padding: 30px 20px;
+    height: 100%;
+}
+
+    .modern-card:hover {
+        transform: translateY(-5px);
+    }
+
+.modern-card-icon {
+    font-size: 2rem;
+    color: #007bff;
+    margin-bottom: 15px;
+}
+
+.modern-card-title {
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 10px;
+}
+
+.modern-card-text {
+    color: #777;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.modern-card-link {
+    font-weight: 500;
+    color: #007bff;
+    text-decoration: none;
+    height: 23px;
+}
+
+    .modern-card-link:hover {
+        text-decoration: underline;
+    }
+
+/*From dash2.aspx*/
+.store-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.store-pill {
+    background-color: #0d6efd;
+    color: white;
+    border-radius: 15px;
+    padding: 2px 10px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+}
+
+    .store-pill .close {
+        color: white;
+        opacity: 0.8;
+        margin-left: 5px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+.tote-box-select:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.grid-purple-text td, .grid-purple-text th {
+    color: #9E7CD7 !important;
+}
+
+
+
+/* Custom styles for integrated pills in Select2 */
+/* Ensure search box is visible */
+/*#storeDrop .select2-container {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.select2-dropdown {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+}
+
+.select2-container--default .select2-selection--multiple {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+@media (max-width: 768px) {
+    .form-control,
+    .select2-container,
+    #storeDrop .select2-container {
+        width: 100% !important;
+    }
+}
+
+.select2-search__field {
+    width: auto !important;
+    padding: 4px 6px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 4px !important;
+}*/
+
+/* Style for no results message */
+/*.select2-results__option--no-results {
+    color: #6c757d;
+    font-style: italic;
+}*/
