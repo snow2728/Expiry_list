@@ -6,7 +6,7 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
     <div class=" container border-light card text-white shadow-lg w-100 mb-5"
-        style="background: url('imgs/logo.jpg') center/cover no-repeat; min-height: 85vh; margin-top: -3px; position: relative; border: 15px white solid;">
+        style="background: url('imgs/logo.jpg') center no-repeat; min-height: 85vh; margin-top: -3px; position: relative; border: 15px white solid;">
 
         <i class="fas fa-star position-absolute text-warning" style="top: 10px; left: 10px; font-size: 2rem;"></i>
         <i class="fas fa-heart position-absolute text-danger" style="top: 10px; right: 10px; font-size: 2rem;"></i>
