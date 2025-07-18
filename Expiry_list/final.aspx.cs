@@ -88,7 +88,6 @@ namespace Expiry_list
                 int orderColumnIndex = Convert.ToInt32(Request["order[0][column]"]);
                 string orderDir = Request["order[0][dir]"] ?? "asc";
 
-<<<<<<< HEAD
                 string username = User.Identity.Name;
                 var permissions = GetAllowedFormsByUser(username);
 
@@ -101,16 +100,10 @@ namespace Expiry_list
 
                 List<string> storeNos = GetLoggedInUserStoreNames();
                 bool hasHO = storeNos.Any(s => s.Equals("HO", StringComparison.OrdinalIgnoreCase));
-=======
-                string userRole = Session["role"] as string;
-                string storeNo = GetLoggedInUserStoreName();
-
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 string selectedMonth = Request.Form["month"];
                 string searchValue = Request["search"] ?? "";
 
                 StringBuilder whereClause = new StringBuilder("1=1");
-<<<<<<< HEAD
                 List<SqlParameter> parameters = new List<SqlParameter>();
 
                 if (!string.IsNullOrEmpty(selectedMonth) &&
@@ -132,46 +125,16 @@ namespace Expiry_list
                     {
                         parameters.Add(new SqlParameter($"@store{i}", storeNos[i]));
                     }
-=======
-                var parameters = new List<SqlParameter>();
-
-                if (!string.IsNullOrEmpty(selectedMonth))
-                {
-                    if (DateTime.TryParseExact(selectedMonth, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime monthDate))
-                    {
-                        whereClause.Append(" AND YEAR(regeDate) = @Year AND MONTH(regeDate) = @Month");
-                        parameters.Add(new SqlParameter("@Year", monthDate.Year));
-                        parameters.Add(new SqlParameter("@Month", monthDate.Month));
-                    }
-                }
-
-                if (userRole == "user")
-                {
-                    whereClause.Append("  AND status IN ('Exchange', 'No Exchange', 'No Action') AND storeNo = @StoreNo");
-                    parameters.Add(new SqlParameter("@StoreNo", storeNo));
-                }
-                else if (userRole == "viewer" || userRole == "admin")
-                {
-                    whereClause.Append(" AND status IN ('Exchange', 'No Exchange', 'No Action')");
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 }
 
                 if (!string.IsNullOrEmpty(searchValue))
                 {
-<<<<<<< HEAD
                     string[] searchableColumns = {
                 "no", "itemNo", "description", "barcodeNo", "qty", "uom", "packingInfo", "expiryDate", "storeNo",
                 "staffName", "batchNo", "vendorNo", "vendorName", "regeDate", "action", "status","note", "remark", "completedDate"
             };
 
                     whereClause.Append(" AND (");
-=======
-                    whereClause.Append(" AND (");
-                    string[] searchableColumns = {
-                   "no", "itemNo", "description", "barcodeNo", "qty", "uom", "packingInfo", "expiryDate", "storeNo",
-                   "staffName", "batchNo", "vendorNo", "vendorName", "regeDate", "action", "status","note", "remark", "completedDate"
-                };
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                     for (int i = 0; i < searchableColumns.Length; i++)
                     {
                         whereClause.Append($"{searchableColumns[i]} LIKE @SearchValue");
@@ -183,12 +146,11 @@ namespace Expiry_list
                 }
 
                 string[] columns = {
-<<<<<<< HEAD
-            "id", "no", "itemNo", "description", "barcodeNo", "qty", "uom",
-            "packingInfo", "expiryDate", "storeNo", "staffName", "batchNo",
-            "vendorNo", "vendorName", "regeDate", "action", "status", "note",
-            "remark", "completedDate"
-        };
+                    "id", "no", "itemNo", "description", "barcodeNo", "qty", "uom",
+                    "packingInfo", "expiryDate", "storeNo", "staffName", "batchNo",
+                    "vendorNo", "vendorName", "regeDate", "action", "status", "note",
+                    "remark", "completedDate"
+                };
                 string orderBy = columns.ElementAtOrDefault(orderColumnIndex) ?? "id";
 
                 string dataQuery = $@"
@@ -256,102 +218,6 @@ namespace Expiry_list
                 Response.ContentType = "application/json";
                 Response.Write(jsonResponse);
                 Response.End();
-=======
-                    "id", "no", "itemNo", "description", "barcodeNo", "qty", "uom",
-                    "packingInfo", "expiryDate", "storeNo", "staffName", "batchNo",
-                    "vendorNo", "vendorName", "regeDate", "action", "status", "note",
-                    "remark", "completedDate"
-                };
-
-                string orderBy = "id";
-                if (orderColumnIndex >= 0 && orderColumnIndex < columns.Length)
-                {
-                    orderBy = columns[orderColumnIndex];
-                }
-
-                string query = $@"
-                        SELECT * 
-                        FROM itemList 
-                        WHERE {whereClause}
-                        ORDER BY {orderBy} {orderDir}
-                        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
-
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    // Clone parameters for this command
-                    foreach (var param in parameters)
-                    {
-                        cmd.Parameters.Add(new SqlParameter(param.ParameterName, param.Value));
-                    }
-                    cmd.Parameters.AddWithValue("@Offset", start);
-                    cmd.Parameters.AddWithValue("@PageSize", length);
-
-                    conn.Open();
-                    DataTable dt = new DataTable();
-                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                    {
-                        da.Fill(dt);
-                    }
-                    conn.Close();
-
-                    string countQuery = $@"
-                SELECT COUNT(*) 
-                FROM itemList 
-                WHERE {whereClause}";
-
-                    using (SqlCommand countCmd = new SqlCommand(countQuery, conn))
-                    {
-                        // Clone parameters for the count command
-                        foreach (var param in parameters)
-                        {
-                            countCmd.Parameters.Add(new SqlParameter(param.ParameterName, param.Value));
-                        }
-
-                        conn.Open();
-                        int totalRecords = (int)countCmd.ExecuteScalar();
-                        conn.Close();
-
-                        var data = dt.AsEnumerable().Select(row => new
-                        {
-                            id = row["id"],
-                            no = row["no"],
-                            itemNo = row["itemNo"],
-                            description = row["description"],
-                            barcodeNo = row["barcodeNo"],
-                            qty = row["qty"],
-                            uom = row["uom"],
-                            packingInfo = row["packingInfo"],
-                            expiryDate = row["expiryDate"],
-                            storeNo = row["storeNo"],
-                            staffName = row["staffName"],
-                            batchNo = row["batchNo"],
-                            vendorNo = row["vendorNo"],
-                            vendorName = row["vendorName"],
-                            regeDate = row["regeDate"],
-                            action = row["action"],
-                            status = row["status"],
-                            note = row["note"],
-                            remark = row["remark"],
-                            completedDate = row["completedDate"]
-                        }).ToList();
-
-                        var response = new
-                        {
-                            draw = draw,
-                            recordsTotal = totalRecords,
-                            recordsFiltered = totalRecords,
-                            data = data,
-                            orderColumn = orderColumnIndex,
-                            orderDir = orderDir
-                        };
-
-                        string jsonResponse = JsonConvert.SerializeObject(response);
-                        Response.ContentType = "application/json";
-                        Response.Write(jsonResponse);
-                        Response.End();
-                    }
-                }
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
             }
         }
 
@@ -397,12 +263,6 @@ namespace Expiry_list
         {
             switch (selectedAction)
             {
-                //case "1":
-                //    return "Collected Item";
-                //case "2":
-                //    return "User Error";
-                //case "3":
-                //    return "Sold Out";
                 case "1":
                     return "Progress";
                 case "2":
@@ -512,10 +372,7 @@ namespace Expiry_list
                 }
             }
         }
-<<<<<<< HEAD
 
-=======
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         protected void btnFilter_Click1(object sender, EventArgs e)
         {
             string script = @"toggleFilter();";
@@ -678,7 +535,6 @@ namespace Expiry_list
         }", true);
         }
 
-<<<<<<< HEAD
         private List<string> GetLoggedInUserStoreNames()
         {
             List<string> storeNos = Session["storeListRaw"] as List<string>;
@@ -688,25 +544,10 @@ namespace Expiry_list
                 return storeNames;
 
             string query = $"SELECT storeNo FROM Stores WHERE storeNo IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})";
-=======
-        private string GetLoggedInUserStoreName()
-        {
-            int storeId = Convert.ToInt32(Session["storeNo"] ?? 0);
-
-            if (storeId == 0 || Session["storeNo"] == null)
-            {
-                Response.Redirect("login.aspx");
-                return null;
-            }
-
-            string storeName = null;
-            string query = "SELECT StoreNo FROM Stores WHERE id = @StoreId";
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
             using (SqlConnection conn = new SqlConnection(strcon))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
-<<<<<<< HEAD
                 for (int i = 0; i < storeNos.Count; i++)
                 {
                     cmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
@@ -723,20 +564,6 @@ namespace Expiry_list
             }
 
             return storeNames;
-=======
-                cmd.Parameters.AddWithValue("@StoreId", storeId);
-                conn.Open();
-
-                storeName = cmd.ExecuteScalar()?.ToString();
-            }
-
-            if (string.IsNullOrEmpty(storeName))
-            {
-                Response.Write("Error: StoreName not found.<br>");
-            }
-
-            return storeName;
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         }
 
         private void BindGridView(int pageNumber = 1, int pageSize = 100)
@@ -746,7 +573,6 @@ namespace Expiry_list
                 string orderBy = string.IsNullOrEmpty(hfSelectedIDs.Value)
                     ? "ORDER BY id"
                     : $"ORDER BY CASE WHEN id = '{hfSelectedIDs.Value}' THEN 0 ELSE 1 END, id";
-<<<<<<< HEAD
 
                 string username = User.Identity.Name;
                 var permissions = GetAllowedFormsByUser(username);
@@ -800,42 +626,7 @@ namespace Expiry_list
                 cmd.Parameters.AddWithValue("@PageSize", pageSize);
 
                 // Execute and bind
-=======
-                string userRole = Session["role"] as string;
-                string storeNo = GetLoggedInUserStoreName();
 
-                string query;
-
-                if (userRole == "user")
-                {
-                    query = $@"SELECT * FROM itemList 
-                 WHERE storeNo = @storeNo
-                {orderBy}
-                 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
-                }
-                else if (userRole == "viewer")
-                {
-                    query = $@"SELECT * FROM itemList 
-                 WHERE status IN ('Exchange', 'No Exchange', 'No Action')
-                 {orderBy}
-                 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
-                }
-                else
-                {
-                    query = $@"SELECT * FROM itemList 
-                  {orderBy} 
-                 OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
-                }
-
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
-                cmd.Parameters.AddWithValue("@PageSize", pageSize);
-                if (userRole == "user" )
-                {
-                    cmd.Parameters.AddWithValue("@storeNo", storeNo);
-                }
-
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 conn.Open();
                 DataTable dt = new DataTable();
                 using (SqlDataAdapter da = new SqlDataAdapter(cmd))
@@ -845,11 +636,7 @@ namespace Expiry_list
                 conn.Close();
 
                 GridView2.DataSource = dt;
-<<<<<<< HEAD
                 GridView2.PageIndex = 0;
-=======
-                GridView2.PageIndex = 0; // Force first page after edit
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 GridView2.DataBind();
             }
         }
@@ -961,7 +748,6 @@ namespace Expiry_list
 
         private DataTable GetFilteredData2()
         {
-<<<<<<< HEAD
             string username = User.Identity.Name;
             var permissions = GetAllowedFormsByUser(username);
             Session["formPermissions"] = permissions;
@@ -995,31 +781,6 @@ namespace Expiry_list
             }
 
             // UI-based STORE filter
-=======
-
-            string userRole = Session["role"] as string;
-            string storeNo = GetLoggedInUserStoreName();
-
-            string query = "SELECT no, itemNo, description, barcodeNo,qty, uom,packingInfo,CONVERT(DATE, expiryDate) AS expiryDate, storeNo, staffName,batchNo, vendorNo,vendorName, CONVERT(DATE, regeDate) AS regeDate,action,status,note,remark, CONVERT(DATE, completedDate) AS completedDate FROM itemList WHERE ";
-            List<SqlParameter> parameters = new List<SqlParameter>();
-
-            // Base filter based on role
-            if (userRole == "user")
-            {
-                query += "status IN ('Exchange', 'No Exchange', 'No Action') and storeNo = @StoreNo";
-                parameters.Add(new SqlParameter("@StoreNo", storeNo));
-            }
-            else if (userRole == "viewer" || userRole == "admin")
-            {
-                query += "status IN ('Exchange', 'No Exchange', 'No Action')";
-            }
-            else
-            {
-                query += "1=1";
-            }
-
-            // STORE filter
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
             if (filterStore.Checked)
             {
                 var selectedStores = lstStoreFilter.Items.Cast<ListItem>()
@@ -1027,7 +788,6 @@ namespace Expiry_list
                     .Select(li => li.Value)
                     .ToList();
 
-<<<<<<< HEAD
                 List<string> allowedStores = hasHO
                     ? selectedStores
                     : selectedStores.Intersect(userStores).ToList();
@@ -1059,69 +819,40 @@ namespace Expiry_list
                 else
                 {
                     query.Append(" AND 1=0"); // No assigned stores
-=======
-                Debug.WriteLine($"Selected stores: {string.Join(",", selectedStores)}");
-
-                if (selectedStores.Count > 0)
-                {
-                    query += " AND storeNo IN (" + string.Join(",", selectedStores.Select((s, i) => $"@Store{i}")) + ")";
-                    parameters.AddRange(selectedStores.Select((s, i) => new SqlParameter($"@Store{i}", s)));
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 }
             }
 
             // ITEM filter
             if (filterItem.Checked && !string.IsNullOrEmpty(item.SelectedValue))
             {
-<<<<<<< HEAD
                 query.Append(" AND itemNo = @ItemNo");
-=======
-                Debug.WriteLine($"Selected item: {item.SelectedValue}");
-                query += " AND itemNo = @ItemNo";
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 parameters.Add(new SqlParameter("@ItemNo", item.SelectedValue));
             }
 
             // VENDOR filter
             if (filterVendor.Checked && !string.IsNullOrEmpty(vendor.SelectedValue))
             {
-<<<<<<< HEAD
                 query.Append(" AND vendorNo = @VendorNo");
-=======
-                Debug.WriteLine($"Selected vendor: {vendor.SelectedValue}");
-                query += " AND vendorNo = @VendorNo";
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 parameters.Add(new SqlParameter("@VendorNo", vendor.SelectedValue));
             }
 
             // STATUS filter
             if (filterStatus.Checked && !string.IsNullOrEmpty(ddlStatusFilter.SelectedItem.Text))
             {
-<<<<<<< HEAD
                 query.Append(" AND status = @Status");
-=======
-                Debug.WriteLine($"Selected status: {ddlStatusFilter.SelectedItem.Text}");
-                query += " AND status = @Status";
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 parameters.Add(new SqlParameter("@Status", ddlStatusFilter.SelectedItem.Text));
             }
 
             // ACTION filter
             if (filterAction.Checked && !string.IsNullOrEmpty(ddlActionFilter.SelectedItem.Text))
             {
-<<<<<<< HEAD
                 query.Append(" AND action = @Action");
-=======
-                Debug.WriteLine($"Selected action: {ddlActionFilter.SelectedItem.Text}");
-                query += " AND action = @Action";
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 parameters.Add(new SqlParameter("@Action", ddlActionFilter.SelectedItem.Text));
             }
 
             // EXPIRY DATE filter
             if (filterExpiryDate.Checked && !string.IsNullOrWhiteSpace(txtExpiryDateFilter.Text))
             {
-<<<<<<< HEAD
                 var firstDayDates = new List<DateTime>();
                 string[] parts = txtExpiryDateFilter.Text.Split('|');
 
@@ -1146,39 +877,16 @@ namespace Expiry_list
 
                     for (int i = 0; i < firstDayDates.Count; i++)
                         parameters.Add(new SqlParameter($"@Exp{i}", firstDayDates[i]));
-=======
-                DateTime expiryDate;
-                if (DateTime.TryParse(txtExpiryDateFilter.Text, out expiryDate))
-                {
-                    Debug.WriteLine($"Selected expiry date: {expiryDate:yyyy-MM-dd}");
-                    query += " AND expiryDate = @ExpiryDate";
-                    parameters.Add(new SqlParameter("@ExpiryDate", expiryDate));
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 }
             }
 
             // REGISTRATION DATE filter
             if (filterRegistrationDate.Checked && !string.IsNullOrWhiteSpace(txtRegDateFilter.Text))
             {
-<<<<<<< HEAD
                 if (DateTime.TryParseExact(txtRegDateFilter.Text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime regDate))
                 {
                     DateTime nextDay = regDate.AddDays(1);
                     query.Append(" AND regeDate >= @RegDate AND regeDate < @NextDay");
-=======
-                DateTime regDate;
-                if (DateTime.TryParseExact(
-                    txtRegDateFilter.Text,
-                    "yyyy-MM-dd",
-                    CultureInfo.InvariantCulture,
-                    DateTimeStyles.None,
-                    out regDate))
-                {
-                    Debug.WriteLine($"Selected registration date: {regDate:yyyy-MM-dd}");
-
-                    DateTime nextDay = regDate.AddDays(1);
-                    query += " AND regeDate >= @RegDate AND regeDate < @NextDay";
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                     parameters.Add(new SqlParameter("@RegDate", regDate));
                     parameters.Add(new SqlParameter("@NextDay", nextDay));
                 }
@@ -1187,19 +895,13 @@ namespace Expiry_list
             // STAFF filter
             if (filterStaff.Checked && !string.IsNullOrWhiteSpace(txtstaffFilter.Text))
             {
-<<<<<<< HEAD
                 query.Append(" AND staffName = @StaffNo");
-=======
-                Debug.WriteLine($"Selected staff: {txtstaffFilter.Text}");
-                query += " AND staffName = @StaffNo";
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 parameters.Add(new SqlParameter("@StaffNo", txtstaffFilter.Text));
             }
 
             // BATCH filter
             if (filterBatch.Checked && !string.IsNullOrWhiteSpace(txtBatchNoFilter.Text))
             {
-<<<<<<< HEAD
                 query.Append(" AND batchNo = @BatchNo");
                 parameters.Add(new SqlParameter("@BatchNo", txtBatchNoFilter.Text));
             }
@@ -1224,35 +926,6 @@ namespace Expiry_list
                 {
                     Debug.WriteLine("Database error: " + ex.ToString());
                     throw;
-=======
-                Debug.WriteLine($"Selected batch: {txtBatchNoFilter.Text}");
-                query += " AND batchNo = @BatchNo";
-                parameters.Add(new SqlParameter("@BatchNo", txtBatchNoFilter.Text));
-            }
-
-
-            DataTable dt = new DataTable();
-
-            using (SqlConnection conn = new SqlConnection(strcon))
-            {
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddRange(parameters.ToArray());
-
-                    try
-                    {
-                        conn.Open();
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            da.Fill(dt);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine("Database error: " + ex.ToString());
-                        throw;
-                    }
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 }
             }
 
@@ -1261,7 +934,6 @@ namespace Expiry_list
 
         private DataTable GetFilteredData()
         {
-<<<<<<< HEAD
             string username = User.Identity.Name;
             var permissions = GetAllowedFormsByUser(username);
             Session["formPermissions"] = permissions;
@@ -1286,31 +958,6 @@ namespace Expiry_list
             }
 
             // Store filter
-=======
-            string userRole = Session["role"] as string;
-            string storeNo = GetLoggedInUserStoreName();
-
-            string query = "SELECT * FROM itemList WHERE ";
-            List<SqlParameter> parameters = new List<SqlParameter>();
-
-            // Base filter based on role
-            if (userRole == "user")
-            {
-                query += "status IN ('Exchange', 'No Exchange', 'No Action') and storeNo = @StoreNo";
-                parameters.Add(new SqlParameter("@StoreNo", storeNo));
-            }
-            else if (userRole == "viewer" || userRole == "admin")
-            {
-                query += "status IN ('Exchange', 'No Exchange', 'No Action')";
-            }
-            else
-            {
-                query += "1=1";
-            }
-
-
-            // STORE filter
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
             if (filterStore.Checked)
             {
                 var selectedStores = lstStoreFilter.Items.Cast<ListItem>()
@@ -1318,7 +965,6 @@ namespace Expiry_list
                     .Select(li => li.Value)
                     .ToList();
 
-<<<<<<< HEAD
                 List<string> filteredStores;
 
                 if (hasHO)
@@ -1432,83 +1078,11 @@ namespace Expiry_list
                 {
                     DateTime nextDay = regDate.AddDays(1);
                     query.Append(" AND regeDate >= @RegDate AND regeDate < @NextDay");
-=======
-                Debug.WriteLine($"Selected stores: {string.Join(",", selectedStores)}");
-
-                if (selectedStores.Count > 0)
-                {
-                    query += " AND storeNo IN (" + string.Join(",", selectedStores.Select((s, i) => $"@Store{i}")) + ")";
-                    parameters.AddRange(selectedStores.Select((s, i) => new SqlParameter($"@Store{i}", s)));
-                }
-            }
-
-            // ITEM filter
-            if (filterItem.Checked && !string.IsNullOrEmpty(item.SelectedValue))
-            {
-                Debug.WriteLine($"Selected item: {item.SelectedValue}");
-                query += " AND itemNo = @ItemNo";
-                parameters.Add(new SqlParameter("@ItemNo", item.SelectedValue));
-            }
-
-            // VENDOR filter
-            if (filterVendor.Checked && !string.IsNullOrEmpty(vendor.SelectedValue))
-            {
-                Debug.WriteLine($"Selected vendor: {vendor.SelectedValue}");
-                query += " AND vendorNo = @VendorNo";
-                parameters.Add(new SqlParameter("@VendorNo", vendor.SelectedValue));
-            }
-
-            // STATUS filter
-            if (filterStatus.Checked && !string.IsNullOrEmpty(ddlStatusFilter.SelectedItem.Text))
-            {
-                Debug.WriteLine($"Selected status: {ddlStatusFilter.SelectedItem.Text}");
-                query += " AND status = @Status";
-                parameters.Add(new SqlParameter("@Status", ddlStatusFilter.SelectedItem.Text));
-            }
-
-            // ACTION filter
-            if (filterAction.Checked && !string.IsNullOrEmpty(ddlActionFilter.SelectedItem.Text))
-            {
-                Debug.WriteLine($"Selected action: {ddlActionFilter.SelectedItem.Text}");
-                query += " AND action = @Action";
-                parameters.Add(new SqlParameter("@Action", ddlActionFilter.SelectedItem.Text));
-            }
-
-            // EXPIRY DATE filter
-            if (filterExpiryDate.Checked && !string.IsNullOrWhiteSpace(txtExpiryDateFilter.Text))
-            {
-                DateTime expiryDate;
-                if (DateTime.TryParse(txtExpiryDateFilter.Text, out expiryDate))
-                {
-                    Debug.WriteLine($"Selected expiry date: {expiryDate:yyyy-MM-dd}");
-                    query += " AND expiryDate = @ExpiryDate";
-                    parameters.Add(new SqlParameter("@ExpiryDate", expiryDate));
-                }
-            }
-
-            /// REGISTRATION DATE filter
-            if (filterRegistrationDate.Checked && !string.IsNullOrWhiteSpace(txtRegDateFilter.Text))
-            {
-                DateTime regDate;
-                if (DateTime.TryParseExact(
-                    txtRegDateFilter.Text,
-                    "yyyy-MM-dd", // Matches TextMode="Date" format
-                    CultureInfo.InvariantCulture,
-                    DateTimeStyles.None,
-                    out regDate))
-                {
-                    Debug.WriteLine($"Selected registration date: {regDate:yyyy-MM-dd}");
-
-                    // Filter by date range (ignores time)
-                    DateTime nextDay = regDate.AddDays(1);
-                    query += " AND regeDate >= @RegDate AND regeDate < @NextDay";
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                     parameters.Add(new SqlParameter("@RegDate", regDate));
                     parameters.Add(new SqlParameter("@NextDay", nextDay));
                 }
             }
 
-<<<<<<< HEAD
             // Staff filter
             if (filterStaff.Checked && !string.IsNullOrWhiteSpace(txtstaffFilter.Text))
             {
@@ -1544,157 +1118,12 @@ namespace Expiry_list
                 {
                     Debug.WriteLine("Database error: " + ex.ToString());
                     throw;
-=======
-            // STAFF filter
-            if (filterStaff.Checked && !string.IsNullOrWhiteSpace(txtstaffFilter.Text))
-            {
-                Debug.WriteLine($"Selected staff: {txtstaffFilter.Text}");
-                query += " AND staffName = @StaffNo";
-                parameters.Add(new SqlParameter("@StaffNo", txtstaffFilter.Text));
-            }
-
-            // BATCH filter
-            if (filterBatch.Checked && !string.IsNullOrWhiteSpace(txtBatchNoFilter.Text))
-            {
-                Debug.WriteLine($"Selected batch: {txtBatchNoFilter.Text}");
-                query += " AND batchNo = @BatchNo";
-                parameters.Add(new SqlParameter("@BatchNo", txtBatchNoFilter.Text));
-            }
-
-            // Debug final query
-            Debug.WriteLine("Final query: " + query);
-
-            DataTable dt = new DataTable();
-
-            using (SqlConnection conn = new SqlConnection(strcon))
-            {
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddRange(parameters.ToArray());
-
-                    try
-                    {
-                        conn.Open();
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            da.Fill(dt);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine("Database error: " + ex.ToString());
-                        throw;
-                    }
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 }
             }
 
             return dt;
         }
 
-<<<<<<< HEAD
-=======
-        private (string query, List<SqlParameter> parameters) GetFilteredQuery()
-        {
-            string userRole = Session["role"] as string;
-            string storeNo = GetLoggedInUserStoreName();
-
-            string query = "SELECT * FROM itemList WHERE ";
-            List<SqlParameter> parameters = new List<SqlParameter>();
-
-            // Base filter based on role
-            if (userRole == "user")
-            {
-                query += "status IN ('Exchange', 'No Exchange', 'No Action') and storeNo = @StoreNo";
-                parameters.Add(new SqlParameter("@StoreNo", storeNo));
-            }
-            else if (userRole == "viewer" || userRole == "admin")
-            {
-                query += "status IN ('Exchange', 'No Exchange', 'No Action')";
-            }
-            else
-            {
-                query += "1=1";
-            }
-
-            string action = GetActionText(ddlActionFilter.SelectedValue);
-            string status = GetStatusText(ddlStatusFilter.SelectedValue);
-            string store = string.Join("|", lstStoreFilter.Items.Cast<ListItem>()
-                        .Where(li => li.Selected)
-                        .Select(li => li.Value));
-            string itemNo = item.SelectedValue;
-            string expiryDate = txtExpiryDateFilter.Text;
-            string regDate = txtRegDateFilter.Text;
-            string staffName = txtstaffFilter.Text;
-            string batchNo = txtBatchNoFilter.Text.Trim();
-            string vendorNo = vendor.SelectedValue;
-
-            if (!string.IsNullOrEmpty(action) && ddlActionFilter.SelectedValue != "0")
-            {
-                query += " AND Action = @Action";
-                parameters.Add(new SqlParameter("@Action", action));
-            }
-
-            if (!string.IsNullOrEmpty(status) && ddlStatusFilter.SelectedValue != "0")
-            {
-                query += " AND Status = @Status";
-                parameters.Add(new SqlParameter("@Status", status));
-            }
-
-            if (!string.IsNullOrEmpty(store) && !store.Contains("all"))
-            {
-                var stores = store.Split('|'); // Split by pipe
-                query += " AND storeNo IN (";
-                for (int i = 0; i < stores.Length; i++)
-                {
-                    if (i > 0) query += ",";
-                    query += $"@Store{i}";
-                    parameters.Add(new SqlParameter($"@Store{i}", stores[i]));
-                }
-                query += ")";
-            }
-
-            if (!string.IsNullOrEmpty(itemNo) && itemNo != "0")
-            {
-                query += " AND itemNo = @ItemNo";
-                parameters.Add(new SqlParameter("@ItemNo", itemNo));
-            }
-
-            if (!string.IsNullOrEmpty(expiryDate))
-            {
-                query += " AND CONVERT(VARCHAR(10), expiryDate, 120) = @ExpiryDate";
-                parameters.Add(new SqlParameter("@ExpiryDate", DateTime.ParseExact(expiryDate, "yyyy-MM", null).ToString("yyyy-MM-dd")));
-            }
-
-            if (!string.IsNullOrEmpty(staffName) && staffName != "0")
-            {
-                query += " AND staffName = @StaffName";
-                parameters.Add(new SqlParameter("@StaffName", staffName));
-            }
-
-            if (!string.IsNullOrEmpty(batchNo))
-            {
-                query += " AND batchNo LIKE '%' + @BatchNo + '%'";
-                parameters.Add(new SqlParameter("@BatchNo", batchNo));
-            }
-
-            if (!string.IsNullOrEmpty(vendorNo) && vendorNo != "0")
-            {
-                query += " AND vendorNo = @VendorNo";
-                parameters.Add(new SqlParameter("@VendorNo", vendorNo));
-            }
-
-            if (!string.IsNullOrEmpty(regDate))
-            {
-                DateTime date = DateTime.ParseExact(regDate, "yyyy-MM-dd", null);
-                query += " AND CAST(regeDate AS DATE) = @RegDate";
-                parameters.Add(new SqlParameter("@RegDate", date.Date));
-            }
-
-            return (query, parameters);
-        }
-
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         private void ExportToExcel(DataTable dt)
         {
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
@@ -1719,7 +1148,6 @@ namespace Expiry_list
 
         private DataTable GetFilteredDataForExport()
         {
-<<<<<<< HEAD
             string username = User.Identity.Name;
             var permissions = GetAllowedFormsByUser(username);
             Session["formPermissions"] = permissions;
@@ -1828,67 +1256,6 @@ namespace Expiry_list
                 {
                     dt.Columns["expiryDate"].DateTimeMode = DataSetDateTime.Unspecified;
                 }
-
-=======
-            using (SqlConnection conn = new SqlConnection(strcon))
-            {
-                string userRole = Session["role"] as string;
-
-                StringBuilder whereClause = new StringBuilder();
-
-                if (userRole == "viewer")
-                {
-                    whereClause.Append("status IN ('Exchange', 'No Exchange', 'No Action')");
-                }
-                else
-                {
-                    whereClause.Append("1=1");
-                }
-
-                string searchValue = Request["search"] ?? "";
-
-                // Define the searchable columns
-                string[] searchableColumns = {
-                   "no", "itemNo", "description", "barcodeNo", "qty", "uom", "packingInfo", "expiryDate", "storeNo",
-                   "staffName", "batchNo", "vendorNo", "vendorName", "regeDate", "action", "status","note", "remark", "completedDate"
-                };
-
-                // Append search filter if search value is provided
-                if (!string.IsNullOrEmpty(searchValue))
-                {
-                    whereClause.Append(" AND (");
-                    foreach (string col in searchableColumns)
-                    {
-                        whereClause.Append($"{col} LIKE '%' + @SearchValue + '%' OR ");
-                    }
-                    whereClause.Remove(whereClause.Length - 4, 4);  // Remove the trailing 'OR'
-                    whereClause.Append(")");
-                }
-
-                // Construct the query without pagination
-                string query = $@"
-            SELECT * 
-            FROM itemList 
-            WHERE {whereClause}
-            ORDER BY id;";
-
-                SqlCommand cmd = new SqlCommand(query, conn);
-
-                // If a search value is provided, add it as a parameter
-                if (!string.IsNullOrEmpty(searchValue))
-                {
-                    cmd.Parameters.AddWithValue("@SearchValue", searchValue);
-                }
-
-                conn.Open();
-                DataTable dt = new DataTable();
-                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                {
-                    da.Fill(dt);
-                }
-                conn.Close();
-
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 return dt;
             }
         }
@@ -1928,7 +1295,6 @@ namespace Expiry_list
                     $"alert('Error loading stores: {ex.Message.Replace("'", "''")}');", true);
             }
         }
-<<<<<<< HEAD
 
         private Dictionary<string, string> GetAllowedFormsByUser(string username)
         {
@@ -1974,7 +1340,5 @@ namespace Expiry_list
                 $"swal('{title}', '{HttpUtility.JavaScriptStringEncode(message)}', '{type}');", true);
         }
 
-=======
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
     }
 }

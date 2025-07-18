@@ -2267,7 +2267,6 @@
     <Content Include="js\jquery-3.6.0.min.js" />
     <Content Include="loginPage.aspx" />
     <Content Include="regeForm.aspx" />
-<<<<<<< HEAD
     <Content Include="regeForm1.aspx" />
     <Content Include="registrationForm.aspx" />
     <Content Include="ReorderForm\approval.aspx" />
@@ -2275,9 +2274,6 @@
     <Content Include="ReorderForm\rege1.aspx" />
     <Content Include="ReorderForm\viewer2.aspx" />
     <Content Include="ReorderForm\viewer3.aspx" />
-=======
-    <Content Include="registrationForm.aspx" />
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
     <Content Include="select2\select2.css" />
     <Content Include="select2\select2.min.css" />
     <Content Include="select2\select2.min.js" />
@@ -2363,7 +2359,6 @@
     <Compile Include="regeForm.aspx.designer.cs">
       <DependentUpon>regeForm.aspx</DependentUpon>
     </Compile>
-<<<<<<< HEAD
     <Compile Include="regeForm1.aspx.cs">
       <DependentUpon>regeForm1.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -2371,8 +2366,6 @@
     <Compile Include="regeForm1.aspx.designer.cs">
       <DependentUpon>regeForm1.aspx</DependentUpon>
     </Compile>
-=======
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
     <Compile Include="registrationForm.aspx.cs">
       <DependentUpon>registrationForm.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -2380,7 +2373,6 @@
     <Compile Include="registrationForm.aspx.designer.cs">
       <DependentUpon>registrationForm.aspx</DependentUpon>
     </Compile>
-<<<<<<< HEAD
     <Compile Include="ReorderForm\approval.aspx.cs">
       <DependentUpon>approval.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -2416,8 +2408,6 @@
     <Compile Include="ReorderForm\viewer3.aspx.designer.cs">
       <DependentUpon>viewer3.aspx</DependentUpon>
     </Compile>
-=======
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
     <Compile Include="Site1.Master.cs">
       <DependentUpon>Site1.Master</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

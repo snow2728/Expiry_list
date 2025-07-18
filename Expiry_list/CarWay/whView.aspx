@@ -3,33 +3,7 @@
 
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-<<<<<<< HEAD
-
-      <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #996FD6;"><i class="fa-solid fa-left-long"></i> Home</a>
-
-  <%--  <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true">
-         <Scripts>
-             <asp:ScriptReference Name="MicrosoftAjax.js" />
-             <asp:ScriptReference Name="MicrosoftAjaxWebForms.js" />
-         </Scripts>
-     </asp:ScriptManager>--%>
-
-    <div class="col-md-12 ms-3" id="gridCol">
-   <%--<asp:UpdatePanel ID="UpdatePanel2" runat="server" UpdateMode="Conditional">
-=======
-    <div class="col-md-12 ms-3" id="gridCol">
-   <asp:UpdatePanel ID="UpdatePanel2" runat="server" UpdateMode="Conditional">
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
-     <ContentTemplate>
-
-        <asp:Panel ID="pnlNoData" runat="server" Visible="false">
-              <div class="alert alert-info">No items to Filter</div>
-<<<<<<< HEAD
-        </asp:Panel>--%>
-=======
-        </asp:Panel>
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
-
+<div>
          <div class="table-responsive gridview-container " style="height: 673px">
              <asp:GridView ID="GridView2" runat="server"
                  CssClass="table table-striped table-bordered table-hover shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto"
@@ -119,19 +93,6 @@
                          <SortedDescendingHeaderStyle BackColor="#6F8DAE" />
                      </asp:GridView>
              </div>
-         </ContentTemplate>
-<<<<<<< HEAD
-        <%-- <Triggers>
-             <asp:AsyncPostBackTrigger ControlID="" EventName="Click" />
-             <asp:AsyncPostBackTrigger ControlID="" EventName="Click" />
-         </Triggers>
-     </asp:UpdatePanel>--%>
-=======
-         <Triggers>
-             <asp:AsyncPostBackTrigger ControlID="btnApplyFilter" EventName="Click" />
-             <asp:AsyncPostBackTrigger ControlID="btnResetFilter" EventName="Click" />
-         </Triggers>
-     </asp:UpdatePanel>
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
+
  </div>
 </asp:Content>

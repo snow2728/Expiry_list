@@ -15,8 +15,6 @@ namespace Expiry_list.CarWay
     {
 
         /// <summary>
-<<<<<<< HEAD
-=======
         /// UpdatePanel2 control.
         /// </summary>
         /// <remarks>
@@ -34,8 +32,6 @@ namespace Expiry_list.CarWay
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel pnlNoData;
 
-        /// <summary>
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         /// GridView2 control.
         /// </summary>
         /// <remarks>

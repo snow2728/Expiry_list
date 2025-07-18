@@ -85,11 +85,7 @@ body {
 }
 
 .pagination-container {
-<<<<<<< HEAD
     position: static !important;
-=======
-    position: static !important; /* Remove fixed positioning */
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 }
 
 /* Mobile optimization */
@@ -223,10 +219,6 @@ table.dataTable thead th {
     font-weight: bold !important;
 }
 
-<<<<<<< HEAD
-=======
-
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 .admin-only {
     display: none;
 }
@@ -239,30 +231,17 @@ table.dataTable thead th {
     display: none;
 }
 
-<<<<<<< HEAD
-=======
-
-
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 .custom-header {
     background-color: #1995ad !important;
     color: #ffffff;
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
 }
-<<<<<<< HEAD
 
 .custom-card {
     background-color: #f1f1f2;
 }
 
-=======
-/* Card background */
-.custom-card {
-    background-color: #f1f1f2;
-}
-/* Custom button style */
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 .custom-btn {
     background-color: #a1d6e2;
     border-color: #1995ad;
@@ -288,12 +267,6 @@ table.dataTable td {
     white-space: normal;
 }
 
-<<<<<<< HEAD
-=======
-
-
-/* Add these styles to your CSS */
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 .rowCheckbox {
     margin: 0 auto;
     display: block;
@@ -311,10 +284,6 @@ table.dataTable td {
     vertical-align: middle !important;
 }
 
-<<<<<<< HEAD
-=======
-/* Add this to your stylesheet */
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 table.dataTable tbody td:first-child,
 table.dataTable thead th:first-child {
     text-align: center !important;
@@ -402,7 +371,6 @@ input[type=number].no-spinners {
         box-shadow: none;
     }
 
-<<<<<<< HEAD
     .nav-link.active1 {
         background: #D0C9EA;
         border-bottom: 3px solid #fff;
@@ -410,8 +378,6 @@ input[type=number].no-spinners {
         box-shadow: none;
     }
 
-=======
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 .nav-group {
     border-right: 1px solid rgba(255,255,255,0.15);
     padding-right: 1rem;
@@ -488,21 +454,12 @@ table.dataTable {
 /*grid sticky*/
 /* Fixed header */
 /* Fixed header styling */
-<<<<<<< HEAD
 .sticky-header {
         position: sticky;
         top: 0;
         z-index: 1000;
         background: #808080 !important; 
 }
-=======
-/*.sticky-header {
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        background: #808080 !important;*/ /* Match gray header background */
-/*}*/
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
 /* Fixed columns styling */
 .fixed-column-1,
@@ -515,13 +472,8 @@ table.dataTable {
 .fixed-column-33,
 .fixed-column-44 {
     position: sticky;
-<<<<<<< HEAD
     z-index: 2; 
     background: #F7F6F3 !important;
-=======
-    z-index: 2; /* Increased z-index */
-    background: #F7F6F3 !important; /* Solid color for odd rows */
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
     border-right: 1px solid #dee2e6;
 }
 
@@ -551,11 +503,7 @@ table.dataTable {
 .table-striped tr:nth-of-type(even) .fixed-column-59,
 .table-striped tr:nth-of-type(even) .fixed-column-60,
 .table-striped tr:nth-of-type(even) .fixed-column-61 {
-<<<<<<< HEAD
     background: white !important;
-=======
-    background: white !important; /* Solid color for even rows */
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 }
 
 
@@ -696,12 +644,7 @@ a[commandname="Edit"] {
 }
 
 .select2-container--default .select2-selection--multiple {
-<<<<<<< HEAD
     min-width: 210px;
-=======
-    width: 100% !important;
-    min-width: 350px;
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
     max-width: 100%;
 }
 
@@ -865,7 +808,6 @@ a[commandname="Edit"] {
     opacity: 0.6;
 }
 
-<<<<<<< HEAD
 .grid-purple-text td, .grid-purple-text th {
     color: #9E7CD7 !important;
 }
@@ -910,5 +852,3 @@ a[commandname="Edit"] {
     color: #6c757d;
     font-style: italic;
 }*/
-=======
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b

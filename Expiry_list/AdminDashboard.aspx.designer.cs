@@ -13,7 +13,6 @@ namespace Expiry_list
 
     public partial class WebForm1
     {
-<<<<<<< HEAD
 
         /// <summary>
         /// pnlExpiryList control.
@@ -59,7 +58,6 @@ namespace Expiry_list
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel pnlReorderQuantity;
-=======
->>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
+
     }
 }
