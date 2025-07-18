@@ -141,7 +141,26 @@
                             className: 'dt-center',
                             visible: false
                         },
+<<<<<<< HEAD
                     ],
+=======
+
+                        //{
+                        //    data: 'edit',
+                        //    width: "125px",
+                        //    render: function (data, type, row) {
+                        //        return '<button class="btn text-white m-1 editBtn" style="background-color:#158396;" data-id="' + row.id + '"><i class="fa-solid fa-pen-to-square"></i> Edit</button>';
+                        //    }
+                        //}
+                    ],
+                    order: [[1, 'asc'], [2, 'asc']],
+                    /*columnDefs: [{ targets: [0], orderable: false }],*/
+                    //stateSaveParams: function (settings, data) {
+                    //    data.columns.forEach(function (col) {
+                    //        col.width = null;
+                    //    });
+                    //},
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                     select: { style: 'multi', selector: 'td:first-child' },
                     lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
                     initComplete: function (settings) {
@@ -165,11 +184,19 @@
             const monthInput = document.getElementById("monthFilter");
             const now = new Date();
             const year = now.getFullYear();
+<<<<<<< HEAD
             const month = String(now.getMonth() + 1).padStart(2, '0');
+=======
+            const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
             monthInput.value = `${year}-${month}`;
 
             const filterPane = document.getElementById("filterPane");
             if (filterPane) {
+<<<<<<< HEAD
+=======
+                // Use server-side ViewState value or default to 'none'
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 filterPane.style.display = "<%= ViewState["FilterPanelVisible"] != null ? (bool)ViewState["FilterPanelVisible"] ? "block" : "none" : "none" %>";
             }
 
@@ -203,7 +230,11 @@
         }
 
         function toggleFilter() {
+<<<<<<< HEAD
             const filterPane = document.getElementById("filterPane"); 
+=======
+            const filterPane = document.getElementById("filterPane"); // Target the outer div
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
             const gridCol = document.getElementById("gridCol");
 
             if (filterPane && gridCol) {
@@ -272,6 +303,7 @@
         }
 
         function InitializeItemVendorFilter() {
+<<<<<<< HEAD
             try {
                 $('#<%= item.ClientID %>, #<%= vendor.ClientID %>').select2({
                     placeholder: 'Select item or vendor',
@@ -287,6 +319,9 @@
                     text: 'There was an error initializing item/vendor dropdowns: ' + err.message
                 });
             }
+=======
+            $('#<%= item.ClientID %>, #<%= vendor.ClientID %>').select2();
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         }
 
         function handleApplyFilters() {
@@ -315,9 +350,20 @@
                 }
             }
 
+<<<<<<< HEAD
 
             if (!anyFilterActive) {
                 Swal.fire('Warning!', 'Please select at least one filter to apply and ensure it has a value.', 'warning');
+=======
+            if (!anyFilterActive) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Filter',
+                    text: 'Please select at least one filter to apply and ensure it has a value.',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
+                });
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 return false;
             }
 
@@ -331,11 +377,19 @@
         }
 
         Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
+<<<<<<< HEAD
+=======
+            // Re-check elements after postback
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
             const filterPane = document.getElementById("filterPane");
             if (filterPane) {
                 filterPane.style.display = <%= Panel1.Visible.ToString().ToLower() %> ? "block" : "none";
           }
 
+<<<<<<< HEAD
+=======
+          // Rest of your initialization code...
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
           initializeComponents();
           setupFilterToggle();
           InitializeItemVendorFilter();
@@ -357,7 +411,11 @@
     </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
+<<<<<<< HEAD
      <a href="AdminDashboard.aspx" class="btn text-white ms-2" style="background-color : #158396;"><i class="fa-solid fa-left-long"></i> Home</a>
+=======
+     <a href="AdminDashboard.aspx" class="btn text-white" style="background-color : #158396;"><i class="fa-solid fa-left-long"></i> Home</a>
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
      <div class="container-fluid col-lg-12">
       <div class="card shadow-md border-dark-subtle">
@@ -479,10 +537,17 @@
                                                 </asp:DropDownList>
                                             </div>
 
+<<<<<<< HEAD
                                             <!-- Expiry Month Filter -->
                                             <div class="form-group mt-3 filter-group" id="expiryDateFilterGroup" runat="server" style="display:none">
                                                 <label for="<%= txtExpiryDateFilter.ClientID %>">Expiry Month</label>
                                                 <asp:TextBox ID="txtExpiryDateFilter" runat="server" CssClass="form-control" ></asp:TextBox>
+=======
+                                            <!-- Expiry Date Filter -->
+                                            <div class="form-group mt-3 filter-group" id="expiryDateFilterGroup" runat="server" style="display:none">
+                                                <label for="<%= txtExpiryDateFilter.ClientID %>">Expiry Date</label>
+                                                <asp:TextBox ID="txtExpiryDateFilter" runat="server" CssClass="form-control" TextMode="Month"></asp:TextBox>
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                                             </div>
 
                                             <!-- Staff Filter -->

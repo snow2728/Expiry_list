@@ -28,7 +28,11 @@ namespace Expiry_list
 
         protected void Session_Start(object sender, EventArgs e)
         {
+<<<<<<< HEAD
             Session["Init"] = true;
+=======
+            
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         }
 
         protected void Application_BeginRequest(object sender, EventArgs e)
@@ -44,6 +48,7 @@ namespace Expiry_list
             {
                 try
                 {
+<<<<<<< HEAD
                     FormsAuthenticationTicket ticket = FormsAuthentication.Decrypt(authCookie.Value);
                     if (ticket != null && !ticket.Expired)
                     {
@@ -58,6 +63,25 @@ namespace Expiry_list
                     }
                 }
                 catch
+=======
+                    // Decrypt the ticket
+                    FormsAuthenticationTicket ticket = FormsAuthentication.Decrypt(authCookie.Value);
+                    if (ticket != null && !ticket.Expired)
+                    {
+                        // Extract roles from UserData (comma-separated)
+                        string[] roles = ticket.UserData.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                        // Create identity and principal
+                        FormsIdentity identity = new FormsIdentity(ticket);
+                        GenericPrincipal principal = new GenericPrincipal(identity, roles);
+
+                        // Attach to current request
+                        Context.User = principal;
+                        HttpContext.Current.User = principal; 
+                    }
+                }
+                catch (Exception ex)
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 {
                     FormsAuthentication.SignOut();
                     Response.Redirect(FormsAuthentication.LoginUrl);

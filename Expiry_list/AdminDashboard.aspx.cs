@@ -15,6 +15,7 @@ namespace Expiry_list
         string strcon = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
         protected void Page_Load(object sender, EventArgs e)
         {
+<<<<<<< HEAD
             if (!IsPostBack)
             {
                 if (Session["formPermissions"] == null || !User.Identity.IsAuthenticated)
@@ -43,6 +44,9 @@ namespace Expiry_list
                     pnlReorderQuantity.Style["display"] = "block";
 
             }
+=======
+
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         }
 
         protected void el_Click1(object sender, EventArgs e)
@@ -53,6 +57,7 @@ namespace Expiry_list
                 return;
             }
 
+<<<<<<< HEAD
             string username = User.Identity.Name;
             var allowedForms = GetAllowedFormsByUser(username);
 
@@ -95,6 +100,29 @@ namespace Expiry_list
                 ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
                     "swal('Access Denied!', 'You do not have permission to access any valid page.', 'error');", true);
             }
+=======
+            var identity = (FormsIdentity)User.Identity;
+            string role = identity.Ticket.UserData.ToLower();
+
+            string redirectUrl;
+            switch (role)
+            {
+                case "admin":
+                    redirectUrl = "registrationForm.aspx";
+                    break;
+                case "user":
+                    redirectUrl = "registrationForm.aspx";
+                    break;
+                case "viewer":
+                    redirectUrl = "itemList.aspx";
+                    break;
+                default:
+                    ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
+                        "swal('Error!', 'Unauthorized access!', 'error');", true);
+                    return;
+            }
+            Response.Redirect(redirectUrl);
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         }
 
         protected void ni_Click1(object sender, EventArgs e)
@@ -105,6 +133,7 @@ namespace Expiry_list
                 return;
             }
 
+<<<<<<< HEAD
             string username = User.Identity.Name;
             var allowedForms = GetAllowedFormsByUser(username);
             Session["formPermissions"] = allowedForms;
@@ -169,6 +198,29 @@ namespace Expiry_list
                 ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
                     "swal('Access Denied!', 'You do not have permission to access any valid page.', 'error');", true);
             }
+=======
+            var identity = (FormsIdentity)User.Identity;
+            string role = identity.Ticket.UserData.ToLower();
+
+            string redirectUrl;
+            switch (role)
+            {
+                case "admin":
+                    redirectUrl = "balanceQty.aspx";
+                    break;
+                case "user":
+                    redirectUrl = "balanceQty.aspx";
+                    break;
+                case "viewer":
+                    redirectUrl = "AdminDashboard.aspx";
+                    break;
+                default:
+                    ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
+                        "swal('Error!', 'Unauthorized access!', 'error');", true);
+                    return;
+            }
+            Response.Redirect(redirectUrl);
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         }
 
         protected void cw_Click1(object sender, EventArgs e)
@@ -179,6 +231,7 @@ namespace Expiry_list
                 return;
             }
 
+<<<<<<< HEAD
             string username = User.Identity.Name;
             var allowedForms = GetAllowedFormsByUser(username);
 
@@ -327,3 +380,28 @@ namespace Expiry_list
 }
 
 
+=======
+            var identity = (FormsIdentity)User.Identity;
+            string role = identity.Ticket.UserData.ToLower();
+
+            string redirectUrl;
+            switch (role)
+            {
+                case "admin":
+                    redirectUrl = "~/CarWay/main1.aspx";
+                    break;
+                case "user":
+                case "viewer":
+                    redirectUrl = "~/AdminDashboard.aspx";
+                    break;
+                default:
+                    ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
+                        "swal('Error!', 'Unauthorized access!', 'error');", true);
+                    return;
+            }
+            Response.Redirect(redirectUrl);
+        }
+
+    }
+}
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b

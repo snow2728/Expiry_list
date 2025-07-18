@@ -2,9 +2,12 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
+<<<<<<< HEAD
 
       <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #996FD6;"><i class="fa-solid fa-left-long"></i> Home</a>
 
+=======
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
     <div>
         <asp:Button runat="server"
        CssClass="btn btn-warning text-white rounded-pill px-4"

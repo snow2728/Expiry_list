@@ -5,11 +5,18 @@
 <script type="text/javascript">
 
     $(document).ready(function () {
+<<<<<<< HEAD
         InitializeStoreFilter();
         if (typeof (Sys) !== 'undefined') {
             Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
                 updateFilterVisibility();
                 InitializeStoreFilter();
+=======
+        // Initialize components only after ScriptManager is ready
+        if (typeof (Sys) !== 'undefined') {
+            Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
+                updateFilterVisibility();
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
                 // Reattach change handlers after postback
                 Object.keys(filterMap).forEach(key => {
@@ -23,6 +30,10 @@
 
         initializeComponents();
         setupEventDelegation();
+<<<<<<< HEAD
+=======
+        InitializeStoreFilter();
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         InitializeItemVendorFilter();
         focusOnEditedRow();
         setupFilterToggle();
@@ -150,8 +161,22 @@
                         className: 'dt-center',
                         visible: false
                     },
+<<<<<<< HEAD
                 ],
                 order: [[1, 'asc'], [2, 'asc']],
+=======
+
+                    //{
+                    //    data: 'edit',
+                    //    width: "125px",
+                    //    render: function (data, type, row) {
+                    //        return '<button class="btn text-white m-1 editBtn" style="background-color:#158396;" data-id="' + row.id + '"><i class="fa-solid fa-pen-to-square"></i> Edit</button>';
+                    //    }
+                    //}
+                ],
+                order: [[1, 'asc'], [2, 'asc']],
+                /*columnDefs: [{ targets: [0], orderable: false }],*/
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 columnDefs: [
                     {
                         targets: [21],
@@ -159,6 +184,14 @@
                         searchable: false
                     }
                 ],
+<<<<<<< HEAD
+=======
+                //stateSaveParams: function (settings, data) {
+                //    data.columns.forEach(function (col) {
+                //        col.width = null;
+                //    });
+                //},
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 select: { style: 'multi', selector: 'td:first-child' },
                 lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
                 initComplete: function (settings, json) {
@@ -181,6 +214,14 @@
                         updateSelectedIDs();
                     });
 
+<<<<<<< HEAD
+=======
+                         <%--grid.on('click', '.editBtn', function () {
+                             var rowId = $(this).data('id');
+                             $('#<%= hfEditId.ClientID %>').val(rowId);
+                             __doPostBack('', '');
+                         });--%>
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 }
             });
 
@@ -194,6 +235,7 @@
 
     function focusOnEditedRow() {
         const rowId = $('#<%= hfSelectedIDs.ClientID %>').val();
+<<<<<<< HEAD
          if (!rowId) return;
 
          const grid = $("#<%= GridView2.ClientID %>");
@@ -240,6 +282,54 @@
                 listBox.addEventListener('change', updateLocationPillsDisplay);
             }
         });
+=======
+        if (!rowId) return;
+
+        const grid = $("#<%= GridView2.ClientID %>");
+
+        if ($.fn.DataTable.isDataTable(grid)) {
+            const dt = grid.DataTable();
+
+            dt.order([]).search('').draw();
+
+            const rowIndex = dt.rows().indexes().find(index =>
+                dt.row(index).data().id === rowId
+            );
+
+            if (typeof rowIndex !== 'undefined') {
+                dt.row(rowIndex).move(0).draw(false);
+
+                grid.parent().animate({ scrollTop: 0 }, 500);
+                dt.row(0).nodes().to$()
+                    .addClass('highlight-row')
+                    .trigger('focus');
+            }
+        } else {
+            const $row = grid.find(`tr[data-id='${rowId}']`);
+            if ($row.length) {
+                const $tbody = grid.find('tbody');
+                $row.prependTo($tbody);
+
+                $('html, body').animate({
+                    scrollTop: grid.offset().top - 100
+                }, 500);
+                $row.addClass('highlight-row');
+
+            }
+        }
+
+        $('#<%= hfSelectedIDs.ClientID %>').val('');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        updateLocationPillsDisplay();
+
+        const listBox = document.getElementById('<%= lstStoreFilter.ClientID %>');
+        if (listBox) {
+            listBox.addEventListener('change', updateLocationPillsDisplay);
+        }
+    });
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
     function setupFilterToggle() {
         const filterMappings = {
@@ -366,6 +456,7 @@
     }
 
     function InitializeStoreFilter() {
+<<<<<<< HEAD
         var $select = $('#<%= lstStoreFilter.ClientID %>');
         var allOptionId = "all";
 
@@ -534,6 +625,101 @@
             });
         }
     }
+=======
+        var $select = $('#<%=lstStoreFilter.ClientID %>');
+      var allOptionId = "all";
+
+      // Remove duplicate "All" option if exists
+      $select.find('option').filter(function () {
+          return $(this).val() === allOptionId;
+      }).slice(1).remove();
+
+      $select.select2({
+          placeholder: "-- Select stores --",
+          closeOnSelect: false,
+          width: '100%',
+          allowClear: true,
+          dropdownParent: $select.closest('.filter-group'),
+          minimumResultsForSearch: 1,
+          escapeMarkup: function (m) { return m; },
+
+          templateResult: function (data) {
+              if (!data.id) return data.text;
+              var isAll = data.id === allOptionId;
+              var allSelected = $select.val()?.includes(allOptionId);
+              var isChecked = isAll ? allSelected : (data.selected && !allSelected);
+              var isDisabled = allSelected && !isAll;
+
+              return $(
+                  '<div class="select2-checkbox-option d-flex align-items-center">' +
+                  '  <input type="checkbox" class="select2-checkbox me-2" ' +
+                  (isChecked ? 'checked' : '') +
+                  (isAll ? ' data-is-all="true"' : '') +
+                  (isDisabled ? ' disabled' : '') + '>' +
+                  '  <div class="select2-text' + (isAll ? ' fw-bold"' : '"') + '>' + data.text + '</div>' +
+                  '</div>'
+              );
+          },
+
+          templateSelection: function (data, container) {
+              return ''; // Empty since we're using pills instead
+          }
+      });
+
+      // Handle checkbox clicks
+      $select.data('select2').$dropdown.on('click', '.select2-checkbox', function (e) {
+          var $option = $(this).closest('.select2-results__option');
+          var data = $option.data('data');
+          if (data) {
+              var isAll = data.id === allOptionId;
+              var selected = $select.val() || [];
+
+              if (isAll) {
+                  if (this.checked) {
+                      $select.val([allOptionId]).trigger('change');
+                  } else {
+                      $select.val([]).trigger('change');
+                  }
+              } else {
+                  var index = selected.indexOf(data.id);
+                  if (this.checked && index === -1) {
+                      selected.push(data.id);
+                  } else if (!this.checked && index !== -1) {
+                      selected.splice(index, 1);
+                  }
+                  $select.val(selected).trigger('change');
+              }
+          }
+      });
+
+      // Update display on change
+      $select.on('change', function () {
+          var values = $select.val() || [];
+          var hasAll = values.includes(allOptionId);
+
+          if (hasAll && values.length > 1) {
+              $select.val([allOptionId]).trigger('change');
+          }
+
+          updateLocationPillsDisplay();
+      });
+
+      // Initialize display
+      updateLocationPillsDisplay();
+
+      // Prevent default selection behavior
+      $select.on('select2:selecting select2:unselecting', function (e) {
+          if (e.params?.args?.originalEvent &&
+              !$(e.params.args.originalEvent.target).hasClass('select2-checkbox')) {
+              e.preventDefault();
+          }
+      });
+  }
+
+   function InitializeItemVendorFilter() {
+        $('#<%= item.ClientID %>, #<%= vendor.ClientID %>').select2();
+   }
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
     function setupEventDelegation() {
         $(document).off('click', '[id*=chkAll1]').on('click', '[id*=chkAll1]', function () {
@@ -582,6 +768,7 @@
         }
     }
 
+<<<<<<< HEAD
    function updateLocationPillsDisplay() {
         const listBox = document.getElementById('<%= lstStoreFilter.ClientID %>');
         const container = document.getElementById('locationPillsContainer');
@@ -614,6 +801,59 @@
 
        container.style.display = listBox.selectedOptions.length > 0 ? 'flex' : 'none';
    }
+=======
+    function updateLocationPillsDisplay() {
+        const listBox = document.getElementById('<%= lstStoreFilter.ClientID %>');
+      const container = document.getElementById('locationPillsContainer');
+
+      if (!listBox || !container) return;
+
+      container.innerHTML = '';
+
+      const hasAll = Array.from(listBox.selectedOptions).some(opt => opt.value === "all");
+      const selectedOptions = Array.from(listBox.selectedOptions).filter(opt => opt.value !== "all");
+
+      if (hasAll) {
+          const pill = document.createElement('span');
+          pill.className = 'location-pill';
+          pill.innerHTML = `
+         <span class="pill-text">All Stores</span>
+         <span class="pill-remove" data-value="all">×</span>
+     `;
+
+          pill.querySelector('.pill-remove').addEventListener('click', function (e) {
+              e.preventDefault();
+              Array.from(listBox.options).forEach(opt => {
+                  if (opt.value === "all") opt.selected = false;
+              });
+              updateLocationPillsDisplay();
+              $('#<%= lstStoreFilter.ClientID %>').trigger('change');
+     });
+
+     container.appendChild(pill);
+ } else {
+     selectedOptions.forEach(option => {
+         const pill = document.createElement('span');
+         pill.className = 'location-pill';
+         pill.innerHTML = `
+             <span class="pill-text">${option.text}</span>
+             <span class="pill-remove" data-value="${option.value}">×</span>
+         `;
+
+         pill.querySelector('.pill-remove').addEventListener('click', function (e) {
+             e.preventDefault();
+             option.selected = false;
+             updateLocationPillsDisplay();
+             $('#<%= lstStoreFilter.ClientID %>').trigger('change');
+         });
+
+         container.appendChild(pill);
+     });
+      }
+
+      container.style.display = listBox.selectedOptions.length > 0 ? 'grid' : 'none';
+  }
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
     function resetLocationPills() {
         const listBox = document.getElementById('<%= lstStoreFilter.ClientID %>');
@@ -652,7 +892,11 @@
         }
 
         if (!anyFilterActive) {
+<<<<<<< HEAD
             Swal.fire('Warning!', 'Please select at least one filter to apply and ensure it has a value.', 'warning');
+=======
+            alert('Please select at least one filter to apply and ensure it has a value.');
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
             return false;
         }
 
@@ -680,7 +924,11 @@
 </asp:Content>  
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
+<<<<<<< HEAD
    <a href="AdminDashboard.aspx" class="btn text-white ms-2" style="background-color : #158396;"><i class="fa-solid fa-left-long"></i> Home</a>
+=======
+   <a href="AdminDashboard.aspx" class="btn text-white" style="background-color : #158396;"><i class="fa-solid fa-left-long"></i> Home</a>
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
     <div class="container-fluid col-lg-12 col-md-12">
         <div class="card shadow-md border-dark-subtle">
@@ -865,10 +1113,16 @@
                                                     <label for="<%=lstStoreFilter.ClientID %>">Location</label>
                                                     <%--<asp:ListBox ID="lstStoreFilter" runat="server" CssClass="form-control select2-multi-check" SelectionMode="Multiple"></asp:ListBox>--%>
                                                
+<<<<<<< HEAD
                                                     <asp:ListBox ID="lstStoreFilter" runat="server" CssClass="form-control select2-multi-check" 
                                                         SelectionMode="Multiple" style="display:none"></asp:ListBox>
    
                                                     <div id="locationPillsContainer" class="location-pills-container mb-2"></div>
+=======
+                                                    <asp:ListBox ID="lstStoreFilter" runat="server" CssClass="form-control select2-multi-check w-100"
+                                                        SelectionMode="Multiple" style="display:none;"></asp:ListBox>
+                                                    <div id="locationPillsContainer" class="location-pills-container mb-2 w-100"></div>
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
     
                                                     <div class="location-pill-template" style="display:block"></div>
                                                 </div>
@@ -881,11 +1135,19 @@
                                                     </asp:DropDownList>
                                                 </div>
 
+<<<<<<< HEAD
                                                 <!-- Expiry Date Filter -->
                                                  <div class="form-group mt-3 filter-group" id="expiryDateFilterGroup" runat="server" style="display:none">
                                                      <label for="<%= txtExpiryDateFilter.ClientID %>">Expiry Month</label>
                                                      <asp:TextBox ID="txtExpiryDateFilter" runat="server" CssClass="form-control" ></asp:TextBox>
                                                  </div>
+=======
+                                                <!-- Expiry Month Filter -->
+                                                <div class="form-group mt-3 filter-group" id="expiryDateFilterGroup" runat="server" style="display:none">
+                                                    <label for="<%= txtExpiryDateFilter.ClientID %>">Expiry Month</label>
+                                                    <asp:TextBox ID="txtExpiryDateFilter" runat="server" CssClass="form-control" ></asp:TextBox>
+                                                </div>
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
                                                 <!-- Staff Filter -->
                                                 <div class="form-group mt-3 filter-group" id="staffFilterGroup" runat="server" style="display:none">
@@ -959,7 +1221,11 @@
 
                             <div class="table-responsive gridview-container " style="height: 673px">
                                 <asp:GridView ID="GridView2" runat="server"
+<<<<<<< HEAD
                                     CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto"
+=======
+                                    CssClass="table table-striped table-bordered table-hover shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto"
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                                     AutoGenerateColumns="False"
                                     DataKeyNames="id"
                                     UseAccessibleHeader="true"
@@ -990,7 +1256,11 @@
 
                                     <Columns>
 
+<<<<<<< HEAD
                                         <asp:TemplateField HeaderText="ID" Visible="false" >
+=======
+                                        <asp:TemplateField HeaderText="ID" Visible="false">
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                                             <ItemTemplate>
                                                 <asp:Label ID="lblId" runat="server" Text='<%# Eval("id") %>' CssClass="row-id" />
                                             </ItemTemplate>
@@ -1081,7 +1351,11 @@
 
                                         <asp:TemplateField HeaderText="Expiry Date" SortExpression="expiryDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-10">
                                             <ItemTemplate>
+<<<<<<< HEAD
                                                 <asp:Label ID="lblExpiryDate" runat="server" Text='<%# Eval("expiryDate", "{0:MMM/yyyy}") %>' />
+=======
+                                                <asp:Label ID="lblExpiryDate" runat="server" Text='<%# Eval("expiryDate", "{0:MMMM/yyyy}") %>' />
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                                             </ItemTemplate>
                                             <ControlStyle Width="120px" />
                                             <HeaderStyle ForeColor="White" BackColor="Gray" />
@@ -1124,7 +1398,11 @@
                                             <ItemStyle HorizontalAlign="Justify" />
                                         </asp:TemplateField>
 
+<<<<<<< HEAD
                                         <asp:TemplateField HeaderText="Vendor Name" ItemStyle-Width="170px" SortExpression="vendorName" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-55">
+=======
+                                        <asp:TemplateField HeaderText="Vendor Name" ItemStyle-Width="170px" SortExpression="vendorName" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0">
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                                             <ItemTemplate>
                                                 <asp:Label ID="lblVendorName" runat="server" Text=' <%# Eval("vendorName") %>' />
                                             </ItemTemplate>

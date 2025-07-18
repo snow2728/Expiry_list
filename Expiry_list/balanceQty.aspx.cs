@@ -74,12 +74,46 @@ namespace Expiry_list
             }
         }
 
+<<<<<<< HEAD
+=======
+        private string GetLoggedInUserStoreName()
+        {
+            int storeId = Convert.ToInt32(Session["storeNo"] ?? 0);
+
+            if (storeId == 0 || Session["storeNo"] == null)
+            {
+                Response.Redirect("login.aspx");
+                return null;
+            }
+
+            string storeName = null;
+            string query = "SELECT StoreNo FROM Stores WHERE id = @StoreId";
+
+            using (SqlConnection conn = new SqlConnection(strcon))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@StoreId", storeId);
+                conn.Open();
+
+                storeName = cmd.ExecuteScalar()?.ToString();
+            }
+
+            if (string.IsNullOrEmpty(storeName))
+            {
+                Response.Write("Error: StoreName not found.<br>");
+            }
+
+            return storeName;
+        }
+
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         private void RespondWithData()
         {
             using (SqlConnection conn = new SqlConnection(strcon))
             {
                 int draw = Convert.ToInt32(Request["draw"]);
                 int start = Convert.ToInt32(Request["start"]);
+<<<<<<< HEAD
                 int len = Convert.ToInt32(Request["length"]); if (len == 0) len = 100;
                 int orderCol = Convert.ToInt32(Request["order[0][column]"]);
                 string orderDir = (Request["order[0][dir]"] ?? "asc").ToLower();
@@ -174,10 +208,119 @@ namespace Expiry_list
                     UnitofMeasure = r["UnitofMeasure"],
                     QtyperUnitofMeasure = r["QtyperUnitofMeasure"],
                     ItemFamily = r["ItemFamily"]
+=======
+                int length = Convert.ToInt32(Request["length"]);
+                int orderColumnIndex = Convert.ToInt32(Request["order[0][column]"]);
+                string orderDir = Request["order[0][dir]"] ?? "asc";
+
+                if (length == 0) length = 100;
+
+                string[] columns = { "srno", "ItemNo", "Description", "LocationCode", "BalanceQty", "TakenDate", "TakenTime", "UnitofMeasure", "QtyperUnitOfMeasure" };
+
+                string[] sortableColumns = {
+                    "srno", "ItemNo",
+                    "Description", "LocationCode", "BalanceQty", "TakenDate", "TakenTime",
+                    "UnitofMeasure", "QtyperUnitofMeasure"
+                };
+
+                string[] searchableColumns = { "srno","ItemNo", "Description", "LocationCode", "BalanceQty", "TakenDate", "TakenTime", "UnitofMeasure", "QtyperUnitOfMeasure" };
+
+                string searchValue = Request["search"] ?? "";
+                string userRole = Session["role"] as string;
+                string storeNo = GetLoggedInUserStoreName();
+
+                StringBuilder whereClause = new StringBuilder("TakenTime = (SELECT MAX(TakenTime) FROM negLocation)");
+
+                if (userRole == "user")
+                {
+                    whereClause.Append(" AND LocationCode = @StoreNo");
+                }
+
+                // Add search filter
+                if (!string.IsNullOrEmpty(searchValue))
+                {
+                    whereClause.Append(" AND (");
+                    foreach (string col in searchableColumns)
+                    {
+                        whereClause.Append($"{col} LIKE '%' + @SearchValue + '%' OR ");
+                    }
+                    whereClause.Remove(whereClause.Length - 4, 4);
+                    whereClause.Append(")");
+                }
+
+                string orderByClause = "";
+                int serverColumnIndex = orderColumnIndex;
+
+                if (serverColumnIndex < 0 || serverColumnIndex >= sortableColumns.Length)
+                {
+                    serverColumnIndex = 0;
+                    orderDir = "asc";
+                }
+
+                string orderBy = $"[{sortableColumns[serverColumnIndex]}]";
+                orderDir = orderDir.ToLower() == "desc" ? "DESC" : "ASC";
+                orderByClause = $" ORDER BY {orderBy} {orderDir}";
+
+                string query = $@"
+                    SELECT * 
+                    FROM negLocation 
+                    WHERE {whereClause}
+                    {orderByClause}
+                    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@Offset", start);
+                cmd.Parameters.AddWithValue("@SearchValue", searchValue);
+                cmd.Parameters.AddWithValue("@PageSize", length);
+
+                if (userRole == "user")
+                {
+                    cmd.Parameters.AddWithValue("@StoreNo", storeNo);
+                }
+
+                conn.Open();
+                DataTable dt = new DataTable();
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                {
+                    da.Fill(dt);
+                }
+                conn.Close();
+
+                string countQuery = $@"
+                   SELECT COUNT(*) 
+                   FROM negLocation 
+                   WHERE {whereClause}";
+
+                SqlCommand countCmd = new SqlCommand(countQuery, conn);
+                countCmd.Parameters.AddWithValue("@SearchValue", searchValue);
+
+                if (userRole == "user")
+                {
+                    countCmd.Parameters.AddWithValue("@StoreNo", storeNo);
+                }
+
+                conn.Open();
+                int totalRecords = (int)countCmd.ExecuteScalar();
+                conn.Close();
+
+                var data = dt.AsEnumerable().Select(row => new
+                {
+                    srno = row["srno"],
+                    ItemNo = row["itemNo"],
+                    Description = row["Description"],
+                    LocationCode = row["LocationCode"],
+                    BalanceQty = row["BalanceQty"],
+                    TakenDate = Convert.ToDateTime(row["TakenDate"]).ToString("yyyy-MM-dd"),
+                    TakenTime = Convert.ToDateTime(row["TakenTime"]).ToString("yyyy-MM-dd HH:mm:ss"),
+                    UnitofMeasure = row["UnitofMeasure"],
+                    QtyperUnitofMeasure = row["QtyperUnitofMeasure"] ,
+                    ItemFamily = row["ItemFamily"]
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 }).ToList();
 
                 var response = new
                 {
+<<<<<<< HEAD
                     draw,
                     recordsTotal = total,
                     recordsFiltered = total,
@@ -188,10 +331,28 @@ namespace Expiry_list
 
                 Response.ContentType = "application/json";
                 Response.Write(JsonConvert.SerializeObject(response));
+=======
+                    draw = draw,
+                    recordsTotal = totalRecords,
+                    recordsFiltered = totalRecords,
+                    data = data,
+                    orderColumn = orderColumnIndex,
+                    orderDir = orderDir
+                };
+
+                // Return JSON response
+                string jsonResponse = JsonConvert.SerializeObject(response);
+                Response.ContentType = "application/json";
+                Response.Write(jsonResponse);
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 Response.End();
             }
         }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         private string GetSortDirection(string sortExpression)
         {
             if (ViewState["SortExpression"] != null && ViewState["SortExpression"].ToString() == sortExpression)
@@ -223,6 +384,7 @@ namespace Expiry_list
             {
                 string orderBy = string.IsNullOrEmpty(hfSelectedIDs.Value)
                     ? "ORDER BY srno"
+<<<<<<< HEAD
                     : $"ORDER BY CASE WHEN srno = @SelectedSr THEN 0 ELSE 1 END, srno";
 
                 string username = User.Identity.Name;
@@ -264,6 +426,46 @@ namespace Expiry_list
                 DataTable dt = new DataTable();
                 conn.Open();
                 new SqlDataAdapter(cmd).Fill(dt);
+=======
+                    : $"ORDER BY CASE WHEN srno = '{hfSelectedIDs.Value}' THEN 0 ELSE 1 END, srno";
+
+                string userRole = Session["role"] as string;
+                string storeNo = GetLoggedInUserStoreName();
+
+                string query;
+
+                if (userRole == "user")
+                {
+                    query = $@"SELECT * FROM negLocation 
+                        WHERE TakenTime = (SELECT MAX(TakenTime) FROM negLocation) 
+                          AND LocationCode = @storeNo
+                        {orderBy}
+                        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+                }
+                else
+                {
+                    query = $@"SELECT * FROM negLocation 
+                        WHERE TakenTime = (SELECT MAX(TakenTime) FROM negLocation) 
+                        {orderBy}
+                        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+                }
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
+                cmd.Parameters.AddWithValue("@PageSize", pageSize);
+
+                if (userRole == "user")
+                {
+                    cmd.Parameters.AddWithValue("@storeNo", storeNo);
+                }
+
+                conn.Open();
+                DataTable dt = new DataTable();
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                {
+                    da.Fill(dt);
+                }
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 conn.Close();
 
                 GridView2.DataSource = dt;
@@ -324,6 +526,7 @@ namespace Expiry_list
 
         private DataTable GetAllItems()
         {
+<<<<<<< HEAD
             List<string> storeNos = GetLoggedInUserStoreNames();
             DataTable dt = new DataTable();
             string query;
@@ -347,16 +550,44 @@ namespace Expiry_list
                     FROM negLocation
                     WHERE TakenTime = (SELECT MAX(TakenTime) FROM negLocation)
                     AND LocationCode IN ({whereIn})";
+=======
+            string storeNo = GetLoggedInUserStoreName();
+            string query;
+            DataTable dt = new DataTable();
+
+            using (SqlConnection conn = new SqlConnection(strcon))
+            {
+                if (storeNo.Equals("HO", StringComparison.OrdinalIgnoreCase))
+                {
+                    query = @"
+                SELECT TakenDate, itemNo, Description, LocationCode, BalanceQty, UnitofMeasure, itemFamily
+                FROM negLocation
+                WHERE TakenTime = (SELECT MAX(TakenTime) FROM negLocation)";
+                }
+                else
+                {
+                    query = @"
+                SELECT TakenDate, itemNo, Description, LocationCode, BalanceQty, UnitofMeasure, itemFamily
+                FROM negLocation
+                WHERE TakenTime = (SELECT MAX(TakenTime) FROM negLocation)
+                AND LocationCode = @storeNo";
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 }
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
+<<<<<<< HEAD
                     if (!storeNos.Any(s => s.Equals("HO", StringComparison.OrdinalIgnoreCase)))
                     {
                         for (int i = 0; i < storeNos.Count; i++)
                         {
                             cmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
                         }
+=======
+                    if (!storeNo.Equals("HO", StringComparison.OrdinalIgnoreCase))
+                    {
+                        cmd.Parameters.AddWithValue("@storeNo", storeNo);
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                     }
 
                     try
@@ -377,6 +608,7 @@ namespace Expiry_list
             return dt;
         }
 
+<<<<<<< HEAD
         private Dictionary<string, string> GetAllowedFormsByUser(string username)
         {
             Dictionary<string, string> forms = new Dictionary<string, string>();
@@ -446,6 +678,8 @@ namespace Expiry_list
             return storeNames;
         }
 
+=======
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
     }
 }
 

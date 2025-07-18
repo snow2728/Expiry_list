@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 ﻿
 using System;
+=======
+﻿using System;
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -28,6 +32,7 @@ namespace Expiry_list
         {
             try
             {
+<<<<<<< HEAD
                 string inputUsername = usernameTextBox.Text.Trim();
                 string inputPassword = passwordTextBox.Text.Trim();
 
@@ -140,18 +145,105 @@ namespace Expiry_list
 
                             string returnUrl = Request.QueryString["ReturnUrl"];
                             Response.Redirect(string.IsNullOrEmpty(returnUrl) ? "AdminDashboard.aspx" : returnUrl);
+=======
+                using (SqlConnection con = new SqlConnection(strcon))
+                {
+                    con.Open();
+                    string query = "SELECT * FROM users WHERE LOWER(RTRIM(LTRIM(username))) LIKE LOWER('%' + @username + '%') AND LOWER(RTRIM(LTRIM(password))) = LOWER(@password)";
+                    using (SqlCommand cmd = new SqlCommand(query, con))
+                    {
+                        cmd.Parameters.AddWithValue("@username", usernameTextBox.Text.Trim().ToLower());
+                        cmd.Parameters.AddWithValue("@password", passwordTextBox.Text.Trim().ToLower());
+
+                        using (SqlDataReader dr = cmd.ExecuteReader())
+                        {
+                            if (dr.HasRows)
+                            {
+                                while (dr.Read())
+                                {
+                                    string id = dr["id"].ToString().Trim();
+                                    string username = dr["username"].ToString().Trim();
+                                    string role = dr["role"].ToString().Trim().ToLower();
+                                    string storeNo = dr["storeNo"]?.ToString().Trim() ?? string.Empty;
+
+                                    // Store user details in session variables
+                                    Session["id"] = id;
+                                    Session["username"] = username;
+                                    Session["role"] = role;
+                                    Session["storeNo"] = storeNo;
+
+                                    // Check if a ReturnUrl exists
+                                    string returnUrl = Request.QueryString["ReturnUrl"];
+                                    string redirectUrl = string.IsNullOrEmpty(returnUrl) ? "" : returnUrl;
+
+                                    // If there's no ReturnUrl, go to a default based on role
+                                    if (string.IsNullOrEmpty(redirectUrl))
+                                    {
+                                        switch (role)
+                                        {
+                                            case "user":
+                                                redirectUrl = "AdminDashboard.aspx";
+                                                break;
+                                            case "viewer":
+                                                redirectUrl = "AdminDashboard.aspx";
+                                                break;
+                                            case "admin":
+                                                redirectUrl = "AdminDashboard.aspx";
+                                                break;
+                                            default:
+                                                redirectUrl = "~/loginForm.aspx";
+                                                ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
+                                                    "swal('Error!', 'Role not recognized!', 'error');", true);
+                                                return;
+                                        }
+                                    }
+
+                                    FormsAuthenticationTicket ticket = new FormsAuthenticationTicket(
+                                        1,
+                                        username,
+                                        DateTime.Now,
+                                        DateTime.Now.AddMinutes(2880),
+                                        false,
+                                        role,
+                                        FormsAuthentication.FormsCookiePath
+                                    );
+                                    string encryptedTicket = FormsAuthentication.Encrypt(ticket);
+                                    HttpCookie authCookie = new HttpCookie(FormsAuthentication.FormsCookieName, encryptedTicket);
+                                    Response.Cookies.Add(authCookie);
+
+                                    // If you rely on Session for UI, do NOT set Session["role"] = null here
+                                    Response.Redirect(redirectUrl);
+
+                                }
+                            }
+                            else
+                            {
+                                ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
+                                    "swal('Error!', 'Invalid Username or Password!', 'error');", true);
+                                clearForm();
+                            }
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
+<<<<<<< HEAD
                 ClientScript.RegisterStartupScript(this.GetType(), "alert",
                     "swal('Error!', 'An unexpected error occurred. Please try again later.', 'error');", true);
+=======
+                ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
+                    "swal('Error!', 'An unexpected error occurred. Please try again later.','error');", true);
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 clearForm();
             }
         }
 
+<<<<<<< HEAD
+=======
+        // Clears the form after login attempt
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         private void clearForm()
         {
             usernameTextBox.Text = string.Empty;
@@ -160,3 +252,7 @@ namespace Expiry_list
 
     }
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b

@@ -1,6 +1,7 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Site1.Master" AutoEventWireup="true" EnableEventValidation="false" CodeBehind="final.aspx.cs" Inherits="Expiry_list.final" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
+<<<<<<< HEAD
 <%
     var permissions = Session["formPermissions"] as Dictionary<string, string>;
     string expiryPerm = permissions != null && permissions.ContainsKey("ExpiryList") ? permissions["ExpiryList"] : "";
@@ -28,6 +29,18 @@
                     }
 
                     // Reattach filter checkbox change handlers
+=======
+    <script src="js/customJS.js"></script>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            // Initialize components only after ScriptManager is ready
+            if (typeof (Sys) !== 'undefined') {
+                Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
+                    updateFilterVisibility();
+
+                    // Reattach change handlers after postback
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                     Object.keys(filterMap).forEach(key => {
                         const checkbox = document.getElementById(filterMap[key].checkboxId);
                         if (checkbox) {
@@ -36,8 +49,14 @@
                     });
                 });
             }
+<<<<<<< HEAD
             initializeFilterVisibility();
             initializeComponents();
+=======
+
+            initializeComponents();
+            InitializeStoreFilter();
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
             InitializeItemVendorFilter();
             setupFilterToggle();
         });
@@ -97,6 +116,10 @@
                                       vendor: $('#<%= vendor.ClientID %>').val(),
                                       regDate: $('#<%= txtRegDateFilter.ClientID %>').val(),
 
+<<<<<<< HEAD
+=======
+                                    //  month: $('#monthFilter').val()
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                                  };
                              }
                          },
@@ -158,8 +181,27 @@
                                  className: 'dt-center',
                                  visible: false
                              },
+<<<<<<< HEAD
                          ],
                          order: [[1, 'asc'], [2, 'asc']],
+=======
+
+                             //{
+                             //    data: 'edit',
+                             //    width: "125px",
+                             //    render: function (data, type, row) {
+                             //        return '<button class="btn text-white m-1 editBtn" style="background-color:#158396;" data-id="' + row.id + '"><i class="fa-solid fa-pen-to-square"></i> Edit</button>';
+                             //    }
+                             //}
+                         ],
+                         order: [[1, 'asc'], [2, 'asc']],
+                         /*columnDefs: [{ targets: [0], orderable: false }],*/
+                         //stateSaveParams: function (settings, data) {
+                         //    data.columns.forEach(function (col) {
+                         //        col.width = null;
+                         //    });
+                         //},
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                          select: { style: 'multi', selector: 'td:first-child' },
                          lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
                          initComplete: function (settings) {
@@ -207,6 +249,7 @@
 
         function setupFilterToggle() {
             const filterMappings = {
+<<<<<<< HEAD
                  '<%= filterAction.ClientID %>': '<%= actionFilterGroup.ClientID %>',
                  '<%= filterStatus.ClientID %>': '<%= statusFilterGroup.ClientID %>',
                  '<%= filterStore.ClientID %>': '<%= storeFilterGroup.ClientID %>',
@@ -215,6 +258,16 @@
                  '<%= filterStaff.ClientID %>': '<%= staffFilterGroup.ClientID %>',
                  '<%= filterBatch.ClientID %>': '<%= batchFilterGroup.ClientID %>',
                  '<%= filterVendor.ClientID %>': '<%= vendorFilterGroup.ClientID %>',
+=======
+             '<%= filterAction.ClientID %>': '<%= actionFilterGroup.ClientID %>',
+             '<%= filterStatus.ClientID %>': '<%= statusFilterGroup.ClientID %>',
+             '<%= filterStore.ClientID %>': '<%= storeFilterGroup.ClientID %>',
+             '<%= filterItem.ClientID %>': '<%= itemFilterGroup.ClientID %>',
+             '<%= filterExpiryDate.ClientID %>': '<%= expiryDateFilterGroup.ClientID %>',
+             '<%= filterStaff.ClientID %>': '<%= staffFilterGroup.ClientID %>',
+             '<%= filterBatch.ClientID %>': '<%= batchFilterGroup.ClientID %>',
+             '<%= filterVendor.ClientID %>': '<%= vendorFilterGroup.ClientID %>',
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                  '<%= filterRegistrationDate.ClientID %>': '<%= regeDateFilterGroup.ClientID %>'
              };
 
@@ -232,6 +285,7 @@
              });
         }
 
+<<<<<<< HEAD
         function initializeFilterVisibility() {
             const filterMap = {
                 action: {
@@ -316,15 +370,24 @@
            });
         }
 
+=======
+        var userRole = '<%= Session["role"] ?? "user" %>';
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         function toggleFilter() {
             const filterPane = document.getElementById("filterPane");
             const gridCol = document.getElementById("gridCol");
 
+<<<<<<< HEAD
+=======
+            const isUser = (typeof userRole !== 'undefined' && userRole.toLowerCase() === 'user');
+
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
             if (filterPane.style.display === "none" || filterPane.style.display === "") {
                 filterPane.style.display = "block";
                 gridCol.classList.remove("col-md-12");
                 gridCol.classList.add("col-md-10");
 
+<<<<<<< HEAD
                 document.getElementById("<%= btnExport.ClientID %>").style.display = "block";
                 document.getElementById("<%= excel.ClientID %>").style.display = "none";
             } else {
@@ -334,6 +397,21 @@
 
                 document.getElementById("<%= excel.ClientID %>").style.display = "block";
                 document.getElementById("<%= btnExport.ClientID %>").style.display = "none";
+=======
+                if (!isUser) {
+                    document.getElementById("<%= btnExport.ClientID %>").style.display = "block";
+                    document.getElementById("<%= excel.ClientID %>").style.display = "none";
+                }
+                } else {
+                    filterPane.style.display = "none";
+                    gridCol.classList.remove("col-md-10");
+                    gridCol.classList.add("col-md-12");
+
+                if (!isUser) {
+                    document.getElementById("<%= excel.ClientID %>").style.display = "block";
+                    document.getElementById("<%= btnExport.ClientID %>").style.display = "none";
+                }
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
             }
         }
 
@@ -398,6 +476,7 @@
         }
 
         function InitializeStoreFilter() {
+<<<<<<< HEAD
             const storeCheckbox = document.getElementById('<%= filterStore.ClientID %>');
             const storeGroup = document.getElementById('<%= storeFilterGroup.ClientID %>');
 
@@ -583,6 +662,133 @@
                     text: 'There was an error initializing item/vendor dropdowns: ' + err.message
                 });
             }
+=======
+            var $select = $('#<%=lstStoreFilter.ClientID %>');
+             var allOptionId = "all";
+
+             // Clear any existing duplicate options
+             $select.find('option').filter(function () {
+                 return $(this).val() === allOptionId;
+             }).slice(1).remove();
+
+             $select.select2({
+                 placeholder: "-- Select stores --",
+                 closeOnSelect: false,
+                 width: '100%',
+                 allowClear: true,
+                 dropdownParent: $select.closest('.filter-group'),
+                 minimumResultsForSearch: 1,
+
+                 templateResult: function (data) {
+                     if (!data.id) return data.text;
+                     var isAll = data.id === allOptionId;
+                     var allSelected = $select.val()?.includes(allOptionId);
+
+                     var isDisabled = allSelected && !isAll;
+
+                     return $(
+                         '<div class="select2-checkbox-option d-flex align-items-center">' +
+                         '  <input type="checkbox" class="select2-checkbox me-2" ' +
+                         (data.selected ? 'checked' : '') +
+                         (isAll ? ' data-is-all="true"' : '') +
+                         (isDisabled ? ' disabled' : '') + '>' + 
+                         '  <div class="select2-text' + (isAll ? ' fw-bold"' : '"') + '>' + data.text + '</div>' +
+                         '</div>'
+                     );
+                 },
+
+                 templateSelection: function (data, container) {
+                     var selectedValues = [...new Set($select.val() || [])];
+                     var showAll = selectedValues.includes(allOptionId);
+
+                     $(container).empty();
+
+                     if (showAll) {
+                         return $('<span class="badge bg-primary me-1">All Stores</span>');
+                     }
+
+                     if (data.id && data.id !== allOptionId) {
+                         var $option = $select.find('option[value="' + data.id + '"]').first();
+                         if ($option.length) {
+                             return $('<span class="badge bg-secondary me-1">' + $option.text() + '</span>');
+                         }
+                     }
+
+                     return data.text; 
+                 },
+                 escapeMarkup: function (m) { return m; }
+             });
+
+             $select.on('select2:opening', function () {
+                 $select.data('select2').$dropdown.find('.select2-checkbox')
+                     .off('click').on('click', function (e) {
+                         if ($(this).prop('disabled')) return; 
+
+                         e.stopPropagation();
+                         var $option = $(this).closest('.select2-results__option');
+                         var data = $option.data('data');
+                         if (!data || !data.id) return;
+
+                         var isAll = data.id === allOptionId;
+                         var currentValues = $select.val() || [];
+
+                         if (isAll) {
+                             $select.val(currentValues.includes(allOptionId) ? [] : [allOptionId]).trigger('change');
+                         } else {
+                             var newValues = currentValues.includes(data.id) ?
+                                 currentValues.filter(v => v !== data.id) :
+                                 [...currentValues.filter(v => v !== allOptionId), data.id];
+                             $select.val(newValues).trigger('change');
+                         }
+                     });
+             });
+
+             $select.on('change', function () {
+                 var values = $select.val() || [];
+                 var hasAll = values.includes(allOptionId);
+
+                 if (hasAll && values.length > 1) {
+                     values = [allOptionId];
+                     $select.val(values).trigger('change');
+                     return;
+                 }
+
+                 var $checkboxes = $select.data('select2').$dropdown.find('.select2-checkbox');
+                 $checkboxes.each(function () {
+                     var $cb = $(this);
+                     var data = $cb.closest('.select2-results__option').data('data');
+                     if (data && data.id) {
+                         var isDisabled = hasAll && data.id !== allOptionId;
+                         $cb.prop('checked', values.includes(data.id))
+                             .prop('disabled', isDisabled);
+                     }
+                 });
+
+                 if ($select.select2('isOpen')) {
+                     $select.select2('close');
+                     $select.select2('open');
+                 }
+             });
+
+             $select.on('select2:selecting select2:unselecting', function (e) {
+                 if (e.params?.args?.originalEvent &&
+                     !$(e.params.args.originalEvent.target).hasClass('select2-checkbox')) {
+                     e.preventDefault();
+                 }
+             });
+
+             $select.on('select2:clearing', function (e) {
+                 $select.data('select2').$dropdown.find('.select2-checkbox')
+                     .prop('checked', false)
+                     .prop('disabled', false);
+                 $select.trigger('input.select2');
+             });
+
+         }
+
+        function InitializeItemVendorFilter() {
+            $('#<%= item.ClientID %>, #<%= vendor.ClientID %>').select2();
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         }
 
          function pageLoad() {
@@ -595,6 +801,7 @@
          }
 
         function updateLocationPillsDisplay() {
+<<<<<<< HEAD
             var $select = $('#<%= lstStoreFilter.ClientID %>');
             var listBox = $select[0];
             var container = document.getElementById('locationPillsContainer');
@@ -645,6 +852,38 @@
             }
 
             container.style.display = values.length > 0 ? 'grid' : 'none';
+=======
+             const listBox = document.getElementById('<%= lstStoreFilter.ClientID %>');
+             const container = document.getElementById('locationPillsContainer');
+
+             if (!listBox || !container) return;
+
+             container.innerHTML = '';
+
+             const hasAll = Array.from(listBox.selectedOptions).some(opt => opt.value === "all");
+ 
+             Array.from(listBox.selectedOptions).forEach(option => {
+                 if (option.value === "all") return;
+     
+                 const pill = document.createElement('span');
+                 pill.className = 'location-pill';
+                 pill.innerHTML = `
+                     <span class="pill-text">${option.text}</span>
+                     <span class="pill-remove" data-value="${option.value}">×</span>
+                 `;
+
+                 pill.querySelector('.pill-remove').addEventListener('click', function (e) {
+                     e.preventDefault();
+                     option.selected = false;
+                     updateLocationPillsDisplay();
+                     $('#<%= lstStoreFilter.ClientID %>').trigger('change');
+                 });
+
+                 container.appendChild(pill);
+             });
+
+            container.style.display = listBox.selectedOptions.length > 0 ? 'flex' : 'none';
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         }
 
         function resetLocationPills() {
@@ -683,9 +922,20 @@
                 }
             }
 
+<<<<<<< HEAD
 
             if (!anyFilterActive) {
                 Swal.fire('Warning!', 'Please select at least one filter to apply and ensure it has a value.', 'warning');
+=======
+            if (!anyFilterActive) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Missing Filter',
+                    text: 'Please select at least one filter to apply and ensure it has a value.',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: 'OK'
+                });
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 return false;
             }
 
@@ -726,6 +976,7 @@
 
     </script>
     </asp:Content>
+<<<<<<< HEAD
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <%
@@ -734,6 +985,11 @@
      bool canViewOnly = !string.IsNullOrEmpty(expiryPerm) && expiryPerm != "edit";
  %>
      <a href="AdminDashboard.aspx" class="btn text-white ms-2" style="background-color : #158396;"><i class="fa-solid fa-left-long"></i> Home</a>
+=======
+<asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
+
+     <a href="AdminDashboard.aspx" class="btn text-white" style="background-color : #158396;"><i class="fa-solid fa-left-long"></i> Home</a>
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
      <div class="container-fluid col-lg-12">
       <div class="card shadow-md border-dark-subtle">
@@ -741,12 +997,17 @@
               <h4 class="text-center text-white">Expiry List</h4>
           </div>
             <div class="card-body">
+<<<<<<< HEAD
                    
+=======
+
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 <div class="d-flex align-items-center flex-wrap mb-2">
                     
                     <div>
                         <asp:Button ID="btnFilter" class="btn me-1 text-white" style="background:#1995ad" runat="server" Text="Show Filter" CausesValidation="false" OnClientClick="toggleFilter(); return false;" OnClick="btnFilter_Click1" />
                     </div>
+<<<<<<< HEAD
                     
                         <% if (canViewOnly) { %>
                             <div class="d-flex align-items-center">
@@ -767,6 +1028,15 @@
                             </div>
                         <% } %>
 
+=======
+                        
+                         <% if (Session["role"] != null && (Session["role"].ToString() == "viewer" || Session["role"].ToString() == "admin")) { %>
+                                <asp:LinkButton ID="excel" CssClass="btn text-white me-2" style="background:#1995ad; display:block;" runat="server" ForeColor="White" Font-Bold="True" Font-Size="Medium" OnClientClick="exportToExcel(); return false;">Export To Excel<i class="ms-1 fa fa-file-excel fa-1x" aria-hidden="true"></i></asp:LinkButton>
+<%--                                <asp:LinkButton ID="LinkButton1" CssClass="btn text-white me-2" style="background:#1995ad; display:block;" runat="server" ForeColor="White" Font-Bold="True" Font-Size="Medium" OnClientClick="exportToExcel(); return false;">Export To Excel<i class="ms-1 fa fa-file-excel fa-1x" aria-hidden="true"></i></asp:LinkButton>--%>
+                                <asp:Button ID="btnExport" runat="server" CssClass="btn text-white me-2" Text="Export to Excel" ForeColor="White" Font-Bold="True" Font-Size="Medium" style="background:#1995ad; display:none;" OnClick="btnExport_Click" />
+                                <%--<a href="final.aspx" class="text-decoration-none text-white ms-2 btn fw-bold" style="background:#1995ad">Completed Items >></a>--%>
+                          <% } %>
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
                          <div class="me-2 shadow-md">
                               <input type="month" id="monthFilter" class="form-control me-2" onchange="refreshDataTable()" />
@@ -810,6 +1080,7 @@
                                                         <label class="form-check-label" for="<%= filterStatus.ClientID %>">Status</label>
                                                     </div>
 
+<<<<<<< HEAD
                                                       <%
                                                         var panelPermissions = Session["formPermissions"] as Dictionary<string, string>;
                                                         string panelExpiryPerm = panelPermissions != null && panelPermissions.ContainsKey("ExpiryList") ? panelPermissions["ExpiryList"] : null;
@@ -823,6 +1094,14 @@
                                                         </div>
                                                     <% } %>
 
+=======
+                                                     <% if (Session["role"] != null && Session["role"].ToString() == "user" ) { %>
+                                                        <div class="form-check">
+                                                             <asp:CheckBox ID="filterStore" runat="server" CssClass="form-check-input" />
+                                                             <label class="form-check-label" for="<%= filterStore.ClientID %>">Location</label>
+                                                        </div>
+                                                  <% } %>
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
                                                     <div class="form-check">
                                                         <asp:CheckBox ID="filterItem" runat="server" CssClass="form-check-input" />
@@ -882,6 +1161,7 @@
                                                 </asp:DropDownList>
                                             </div>
 
+<<<<<<< HEAD
                                             <% if (panelCanViewOnly) { %>
                                                 <div class="form-group mt-3 filter-group" id="storeFilterGroup" runat="server" style="display:none">
                                                     <label for="<%=lstStoreFilter.ClientID %>">Location</label>
@@ -890,6 +1170,21 @@
                                                         SelectionMode="Multiple" style="display:none"></asp:ListBox>
                                                     <div id="locationPillsContainer" class="location-pills-container mb-2"></div>
                                                 </div>
+=======
+                                            <% if (Session["role"] != null && Session["role"].ToString() == "user" ) { %>
+                                                  <!-- Store Filter -->
+                                                 <div class="form-group mt-3 filter-group" id="storeFilterGroup" runat="server" style="display:none">
+                                                     <label for="<%=lstStoreFilter.ClientID %>">Location</label>
+                                                     <%--<asp:ListBox ID="lstStoreFilter" runat="server" CssClass="form-control select2-multi-check" SelectionMode="Multiple"></asp:ListBox>--%>
+           
+                                                     <asp:ListBox ID="lstStoreFilter" runat="server" CssClass="form-control select2-multi-check" 
+                                                         SelectionMode="Multiple" style="display:none"></asp:ListBox>
+    
+                                                     <div id="locationPillsContainer" class="location-pills-container mb-2"></div>
+    
+                                                     <div class="location-pill-template" style="display:block"></div>
+                                                 </div>
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                                             <% } %>
 
                                             <!-- Item No Filter -->
@@ -900,10 +1195,17 @@
                                                 </asp:DropDownList>
                                             </div>
 
+<<<<<<< HEAD
                                             <!-- Expiry Month Filter -->
                                             <div class="form-group mt-3 filter-group" id="expiryDateFilterGroup" runat="server" style="display:none">
                                                 <label for="<%= txtExpiryDateFilter.ClientID %>">Expiry Month</label>
                                                 <asp:TextBox ID="txtExpiryDateFilter" runat="server" CssClass="form-control" ></asp:TextBox>
+=======
+                                            <!-- Expiry Date Filter -->
+                                            <div class="form-group mt-3 filter-group" id="expiryDateFilterGroup" runat="server" style="display:none">
+                                                <label for="<%= txtExpiryDateFilter.ClientID %>">Expiry Date</label>
+                                                <asp:TextBox ID="txtExpiryDateFilter" runat="server" CssClass="form-control" TextMode="Month"></asp:TextBox>
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                                             </div>
 
                                             <!-- Staff Filter -->
@@ -986,7 +1288,10 @@
                                     OnRowEditing="GridView1_RowEditing"
                                     AllowPaging="false"
                                     PageSize="100"
+<<<<<<< HEAD
                                     BackColor="WhiteSmoke"
+=======
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                                     CellPadding="4"
                                     ForeColor="#333333"
                                     GridLines="None"

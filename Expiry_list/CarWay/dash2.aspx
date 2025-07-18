@@ -575,8 +575,11 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:HiddenField ID="hdnGridData" runat="server" />
     
+<<<<<<< HEAD
       <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #996FD6;"><i class="fa-solid fa-left-long"></i> Home</a>
 
+=======
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
     <div class="container py-4">
         <a href="main1.aspx" class="btn text-white mb-2" style="background-color: #158396;">
             <i class="fa-solid fa-left-long"></i> Home

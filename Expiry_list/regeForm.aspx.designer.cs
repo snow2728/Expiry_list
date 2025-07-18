@@ -51,13 +51,48 @@ namespace Expiry_list
         protected global::System.Web.UI.WebControls.RequiredFieldValidator passwordRequired;
 
         /// <summary>
+<<<<<<< HEAD
         /// lstStoreFilter control.
+=======
+        /// roleTextBox control.
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
+<<<<<<< HEAD
         protected global::System.Web.UI.WebControls.ListBox lstStoreFilter;
+=======
+        protected global::System.Web.UI.WebControls.DropDownList roleTextBox;
+
+        /// <summary>
+        /// roleRequired control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator roleRequired;
+
+        /// <summary>
+        /// storeDrop control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl storeDrop;
+
+        /// <summary>
+        /// storeTextBox control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList storeTextBox;
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
         /// <summary>
         /// storeNoRequired control.
@@ -69,39 +104,65 @@ namespace Expiry_list
         protected global::System.Web.UI.WebControls.RequiredFieldValidator storeNoRequired;
 
         /// <summary>
+<<<<<<< HEAD
         /// chkEnable control.
+=======
+        /// btnRegister control.
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
+<<<<<<< HEAD
         protected global::System.Web.UI.WebControls.CheckBox chkEnable;
 
         /// <summary>
         /// chkExpiryList_Enable control.
+=======
+        protected global::System.Web.UI.WebControls.Button btnRegister;
+
+        /// <summary>
+        /// ScriptManager1 control.
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
+<<<<<<< HEAD
         protected global::System.Web.UI.WebControls.CheckBox chkExpiryList_Enable;
 
         /// <summary>
         /// rdoExpiryList_View control.
+=======
+        protected global::System.Web.UI.ScriptManager ScriptManager1;
+
+        /// <summary>
+        /// UpdatePanel1 control.
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
+<<<<<<< HEAD
         protected global::System.Web.UI.WebControls.RadioButton rdoExpiryList_View;
 
         /// <summary>
         /// rdoExpiryList_Edit control.
+=======
+        protected global::System.Web.UI.UpdatePanel UpdatePanel1;
+
+        /// <summary>
+        /// userGridView control.
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
+<<<<<<< HEAD
         protected global::System.Web.UI.WebControls.RadioButton rdoExpiryList_Edit;
 
         /// <summary>
@@ -310,5 +371,8 @@ namespace Expiry_list
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button Button1;
+=======
+        protected global::System.Web.UI.WebControls.GridView userGridView;
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
     }
 }

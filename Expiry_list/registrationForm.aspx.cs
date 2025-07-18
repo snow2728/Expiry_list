@@ -21,6 +21,11 @@ namespace Expiry_list
     {
         string strcon = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
 
+<<<<<<< HEAD
+=======
+        private string storeName;
+
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         protected void Page_Load(object sender, EventArgs e)
         {
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
@@ -36,6 +41,10 @@ namespace Expiry_list
             if (!IsPostBack)
             {
                 clearForm();
+<<<<<<< HEAD
+=======
+                storeName = GetLoggedInUserStoreName();
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
                 string staff = Session["username"] as string;
                 ViewState["StaffName"] = staff;
@@ -43,7 +52,11 @@ namespace Expiry_list
                 hiddenStaffName.Value = staff;
 
                 no.Text = GetNextItemNo();
+<<<<<<< HEAD
                 storeNo.Text = string.Join(",", GetLoggedInUserStoreNames()); ;
+=======
+                storeNo.Text = storeName;
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 tdyDate.Text = DateTime.Now.ToString("dd/MM/yyyy");
 
                 //DisplaySessionData();
@@ -77,9 +90,15 @@ namespace Expiry_list
 
         protected string GetNextItemNo()
         {
+<<<<<<< HEAD
             string store1 = string.Join(",", GetLoggedInUserStoreNames());
             string lastItemNo = GetLastItemNo(store1);
 
+=======
+            string store1 = GetLoggedInUserStoreName();
+
+            string lastItemNo = GetLastItemNo(store1);
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
             int lastNumber = 0;
 
             if (!string.IsNullOrEmpty(lastItemNo))
@@ -87,7 +106,11 @@ namespace Expiry_list
                 string[] parts = lastItemNo.Split('-');
                 if (parts.Length == 2 && int.TryParse(parts[1], out lastNumber))
                 {
+<<<<<<< HEAD
                     lastNumber++;
+=======
+                    lastNumber++; 
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 }
             }
 
@@ -117,6 +140,7 @@ namespace Expiry_list
         }
 
         // get the storeName of logged in user's storeNo
+<<<<<<< HEAD
         private List<string> GetLoggedInUserStoreNames()
         {
             List<string> storeNos = Session["storeListRaw"] as List<string>;
@@ -126,10 +150,24 @@ namespace Expiry_list
                 return storeNames;
 
             string query = $"SELECT storeNo FROM Stores WHERE storeNo IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})";
+=======
+        private string GetLoggedInUserStoreName()
+        {
+            int storeNo = Convert.ToInt32(Session["storeNo"] ?? 0);
+
+            if (storeNo == 0)
+            {
+                return null;
+            }
+
+            string storeName = null;
+            string query = "SELECT StoreNo FROM Stores WHERE id = @StoreNo";
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
             using (SqlConnection conn = new SqlConnection(strcon))
             using (SqlCommand cmd = new SqlCommand(query, conn))
             {
+<<<<<<< HEAD
                 for (int i = 0; i < storeNos.Count; i++)
                 {
                     cmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
@@ -146,6 +184,15 @@ namespace Expiry_list
             }
 
             return storeNames;
+=======
+                cmd.Parameters.AddWithValue("@StoreNo", storeNo);
+                conn.Open();
+
+                storeName = cmd.ExecuteScalar()?.ToString();
+            }
+
+            return storeName;
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         }
 
         //Find item
@@ -329,7 +376,11 @@ namespace Expiry_list
 
         protected void addBtn_Click1(object sender, EventArgs e)
         {
+<<<<<<< HEAD
               string newItemNo = no.Text;
+=======
+            string newItemNo = no.Text;
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
             DataTable dt = Session["ItemLines"] as DataTable;
             if (dt == null)
@@ -369,7 +420,11 @@ namespace Expiry_list
                 newRow["UOM"] = hiddenUOM.Value;
                 newRow["BarcodeNo"] = hiddenBarcodeNo.Value;
                 newRow["BatchNo"] = batchNo.Text;
+<<<<<<< HEAD
                 newRow["StoreNo"] = GetLoggedInUserStoreNames();
+=======
+                newRow["StoreNo"] = GetLoggedInUserStoreName();
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 newRow["StaffName"] = staffName.Text;
                 newRow["registrationDate"] = DateTime.Now;
                 newRow["Note"] = note.Text;
@@ -530,6 +585,126 @@ namespace Expiry_list
             }
         }
 
+<<<<<<< HEAD
+=======
+        //protected void barcodeNo_SelectedIndexChanged(object sender, EventArgs e)
+        //{
+        //    string selectedBarcodeNo = barcodeNo.Text;
+
+        //    if (!string.IsNullOrEmpty(selectedBarcodeNo))
+        //    {
+        //        // Auto-fill other fields based on barcode
+        //        FetchItemDetailsByBarcode(selectedBarcodeNo);
+        //    }
+        //}
+
+        //private void FetchItemDetailsByBarcode(string barcodeNo)
+        //{
+        //    Item itemDetails = GetItemDetailsByBarcode(barcodeNo);
+
+        //    if (itemDetails != null)
+        //    {
+        //        desc.Text = itemDetails.ItemDescription;
+        //        uom.Text = itemDetails.UOM;
+        //        packingInfo.Text = itemDetails.PackingInfo;
+
+        //        // Populate the itemNo dropdown with items related to this barcode
+        //        BindItemDropdownByBarcode(barcodeNo);
+        //    }
+        //}
+
+        //protected void BindItemDropdownByBarcode(string barcode)
+        //{
+        //    List<Item> items = GetItemsByBarcode(barcode);
+
+        //    itemNo.Items.Clear();
+        //    if (items.Count > 0)
+        //    {
+        //        foreach (var item in items)
+        //        {
+        //            ListItem newItem = new ListItem(item.ItemNo + " - " + item.ItemDescription, item.ItemNo);
+        //            itemNo.Items.Add(newItem);
+        //        }
+        //    }
+        //}
+
+        //[WebMethod]
+        //[ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+        //public static List<Item> GetItemsByBarcode(string searchBarcode)
+        //{
+        //    List<Item> items = new List<Item>();
+
+        //    try
+        //    {
+        //        string connectionString = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
+        //        using (SqlConnection con = new SqlConnection(connectionString))
+        //        {
+        //            con.Open();
+        //            using (SqlCommand cmd = new SqlCommand("SELECT * FROM Items WHERE barcodeNo LIKE @SearchBarcode", con))
+        //            {
+        //                cmd.Parameters.AddWithValue("@SearchBarcode", "%" + searchBarcode + "%");
+
+        //                using (SqlDataReader reader = cmd.ExecuteReader())
+        //                {
+        //                    while (reader.Read())
+        //                    {
+        //                        items.Add(new Item
+        //                        {
+        //                            ItemNo = reader["ItemNo"].ToString(),
+        //                            ItemDescription = reader["description"].ToString(),
+        //                            Barcode = reader["barcodeNo"].ToString(),
+        //                            UOM = reader["uom"].ToString(),
+        //                            PackingInfo = reader["packingInfo"].ToString()
+        //                        });
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        HttpContext.Current.Response.Write(ex.Message);
+        //        throw new Exception("Error fetching items by barcode: " + ex.Message);
+        //    }
+
+        //    return items;
+        //}
+
+
+        //[WebMethod]
+        //public static Item GetItemDetailsByBarcode(string barcodeNo)
+        //{
+        //    Item itemDetails = new Item();
+
+        //    string connectionString = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
+        //    using (SqlConnection conn = new SqlConnection(connectionString))
+        //    {
+        //        string query = "SELECT * FROM Items WHERE barcodeNo = @BarcodeNo";
+        //        using (SqlCommand cmd = new SqlCommand(query, conn))
+        //        {
+        //            cmd.Parameters.AddWithValue("@BarcodeNo", barcodeNo);
+        //            conn.Open();
+
+        //            using (SqlDataReader reader = cmd.ExecuteReader())
+        //            {
+        //                if (reader.Read())
+        //                {
+        //                    itemDetails = new Item
+        //                    {
+        //                        ItemNo = reader["ItemNo"].ToString(),
+        //                        ItemDescription = reader["description"].ToString(),
+        //                        Barcode = reader["barcodeNo"].ToString(),
+        //                        UOM = reader["uom"].ToString(),
+        //                        PackingInfo = reader["packingInfo"].ToString()
+        //                    };
+        //                }
+        //            }
+        //        }
+        //    }
+        //    return itemDetails;
+        //}
+
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         protected void GridView_RowDeleting(object sender, GridViewDeleteEventArgs e)
         {
             DataView dv = Session["SortedItemLines"] as DataView; // Sorted DataView
@@ -568,6 +743,7 @@ namespace Expiry_list
         protected void btnConfirmAll_Click1(object sender, EventArgs e)
         {
             bool hasUnsavedValues =
+<<<<<<< HEAD
                 !string.IsNullOrEmpty(hiddenSelectedItem.Value) ||
                 !string.IsNullOrEmpty(desc.Text) ||
                 !string.IsNullOrEmpty(barcodeNo.Text) ||
@@ -576,6 +752,17 @@ namespace Expiry_list
                 !string.IsNullOrEmpty(expiryDate.Text) ||
                 !string.IsNullOrEmpty(qty.Text) ||
                 !string.IsNullOrEmpty(batchNo.Text);
+=======
+             !string.IsNullOrEmpty(hiddenSelectedItem.Value) ||
+             !string.IsNullOrEmpty(desc.Text) ||
+             !string.IsNullOrEmpty(barcodeNo.Text) ||
+             !string.IsNullOrEmpty(uom.Text) ||
+             !string.IsNullOrEmpty(packingInfo.Text) ||
+             !string.IsNullOrEmpty(expiryDate.Text) ||
+             !string.IsNullOrEmpty(qty.Text) ||
+             !string.IsNullOrEmpty(batchNo.Text);
+             //!string.IsNullOrEmpty(note.Text); // Include note.Text
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
             if (hasUnsavedValues)
             {
@@ -586,6 +773,10 @@ namespace Expiry_list
                 uom.Text = hiddenUOM.Value;
                 packingInfo.Text = hiddenPackingInfo.Value;
                 barcodeNo.Text = hiddenBarcodeNo.Value;
+<<<<<<< HEAD
+=======
+                //clearForm();
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 return;
             }
 
@@ -596,17 +787,33 @@ namespace Expiry_list
                 return;
             }
 
+<<<<<<< HEAD
             List<string> storeList = GetLoggedInUserStoreNames();
             if (storeList == null || storeList.Count == 0)
             {
                 ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
                     "swal('Error!', 'No store access assigned for this user!', 'error');", true);
                 return;
+=======
+            string store1 = GetLoggedInUserStoreName();
+
+            string lastItemNo = GetLastItemNo(store1);
+            int lastNumber = 0;
+
+            if (!string.IsNullOrEmpty(lastItemNo))
+            {
+                string[] parts = lastItemNo.Split('-');
+                if (parts.Length == 2 && int.TryParse(parts[1], out lastNumber))
+                {
+                    lastNumber++;
+                }
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
             }
 
             if (Session["ItemLines"] != null)
             {
                 DataTable dt = Session["ItemLines"] as DataTable;
+<<<<<<< HEAD
 
                 foreach (string storeNo in storeList)
                 {
@@ -693,6 +900,78 @@ namespace Expiry_list
 
                 ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
                     "swal('Success!', 'All items were added to the database for all stores!', 'success');", true);
+=======
+                string newItemNo = $"{store1}-{lastNumber}";
+
+                foreach (DataRow row in dt.Rows)
+                {
+                    string itemNo = row["ItemNo"].ToString();
+                    string description = row["Description"].ToString();
+                    string quantity = row["Qty"].ToString();
+                    string expiryDate = row["ExpiryDate"].ToString();
+                    string packingInfo = row["PackingInfo"].ToString();
+                    string uom = row["UOM"].ToString();
+                    string barcodeNo = row["BarcodeNo"].ToString();
+                    string batchNo = row["BatchNo"].ToString();
+                    string store = row["StoreNo"].ToString();
+                    string staffName = row["StaffName"].ToString();
+                    string note = row["Note"].ToString();
+                    string remark = row["Remark"].ToString();
+
+                    string query = @"SELECT v.VendorNo, v.VendorName 
+                             FROM Vendors v 
+                             JOIN Items i ON v.id = i.VendorNo 
+                             WHERE i.ItemNo = @ItemNo";
+                    using (SqlCommand cmdVendor = new SqlCommand(query))
+                    {
+                        cmdVendor.Parameters.AddWithValue("@ItemNo", itemNo);
+                        DataTable vendorData = GetData(cmdVendor);
+
+                        if (vendorData.Rows.Count > 0)
+                        {
+                            string vendorNo = vendorData.Rows[0]["VendorNo"].ToString();
+                            string vendorName = vendorData.Rows[0]["VendorName"].ToString();
+
+                            // Insert the item into the ItemList table
+                            string insertQuery = @"
+                                INSERT INTO ItemList 
+                                (no, ItemNo, Description, BarcodeNo, Qty, UOM, PackingInfo, ExpiryDate, StoreNo, StaffName, BatchNo, VendorNo, VendorName, Note, Remark) 
+                                VALUES 
+                                (@no, @ItemNo, @Description, @BarcodeNo, @Qty, @UOM, @PackingInfo, @ExpiryDate, @storeNo, @StaffName, @BatchNo, @VendorNo, @VendorName, @Note, @Remark)";
+
+                            using (SqlCommand cmd = new SqlCommand(insertQuery))
+                            {
+                                // Insert the generated 'No' for all lines
+                                cmd.Parameters.AddWithValue("@no", newItemNo);
+                                cmd.Parameters.AddWithValue("@ItemNo", itemNo);
+                                cmd.Parameters.AddWithValue("@Description", description);
+                                cmd.Parameters.AddWithValue("@Qty", quantity);
+                                cmd.Parameters.AddWithValue("@ExpiryDate", expiryDate);
+                                cmd.Parameters.AddWithValue("@PackingInfo", packingInfo);
+                                cmd.Parameters.AddWithValue("@UOM", uom);
+                                cmd.Parameters.AddWithValue("@BarcodeNo", barcodeNo);
+                                cmd.Parameters.AddWithValue("@BatchNo", batchNo);
+                                cmd.Parameters.AddWithValue("@storeNo", store);
+                                cmd.Parameters.AddWithValue("@StaffName", staffName);
+                                cmd.Parameters.AddWithValue("@Note", note);
+                                cmd.Parameters.AddWithValue("@VendorNo", vendorNo);
+                                cmd.Parameters.AddWithValue("@VendorName", vendorName);
+                                cmd.Parameters.AddWithValue("@Remark", remark);
+
+                                ExecuteQuery(cmd);
+                            }
+                        }
+                    }
+                    lastNumber++;
+                }
+                Session["ItemLines"] = null;
+                BindGridView();
+                //clearForm();
+
+                no.Text = $"{store1}-{lastNumber}";
+                ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
+                       "swal('Success!', 'All items were added to the database!', 'success');", true);
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
             }
             else
             {
@@ -728,4 +1007,8 @@ namespace Expiry_list
             }
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b

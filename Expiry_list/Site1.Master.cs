@@ -44,7 +44,7 @@ namespace Expiry_list
                     panel1.Visible = false;
                     tabs.Visible = false;
                 }
-
+                
             }
         }
 
@@ -53,32 +53,37 @@ namespace Expiry_list
             // Sign out and clear session
             FormsAuthentication.SignOut();
 
+            // Clear all session variables
             Session.Clear();
             Session.RemoveAll();
             Session["ItemLines"] = null;
 
             Session.Abandon();
 
+            // Remove session cookie
             if (Request.Cookies["ASP.NET_SessionId"] != null)
             {
                 HttpCookie sessionCookie = new HttpCookie("ASP.NET_SessionId", "");
-                sessionCookie.Expires = DateTime.Now.AddYears(-1);
                 Response.Cookies.Add(sessionCookie);
             }
 
             // Remove authentication cookie
             HttpCookie authCookie = new HttpCookie(FormsAuthentication.FormsCookieName, "");
-            authCookie.Expires = DateTime.Now.AddYears(-1); 
             Response.Cookies.Add(authCookie);
 
+            // Output session data before redirecting (debugging)
             DisplaySessionData();
+
+            // Redirect to login page
             Response.Redirect("loginPage.aspx");
 
+            // Make sure to complete the request
             Context.ApplicationInstance.CompleteRequest();
         }
 
         private void DisplaySessionData()
         {
+            // You can use this to inspect the session contents before redirecting (for debugging purposes)
             foreach (string key in Session.Keys)
             {
                 Debug.WriteLine($"Session Key: {key}, Value: {Session[key]}");

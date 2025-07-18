@@ -90,6 +90,15 @@
                         api.columns.adjust();
                     }, 50);
                 },
+<<<<<<< HEAD
+=======
+              /*columnDefs: [{ targets: [0], orderable: false }],*/
+              //stateSaveParams: function (settings, data) {
+              //    data.columns.forEach(function (col) {
+              //        col.width = null;
+              //    });
+                //},
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                 "error": function (xhr, error, thrown) {
                     console.error("DataTables error:", error, thrown);
                     alert("Error loading data. Check console for details.");
@@ -121,7 +130,11 @@
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
+<<<<<<< HEAD
      <a href="AdminDashboard.aspx" class="btn text-white ms-2" style="background-color : #158396;"><i class="fa-solid fa-left-long"></i> Home</a>
+=======
+     <a href="AdminDashboard.aspx" class="btn text-white" style="background-color : #158396;"><i class="fa-solid fa-left-long"></i> Home</a>
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
 
     <div class="container-fluid col-lg-12">
  <div class="card shadow-md border-dark-subtle">
@@ -167,6 +180,18 @@
                                               <ItemStyle HorizontalAlign="Justify" />
                                           </asp:TemplateField>
 
+<<<<<<< HEAD
+=======
+                                      <%--<asp:TemplateField HeaderText="Serial No" SortExpression="srno" HeaderStyle-ForeColor="White" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify">
+                                          <ItemTemplate>
+                                              <asp:Label ID="srno" runat="server" Text='<%# Eval("srno") %>' />
+                                          </ItemTemplate>
+                                          <ControlStyle Width="120px" />
+                                          <HeaderStyle ForeColor="White" BackColor="Gray" />
+                                          <ItemStyle HorizontalAlign="Justify" />
+                                      </asp:TemplateField>--%>
+
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
                                      <asp:TemplateField HeaderText="Item No" SortExpression="ItemNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify">
                                       <ItemTemplate>
                                        <asp:Label ID="itemNo" runat="server" Text='<%# Eval("ItemNo") %>' />

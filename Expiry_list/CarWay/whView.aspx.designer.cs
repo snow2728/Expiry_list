@@ -15,6 +15,27 @@ namespace Expiry_list.CarWay
     {
 
         /// <summary>
+<<<<<<< HEAD
+=======
+        /// UpdatePanel2 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.UpdatePanel UpdatePanel2;
+
+        /// <summary>
+        /// pnlNoData control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlNoData;
+
+        /// <summary>
+>>>>>>> dd28a8dd26355ac93475b3760a0023853d81994b
         /// GridView2 control.
         /// </summary>
         /// <remarks>

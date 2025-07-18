@@ -450,60 +450,65 @@
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
-    <a href="AdminDashboard.aspx" class="btn text-white ms-2" style="background-color : #158396;"><i class="fa-solid fa-left-long"></i> Home</a>
 
     <div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow rounded-4 p-4">
-                <div class="row g-3">
-                    <!-- Username -->
-                    <div class="col-md-6">
-                        <label for="<%= usernameTextBox.ClientID %>" class="form-label">Username</label>
-                        <asp:TextBox ID="usernameTextBox" runat="server"
-                            CssClass="form-control border-info shadow-sm"
-                            AutoFocus="true" AutoComplete="username" />
-                        <asp:RequiredFieldValidator ID="usernameRequired" runat="server"
-                            ControlToValidate="usernameTextBox"
-                            ErrorMessage="Username is required!"
-                            CssClass="text-danger small d-block mt-1"
-                            Display="Dynamic" />
-                    </div>
-
-                    <!-- Password -->
-                    <div class="col-md-6">
-                        <label for="<%= passwordTextBox.ClientID %>" class="form-label">Password</label>
-                        <asp:TextBox ID="passwordTextBox" runat="server"
-                            TextMode="Password"
-                            CssClass="form-control border-info shadow-sm"
-                            AutoComplete="current-password" />
-                        <asp:RequiredFieldValidator ID="passwordRequired" runat="server"
-                            ControlToValidate="passwordTextBox"
-                            ErrorMessage="Password is required!"
-                            CssClass="text-danger small d-block mt-1"
-                            Display="Dynamic" />
-                    </div>
+                <!-- Username -->
+                    <label for="<%= usernameTextBox.ClientID %>" class="form-label">Username</label>
+                    <asp:TextBox ID="usernameTextBox" runat="server" 
+                        CssClass="form-control border-info shadow-sm" 
+                    <asp:RequiredFieldValidator ID="usernameRequired" runat="server"
+                        ControlToValidate="usernameTextBox"
+                        CssClass="text-danger small d-block mt-1"
+                        Display="Dynamic" />
                 </div>
 
-                 <div class="row g-3">
+                <!-- Password -->
+                    <label for="<%= passwordTextBox.ClientID %>" class="form-label">Password</label>
+                    <asp:TextBox ID="passwordTextBox" runat="server" 
+                        TextMode="Password" 
+                        CssClass="form-control border-info shadow-sm" 
+                        AutoComplete="current-password" />
+                    <asp:RequiredFieldValidator ID="passwordRequired" runat="server"
+                        ControlToValidate="passwordTextBox"
+                        CssClass="text-danger small d-block mt-1"
+                        Display="Dynamic" />
+                </div>
 
-                      <!-- Store Selector -->
-                     <div class="col-md-6 mt-4">
-                         <label for="<%= lstStoreFilter.ClientID %>" class="form-label me-3">Store(s)</label>
-                         <asp:ListBox ID="lstStoreFilter" runat="server" CssClass="form-control d-none" SelectionMode="Multiple"></asp:ListBox>
-                         <div id="locationPillsContainer" class="location-pills-container mb-2"></div>
-                         <asp:RequiredFieldValidator ID="storeNoRequired" runat="server"
-                             ControlToValidate="lstStoreFilter"
-                             ErrorMessage="Store is required!"
-                             CssClass="text-danger small d-block mt-1"
-                             Display="Dynamic" />
-                     </div>
+                <!-- Role & Store -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-6">
+                        <label for="<%= roleTextBox.ClientID %>" class="form-label">Role</label>
+                        <asp:DropDownList ID="roleTextBox" 
+                            CssClass="form-select border-info shadow-sm" 
+                            runat="server">
+                            <asp:ListItem Text="Choose Role..." Value="" />
+                            <asp:ListItem Text="Admin" Value="admin" />
+                            <asp:ListItem Text="User" Value="user" />
+                            <asp:ListItem Text="Viewer" Value="viewer" />
+                        </asp:DropDownList>
+                        <asp:RequiredFieldValidator ID="roleRequired" runat="server"
+                            ControlToValidate="roleTextBox"
+                            ErrorMessage="Role is required"
+                            CssClass="text-danger small d-block mt-1"
+                            Display="Dynamic" />
+                    </div>
+
+                        <asp:RequiredFieldValidator ID="storeNoRequired" runat="server"
+                            CssClass="text-danger small d-block mt-1"
+                            Display="Dynamic" />
+                    </div>
 
                      <div class="col-md-6 mt-4">
                          <asp:CheckBox ID="chkEnable" runat="server" Text=" Enabled" />
-                     </div>
+                </div>
 
-                 </div>
+                <!-- Register Button -->
+                <div class="">
+                    <asp:Button ID="btnRegister" runat="server" Text="Register" 
+                        OnClick="btnRegister_Click" 
+                        CssClass="btn btn-primary btn-md fw-bold shadow-sm" 
+                        style="background-color: #158396; border-color: #127485;" />
+                </div>
 
                 <!-- Form Permissions -->
                 <div class="mt-4">
@@ -514,12 +519,12 @@
                         <div class="form-check">
                             <asp:CheckBox ID="chkExpiryList_Enable" runat="server" CssClass="form-check-input" />
                             <label class="form-check-label" for="<%= chkExpiryList_Enable.ClientID %>">Expiry List</label>
-                        </div>
+            </div>
                         <div id="permissionExpiryList" class="row g-3 ms-3 mt-2" style="display: none;">
                             <div class="col-auto form-check">
                                 <asp:RadioButton ID="rdoExpiryList_View" GroupName="ExpiryList" runat="server" CssClass="form-check-input" />
                                 <label class="form-check-label" for="<%= rdoExpiryList_View.ClientID %>">View</label>
-                            </div>
+        </div>
                             <div class="col-auto form-check">
                                 <asp:RadioButton ID="rdoExpiryList_Edit" GroupName="ExpiryList" runat="server" CssClass="form-check-input" />
                                 <label class="form-check-label" for="<%= rdoExpiryList_Edit.ClientID %>">Edit</label>
@@ -535,122 +540,23 @@
                         </div>
                     </div>
 
-                    <!-- Negative Inventory -->
-                    <div class="border border-info rounded p-3 mb-3">
-                        <div class="form-check">
-                            <asp:CheckBox ID="chkNegativeInventory_Enable" runat="server" CssClass="form-check-input" />
-                            <label class="form-check-label" for="<%= chkNegativeInventory_Enable.ClientID %>"> Negative Inventory</label>
-                        </div>
-                        <div id="permissionNegativeInventory" class="row g-3 ms-3 mt-2" style="display: none;">
-                            <div class="col-auto form-check">
-                                <asp:RadioButton ID="rdoNegativeInventory_View" GroupName="NegativeInventory" runat="server" CssClass="form-check-input" />
-                                <label class="form-check-label" for="<%= rdoNegativeInventory_View.ClientID %>">View</label>
-                            </div>
-                            <div class="col-auto form-check">
-                                <asp:RadioButton ID="rdoNegativeInventory_Edit" GroupName="NegativeInventory" runat="server" CssClass="form-check-input" />
-                                <label class="form-check-label" for="<%= rdoNegativeInventory_Edit.ClientID %>">Edit</label>
-                            </div>
-                            <div class="col-auto form-check">
-                                <asp:RadioButton ID="rdoNegativeInventory_Admin" GroupName="NegativeInventory" runat="server" CssClass="form-check-input" />
-                                <label class="form-check-label" for="<%= rdoNegativeInventory_Admin.ClientID %>">Admin</label>
-                            </div>
-                              <div class="col-auto form-check">
-                                  <asp:RadioButton ID="rdoNegativeInventory_Super" GroupName="NegativeInventory" runat="server" CssClass="form-check-input" />
-                                  <label class="form-check-label" for="<%= rdoNegativeInventory_Super.ClientID %>">Super</label>
-                              </div>
-                        </div>
-                    </div>
 
-                    <%-- System Settings --%>
-                    <div class="border border-info rounded p-3 mb-3">
-                        <div class="form-check">
-                            <asp:CheckBox ID="chkSystemSettings_Enable" runat="server" CssClass="form-check-input" />
-                            <label class="form-check-label" for="<%= chkSystemSettings_Enable.ClientID %>">System Setting</label>
-                        </div>
-                        <div id="permissionSystemSettings" class="row g-3 ms-3 mt-2" style="display: none;">
-                            <div class="col-auto form-check">
-                                <asp:RadioButton ID="rdoSystemSettings_View" GroupName="SystemSettings" runat="server" CssClass="form-check-input" />
-                                <label class="form-check-label" for="<%= rdoSystemSettings_View.ClientID %>">View</label>
-                            </div>
-                            <div class="col-auto form-check">
-                                <asp:RadioButton ID="rdoSystemSettings_Edit" GroupName="SystemSettings" runat="server" CssClass="form-check-input" />
-                                <label class="form-check-label" for="<%= rdoSystemSettings_Edit.ClientID %>">Edit</label>
-                            </div>
-                            <div class="col-auto form-check">
-                                <asp:RadioButton ID="rdoSystemSettings_Admin" GroupName="SystemSettings" runat="server" CssClass="form-check-input" />
-                                <label class="form-check-label" for="<%= rdoSystemSettings_Admin.ClientID %>">Admin</label>
-                            </div>
-                             <div class="col-auto form-check">
-                                 <asp:RadioButton ID="rdoSystemSettings_Super" GroupName="SystemSettings" runat="server" CssClass="form-check-input" />
-                                 <label class="form-check-label" for="<%= rdoSystemSettings_Super.ClientID %>">Super</label>
-                             </div>
-                        </div>
-                    </div>
 
-                    <%-- Car Way --%>
-                     <div class="border border-info rounded p-3 mb-3">
-                         <div class="form-check">
-                             <asp:CheckBox ID="chkCarWayPlan_Enable" runat="server" CssClass="form-check-input" />
-                             <label class="form-check-label" for="<%= chkCarWayPlan_Enable.ClientID %>">Car Way</label>
-                         </div>
 
-                         <div id="permissionCarWayPlan" class="row g-3 ms-3 mt-2" style="display: none;">
-                             <div class="col-auto form-check">
-                                 <asp:RadioButton ID="rdoCarWayPlan_View" GroupName="CarWayPlan" runat="server" CssClass="form-check-input" />
-                                 <label class="form-check-label" for="<%= rdoCarWayPlan_View.ClientID %>">View</label>
-                             </div>
-                             <div class="col-auto form-check">
-                                 <asp:RadioButton ID="rdoCarWayPlan_Edit" GroupName="CarWayPlan" runat="server" CssClass="form-check-input" />
-                                 <label class="form-check-label" for="<%= rdoCarWayPlan_Edit.ClientID %>">Edit</label>
-                             </div>
-                             <div class="col-auto form-check">
-                                 <asp:RadioButton ID="rdoCarWayPlan_Admin" GroupName="CarWayPlan" runat="server" CssClass="form-check-input" />
-                                 <label class="form-check-label" for="<%= rdoCarWayPlan_Admin.ClientID %>">Admin</label>
-                             </div>
-                               <div class="col-auto form-check">
-                                  <asp:RadioButton ID="rdoCarWayPlan_Super" GroupName="CarWayPlan" runat="server" CssClass="form-check-input" />
-                                  <label class="form-check-label" for="<%= rdoCarWayPlan_Super.ClientID %>">Super</label>
-                              </div>
-                         </div>
-                     </div>
 
-                    <%-- Reorder Quantity --%>
-                     <div class="border border-info rounded p-3 mb-3">
-                             <div class="form-check">
-                                 <asp:CheckBox ID="chkReorderQuantity_Enable" runat="server" CssClass="form-check-input" />
-                                 <label class="form-check-label" for="<%= chkReorderQuantity_Enable.ClientID %>">Reorder Quantity</label>
-                             </div>
 
-                             <div id="permissionReorderQuantity" class="row g-3 ms-3 mt-2" style="display: none;">
-                                 <div class="col-auto form-check">
-                                     <asp:RadioButton ID="rdoReorderQuantity_View" GroupName="ReorderQuantity" runat="server" CssClass="form-check-input" />
-                                     <label class="form-check-label" for="<%= rdoReorderQuantity_View.ClientID %>">View</label>
-                                 </div>
-                                 <div class="col-auto form-check">
-                                     <asp:RadioButton ID="rdoReorderQuantity_Edit" GroupName="ReorderQuantity" runat="server" CssClass="form-check-input" />
-                                     <label class="form-check-label" for="<%= rdoReorderQuantity_Edit.ClientID %>">Edit</label>
-                                 </div>
-                                 <div class="col-auto form-check">
-                                     <asp:RadioButton ID="rdoReorderQuantity_Admin" GroupName="ReorderQuantity" runat="server" CssClass="form-check-input" />
-                                     <label class="form-check-label" for="<%= rdoReorderQuantity_Admin.ClientID %>">Admin</label>
-                                 </div>
-                                 <div class="col-auto form-check">
-                                    <asp:RadioButton ID="rdoReorderQuantity_Super" GroupName="ReorderQuantity" runat="server" CssClass="form-check-input" />
-                                    <label class="form-check-label" for="<%= rdoReorderQuantity_Super.ClientID %>">Super</label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                             </div>
-                         </div>
+                            </PagerTemplate>
 
-                        <!-- Register Button -->
-                        <div>
-                            <asp:Button ID="Button1" runat="server" Text="Save" 
-                                OnClick="btnRegister_Click" OnClientClick="return validateStoreSelection();" 
-                                CssClass="btn btn-primary btn-md fw-bold shadow-sm" 
-                                style="background-color: #158396; border-color: #127485;" />
+                           <PagerStyle CssClass="pagination-container" />
+
                         </div>
-                    </div>
-                </div>
-             </div>
+                    </ContentTemplate>
+               </asp:UpdatePanel>
+            </div>
         </div>
     </div>
 
