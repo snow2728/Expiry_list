@@ -51,7 +51,7 @@ namespace Expiry_list
             }
         }
 
-          protected void el_Click1(object sender, EventArgs e)
+        protected void el_Click1(object sender, EventArgs e)
         {
             if (!User.Identity.IsAuthenticated)
             {
@@ -290,7 +290,7 @@ namespace Expiry_list
             else
             {
                 redirectUrl = "~/AdminDashboard.aspx";
-            }
+        }
 
             if (!string.IsNullOrEmpty(redirectUrl))
             {
@@ -353,8 +353,8 @@ namespace Expiry_list
             using (SqlConnection conn = new SqlConnection(strcon))
             {
                 string query = @"
-                    SELECT f.name AS FormName,
-                    CASE up.permission_level
+            SELECT f.name AS FormName,
+                   CASE up.permission_level
                         WHEN 1 THEN 'view'
                         WHEN 2 THEN 'edit'
                         WHEN 3 THEN 'admin'

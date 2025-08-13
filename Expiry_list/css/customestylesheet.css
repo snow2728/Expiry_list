@@ -833,6 +833,7 @@ a[commandname="Edit"] {
 
 
 
+
 /* style for AdminDashboard.aspx */
 .modern-card {
     border: none;
@@ -909,6 +910,10 @@ a[commandname="Edit"] {
     opacity: 0.6;
 }
 
+.grid-purple-text td, .grid-purple-text th {
+    color: #9E7CD7 !important;
+}
+
 .highlight-row {
     box-shadow: 0 0 10px 2px #ffcc00;
     position: relative;
@@ -917,13 +922,26 @@ a[commandname="Edit"] {
 @keyframes pulse {
     0% {
         box-shadow: 0 0 0 0 rgba(255, 204, 0, 0.7);
-    }
+}
 
     70% {
         box-shadow: 0 0 0 10px rgba(255, 204, 0, 0);
-    }
+}
 
     100% {
         box-shadow: 0 0 0 0 rgba(255, 204, 0, 0);
     }
 }
+
+.select2-search__field {
+    width: auto !important;
+    padding: 4px 6px !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 4px !important;
+}*/
+
+/* Style for no results message */
+/*.select2-results__option--no-results {
+    color: #6c757d;
+    font-style: italic;
+}*/

@@ -23,6 +23,7 @@ namespace Expiry_list
                 {
                     if (Session["username"] != null)
                     {
+                        // Display the username and logout panel
                         usernameSpan.Text = Session["username"].ToString();
                         usernameSpan.Visible = true;
                         panel1.Visible = true;
@@ -38,11 +39,12 @@ namespace Expiry_list
                 }
                 else
                 {
+                    // On the login page, hide these elements
                     usernameSpan.Visible = false;
                     panel1.Visible = false;
                     tabs.Visible = false;
                 }
-
+                
             }
         }
 
@@ -51,12 +53,14 @@ namespace Expiry_list
             // Sign out and clear session
             FormsAuthentication.SignOut();
 
+            // Clear all session variables
             Session.Clear();
             Session.RemoveAll();
             Session["ItemLines"] = null;
 
             Session.Abandon();
 
+            // Remove session cookie
             if (Request.Cookies["ASP.NET_SessionId"] != null)
             {
                 HttpCookie sessionCookie = new HttpCookie("ASP.NET_SessionId", "");
@@ -69,14 +73,19 @@ namespace Expiry_list
             authCookie.Expires = DateTime.Now.AddYears(-1); 
             Response.Cookies.Add(authCookie);
 
+            // Output session data before redirecting (debugging)
             DisplaySessionData();
+
+            // Redirect to login page
             Response.Redirect("loginPage.aspx");
 
+            // Make sure to complete the request
             Context.ApplicationInstance.CompleteRequest();
         }
 
         private void DisplaySessionData()
         {
+            // You can use this to inspect the session contents before redirecting (for debugging purposes)
             foreach (string key in Session.Keys)
             {
                 Debug.WriteLine($"Session Key: {key}, Value: {Session[key]}");
@@ -88,10 +97,10 @@ namespace Expiry_list
             // Avoid setting headers if we're exporting
             if (!HttpContext.Current.Response.ContentType.StartsWith("application/vnd.openxmlformats-officedocument"))
             {
-                Response.Headers.Add("Content-Security-Policy", "frame-ancestors 'none'");
-                Response.Headers.Add("X-Frame-Options", "DENY");
-                Response.Headers.Add("Referrer-Policy", "no-referrer");
-            }
+            Response.Headers.Add("Content-Security-Policy", "frame-ancestors 'none'");
+            Response.Headers.Add("X-Frame-Options", "DENY");
+            Response.Headers.Add("Referrer-Policy", "no-referrer");
+        }
         }
 
     }

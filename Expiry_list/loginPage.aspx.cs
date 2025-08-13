@@ -35,6 +35,7 @@ namespace Expiry_list
                 {
                     con.Open();
 
+                    // 1. Check username/password and IsEnabled
                     string query = "SELECT id, username, IsEnabled FROM users WHERE username = @username AND password = @password";
 
                     using (SqlCommand cmd = new SqlCommand(query, con))

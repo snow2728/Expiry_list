@@ -6,87 +6,88 @@
 
         $(document).ready(function () {
             var staffName = $('#<%= hiddenStaffName.ClientID %>').val();
-            $('#<%= staffName.ClientID %>').val(staffName);
+              $('#<%= staffName.ClientID %>').val(staffName);
 
-            // Initialize Select2 for item search
-            $("#<%= itemNo.ClientID %>").select2({
-                placeholder: 'Search by Item No, Description, or Barcode',
-                minimumInputLength: 2,
-                allowClear: true,
-                //tags: true,
-                ajax: {
-                    url: 'registrationForm.aspx/GetItems',
-                    type: 'POST',
-                    contentType: "application/json; charset=utf-8",
-                    dataType: 'json',
-                    delay: 250,
-                    data: function (params) {
-                        return JSON.stringify({ searchTerm: params.term });
-                    },
-                    processResults: function (data) {
+              // Initialize Select2 for item search
+              $("#<%= itemNo.ClientID %>").select2({
+                  placeholder: 'Search by Item No, Description, or Barcode',
+                  minimumInputLength: 2,
+                  allowClear: true,
+                  //tags: true,
+                  ajax: {
+                      url: 'registrationForm.aspx/GetItems',
+                      type: 'POST',
+                      contentType: "application/json; charset=utf-8",
+                      dataType: 'json',
+                      delay: 250,
+                      data: function (params) {
+                          return JSON.stringify({ searchTerm: params.term });
+                      },
+                      processResults: function (data) {
                         var items = data.d || [];
 
                         if (items.length === 0) {
-                            setTimeout(function () {
+                          setTimeout(function () {
                                 Swal.fire({
                                     icon: 'warning',
                                     title: 'No Items Found',
                                     text: 'No items match your search. Please try again.'
                                 });
                             }, 300); // slight delay to avoid conflicting with Select2 rendering
-                        }
-                        return {
-                            results: data.d.map(function (item) {
-                                return {
-                                    id: item.ItemNo,
-                                    text: item.ItemNo + " - " + item.ItemDescription,
-                                    description: item.ItemDescription,
-                                    barcode: item.Barcode,
-                                    uom: item.UOM,
-                                    packing: item.PackingInfo
-                                };
-                            })
-                        };
-                    },
-                    cache: true
-                }
-            });
+                          }
 
-            var selectedItemId = $('#<%= hiddenSelectedItem.ClientID %>').val();
-            var selectedItemText = $('#<%= hiddenDescription.ClientID %>').val();
+                          return {
+                              results: data.d.map(function (item) {
+                                  return {
+                                      id: item.ItemNo,
+                                      text: item.ItemNo + " - " + item.ItemDescription,
+                                      description: item.ItemDescription,
+                                      barcode: item.Barcode,
+                                      uom: item.UOM,
+                                      packing: item.PackingInfo
+                                  };
+                              })
+                          };
+                      },
+                      cache: true
+                  }
+              });
 
-            if (selectedItemId) {
-                // Manually add the selected option to Select2
-                var $itemNo = $('#<%= itemNo.ClientID %>');
-                var option = new Option(selectedItemId + " - " + selectedItemText, selectedItemId, true, true);
-                $itemNo.append(option).trigger('change');
-            }
+              var selectedItemId = $('#<%= hiddenSelectedItem.ClientID %>').val();
+              var selectedItemText = $('#<%= hiddenDescription.ClientID %>').val();
 
-            $('#<%= itemNo.ClientID %>').on('select2:select', function (e) {
-                clearFields();
+              if (selectedItemId) {
+                  // Manually add the selected option to Select2
+                  var $itemNo = $('#<%= itemNo.ClientID %>');
+                  var option = new Option(selectedItemId + " - " + selectedItemText, selectedItemId, true, true);
+                  $itemNo.append(option).trigger('change');
+              }
 
-                var selectedData = e.params.data;
+              $('#<%= itemNo.ClientID %>').on('select2:select', function (e) {
+                  clearFields();
 
-                // Set the new values after clearing
-                $('#<%= desc.ClientID %>').val(selectedData.description);
-                $('#<%= uom.ClientID %>').val(selectedData.uom);
-                $('#<%= packingInfo.ClientID %>').val(selectedData.packing);
+                  var selectedData = e.params.data;
 
-                var barcode = selectedData.barcode.length > 0 ? selectedData.barcode[0] : '';
-                $('#<%= barcodeNo.ClientID %>').val(barcode);
+                  // Set the new values after clearing
+                  $('#<%= desc.ClientID %>').val(selectedData.description);
+                    $('#<%= uom.ClientID %>').val(selectedData.uom);
+                    $('#<%= packingInfo.ClientID %>').val(selectedData.packing);
 
-                // Update hidden fields
-                $('#<%= hiddenSelectedItem.ClientID %>').val(selectedData.id);
-                $('#<%= hiddenBarcodeNo.ClientID %>').val(barcode);
-                $('#<%= hiddenDescription.ClientID %>').val(selectedData.description);
-                $('#<%= hiddenUOM.ClientID %>').val(selectedData.uom);
-                $('#<%= hiddenPackingInfo.ClientID %>').val(selectedData.packing);
-            });
+                    var barcode = selectedData.barcode.length > 0 ? selectedData.barcode[0] : '';
+                    $('#<%= barcodeNo.ClientID %>').val(barcode);
 
-            $('#<%= itemNo.ClientID %>').on('select2:clear', function (e) {
-                clearFields();
-            });
-        });
+                    // Update hidden fields
+                    $('#<%= hiddenSelectedItem.ClientID %>').val(selectedData.id);
+                    $('#<%= hiddenBarcodeNo.ClientID %>').val(barcode);
+                    $('#<%= hiddenDescription.ClientID %>').val(selectedData.description);
+                    $('#<%= hiddenUOM.ClientID %>').val(selectedData.uom);
+                    $('#<%= hiddenPackingInfo.ClientID %>').val(selectedData.packing);
+                });
+
+              $('#<%= itemNo.ClientID %>').on('select2:clear', function (e) {
+                  clearFields();
+              });
+          });
 
         function isNumberKey(evt) {
             var charCode = (evt.which) ? evt.which : evt.keyCode;
@@ -101,39 +102,39 @@
         // Clear textboxes when a new item is selected
         function clearFields() {
             $('#<%= desc.ClientID %>').val('');
-            $('#<%= uom.ClientID %>').val('');
-            $('#<%= packingInfo.ClientID %>').val('');
-            $('#<%= barcodeNo.ClientID %>').val('');
-            $('#<%= qty.ClientID %>').val('');
-            $('#<%= expiryDate.ClientID %>').val('');
-            $('#<%= batchNo.ClientID %>').val('');
-            $('#<%= note.ClientID %>').val('');
+               $('#<%= uom.ClientID %>').val('');
+               $('#<%= packingInfo.ClientID %>').val('');
+               $('#<%= barcodeNo.ClientID %>').val('');
+               $('#<%= qty.ClientID %>').val('');
+               $('#<%= expiryDate.ClientID %>').val('');
+               $('#<%= batchNo.ClientID %>').val('');
+               $('#<%= note.ClientID %>').val('');
 
-            // Clear hidden fields as well
-            $('#<%= hiddenSelectedItem.ClientID %>').val('');
-            $('#<%= hiddenBarcodeNo.ClientID %>').val('');
-            $('#<%= hiddenDescription.ClientID %>').val('');
-            $('#<%= hiddenUOM.ClientID %>').val('');
-            $('#<%= hiddenPackingInfo.ClientID %>').val('');
+               // Clear hidden fields as well
+               $('#<%= hiddenSelectedItem.ClientID %>').val('');
+               $('#<%= hiddenBarcodeNo.ClientID %>').val('');
+               $('#<%= hiddenDescription.ClientID %>').val('');
+               $('#<%= hiddenUOM.ClientID %>').val('');
+               $('#<%= hiddenPackingInfo.ClientID %>').val('');
 
-            $('#<%= hiddenQty.ClientID %>').val('');
-            $('#<%= hiddenBatchNo.ClientID %>').val('');
+               $('#<%= hiddenQty.ClientID %>').val('');
+               $('#<%= hiddenBatchNo.ClientID %>').val('');
         }
 
         function restoreFields(itemNoValue, itemDescription) {
             if (itemNoValue) {
                 // Clear existing options and add the selected item
                 var $itemNo = $('#<%= itemNo.ClientID %>');
-                $itemNo.empty(); // Clear existing options
-                var option = new Option(itemNoValue + " - " + itemDescription, itemNoValue, true, true);
-                $itemNo.append(option).trigger('change');
-            }
+                   $itemNo.empty(); // Clear existing options
+                   var option = new Option(itemNoValue + " - " + itemDescription, itemNoValue, true, true);
+                   $itemNo.append(option).trigger('change');
+               }
 
-            // Restore other fields from hidden values
-            $('#<%= desc.ClientID %>').val($('#<%= hiddenDescription.ClientID %>').val());
-            $('#<%= uom.ClientID %>').val($('#<%= hiddenUOM.ClientID %>').val());
-            $('#<%= packingInfo.ClientID %>').val($('#<%= hiddenPackingInfo.ClientID %>').val());
-            $('#<%= barcodeNo.ClientID %>').val($('#<%= hiddenBarcodeNo.ClientID %>').val());
+               // Restore other fields from hidden values
+               $('#<%= desc.ClientID %>').val($('#<%= hiddenDescription.ClientID %>').val());
+               $('#<%= uom.ClientID %>').val($('#<%= hiddenUOM.ClientID %>').val());
+               $('#<%= packingInfo.ClientID %>').val($('#<%= hiddenPackingInfo.ClientID %>').val());
+               $('#<%= barcodeNo.ClientID %>').val($('#<%= hiddenBarcodeNo.ClientID %>').val());
         }
 
         history.pushState(null, null, location.href);
@@ -341,110 +342,110 @@
                         style="background-color: #1995ad; border-top-left-radius: 10px; border-top-right-radius: 10px;">
                         <h2 class="mb-0">Expiry List</h2>
                     </div>
+ 
+                        <div class="card-body p-2 overflow-scroll">
+                            <asp:Button Text="Confirm" runat="server" ID="btnConfirmAll"
+                                CssClass="btn btn-dark m-1 fa-1x text-black"
+                                CausesValidation="false" Style="background-color: #a1d6e2;" OnClick="btnConfirmAll_Click1" />
+                            <!-- Reduced padding -->
+                            <div class="table-responsive">
+                                <!-- Bootstrap responsive table wrapper -->
+                                <asp:GridView runat="server"
+                                    ID="gridTable"
+                                    AutoGenerateColumns="false"
+                                    ShowFooter="true" DataKeyNames="No"
+                                    CssClass="table table-striped table-hover border-black border-2 shadow-lg mt-2 border-top"
+                                    GridLines="None" Width="100%"
+                                    OnRowEditing="GridView_RowEditing"
+                                    OnRowDeleting="GridView_RowDeleting"
+                                    OnRowCancelingEdit="GridView_RowCancelingEdit"
+                                    OnRowUpdating="GridView_RowUpdating"
+                                    EnableViewState="true">
 
-                    <div class="card-body p-2 overflow-scroll">
-                        <asp:Button Text="Confirm" runat="server" ID="btnConfirmAll"
-                            CssClass="btn btn-dark m-1 fa-1x text-black"
-                            CausesValidation="false" Style="background-color: #a1d6e2;" OnClick="btnConfirmAll_Click1" />
-                        <!-- Reduced padding -->
-                        <div class="table-responsive">
-                            <!-- Bootstrap responsive table wrapper -->
-                            <asp:GridView runat="server"
-                                ID="gridTable"
-                                AutoGenerateColumns="false"
-                                ShowFooter="true" DataKeyNames="No"
-                                CssClass="table table-striped table-hover border-black border-2 shadow-lg mt-2 border-top"
-                                GridLines="None" Width="100%"
-                                OnRowEditing="GridView_RowEditing"
-                                OnRowDeleting="GridView_RowDeleting"
-                                OnRowCancelingEdit="GridView_RowCancelingEdit"
-                                OnRowUpdating="GridView_RowUpdating"
-                                EnableViewState="true">
+                                    <EmptyDataTemplate>
+                                        <div class="alert alert-info">No items to confirm!</div>
+                                    </EmptyDataTemplate>
 
-                                <EmptyDataTemplate>
-                                    <div class="alert alert-info">No items to confirm!</div>
-                                </EmptyDataTemplate>
+                                    <Columns>
+                                        <asp:BoundField DataField="ItemNo" HeaderText="Item No" ReadOnly="True" />
+                                        <asp:BoundField DataField="Description" HeaderText="Description" ReadOnly="True" />
 
-                                <Columns>
-                                    <asp:BoundField DataField="ItemNo" HeaderText="Item No" ReadOnly="True" />
-                                    <asp:BoundField DataField="Description" HeaderText="Description" ReadOnly="True" />
+                                        <asp:TemplateField HeaderText="Qty">
+                                            <ItemTemplate>
+                                                <asp:Label ID="lblQuantity" runat="server" Text='<%# Eval("Qty") %>'></asp:Label>
+                                            </ItemTemplate>
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="txtQuantity" runat="server"
+                                                    Text='<%# Bind("Qty") %>' Width="59px"
+                                                    onkeypress="return blockInvalidChars(event)" onpaste="return false"></asp:TextBox>
+                                            </EditItemTemplate>
+                                        </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="Qty">
-                                        <ItemTemplate>
-                                            <asp:Label ID="lblQuantity" runat="server" Text='<%# Eval("Qty") %>'></asp:Label>
-                                        </ItemTemplate>
-                                        <EditItemTemplate>
-                                            <asp:TextBox ID="txtQuantity" runat="server"
-                                                Text='<%# Bind("Qty") %>' Width="59px"
-                                                onkeypress="return blockInvalidChars(event)" onpaste="return false"></asp:TextBox>
-                                        </EditItemTemplate>
-                                    </asp:TemplateField>
+                                        <asp:TemplateField HeaderText="UOM">
+                                            <ItemTemplate>
+                                                <asp:Label ID="lblUom" runat="server" Text='<%# Eval("UOM") %>'></asp:Label>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="UOM">
-                                        <ItemTemplate>
-                                            <asp:Label ID="lblUom" runat="server" Text='<%# Eval("UOM") %>'></asp:Label>
-                                        </ItemTemplate>
-                                    </asp:TemplateField>
+                                        <asp:TemplateField HeaderText="Packing Info">
+                                            <ItemTemplate>
+                                                <asp:Label ID="lblPack" runat="server" Text='<%# Eval("PackingInfo") %>'></asp:Label>
+                                            </ItemTemplate>
+                                        </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="Packing Info">
-                                        <ItemTemplate>
-                                            <asp:Label ID="lblPack" runat="server" Text='<%# Eval("PackingInfo") %>'></asp:Label>
-                                        </ItemTemplate>
-                                    </asp:TemplateField>
+                                        <asp:TemplateField HeaderText="Expiry Date">
+                                            <ItemTemplate>
+                                                <asp:Label ID="lblExpiryDate" runat="server" Text='<%# Eval("ExpiryDate", "{0:MMM-yyyy}") %>'></asp:Label>
+                                            </ItemTemplate>
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="txtExpiryDate" runat="server"
+                                                    Text='<%# Bind("ExpiryDate", "{0:yyyy-MM}") %>'
+                                                    type="month" Width="109px"></asp:TextBox>
+                                            </EditItemTemplate>
+                                        </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="Expiry Date">
-                                        <ItemTemplate>
-                                            <asp:Label ID="lblExpiryDate" runat="server" Text='<%# Eval("ExpiryDate", "{0:MMM-yyyy}") %>'></asp:Label>
-                                        </ItemTemplate>
-                                        <EditItemTemplate>
-                                            <asp:TextBox ID="txtExpiryDate" runat="server"
-                                                Text='<%# Bind("ExpiryDate", "{0:yyyy-MM}") %>'
-                                                type="month" Width="109px"></asp:TextBox>
-                                        </EditItemTemplate>
-                                    </asp:TemplateField>
+                                        <asp:TemplateField HeaderText="Batch">
+                                            <ItemTemplate>
+                                                <asp:Label ID="lblBatch" runat="server" Text='<%# Eval("BatchNo") %>'></asp:Label>
+                                            </ItemTemplate>
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="txtBatch" runat="server" Text='<%# Bind("BatchNo") %>' Width="127px"></asp:TextBox>
+                                            </EditItemTemplate>
+                                        </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="Batch">
-                                        <ItemTemplate>
-                                            <asp:Label ID="lblBatch" runat="server" Text='<%# Eval("BatchNo") %>'></asp:Label>
-                                        </ItemTemplate>
-                                        <EditItemTemplate>
-                                            <asp:TextBox ID="txtBatch" runat="server" Text='<%# Bind("BatchNo") %>' Width="127px"></asp:TextBox>
-                                        </EditItemTemplate>
-                                    </asp:TemplateField>
+                                        <asp:TemplateField HeaderText="Note">
+                                            <ItemTemplate>
+                                                <asp:Label ID="lblNote" runat="server" Text='<%# Eval("Note") %>'></asp:Label>
+                                            </ItemTemplate>
+                                            <EditItemTemplate>
+                                                <asp:TextBox ID="txtNote" runat="server" Text='<%# Bind("Note") %>' Width="157px"></asp:TextBox>
+                                            </EditItemTemplate>
+                                        </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="Note">
-                                        <ItemTemplate>
-                                            <asp:Label ID="lblNote" runat="server" Text='<%# Eval("Note") %>'></asp:Label>
-                                        </ItemTemplate>
-                                        <EditItemTemplate>
-                                            <asp:TextBox ID="txtNote" runat="server" Text='<%# Bind("Note") %>' Width="157px"></asp:TextBox>
-                                        </EditItemTemplate>
-                                    </asp:TemplateField>
+                                        <asp:TemplateField Visible="false">
+                                            <ItemTemplate>
+                                                <asp:HiddenField ID="hfBarcodeNo" runat="server" Value='<%# Eval("BarcodeNo") %>' />
+                                                <asp:HiddenField ID="hfRemark" runat="server" Value='<%# Eval("Remark") %>' />
+                                                <asp:HiddenField ID="hfCompleted" runat="server" Value='<%# Eval("completedDate") %>' />
+                                            </ItemTemplate>
+                                            <EditItemTemplate>
+                                                <asp:HiddenField ID="hfBarcodeNo" runat="server" Value='<%# Bind("BarcodeNo") %>' />
+                                                <asp:HiddenField ID="hfRemark" runat="server" Value='<%# Bind("Remark") %>' />
+                                                <asp:HiddenField ID="hfCompleted" runat="server" Value='<%# Bind("completedDate") %>' />
+                                            </EditItemTemplate>
+                                        </asp:TemplateField>
 
-                                    <asp:TemplateField Visible="false">
-                                        <ItemTemplate>
-                                            <asp:HiddenField ID="hfBarcodeNo" runat="server" Value='<%# Eval("BarcodeNo") %>' />
-                                            <asp:HiddenField ID="hfRemark" runat="server" Value='<%# Eval("Remark") %>' />
-                                            <asp:HiddenField ID="hfCompleted" runat="server" Value='<%# Eval("completedDate") %>' />
-                                        </ItemTemplate>
-                                        <EditItemTemplate>
-                                            <asp:HiddenField ID="hfBarcodeNo" runat="server" Value='<%# Bind("BarcodeNo") %>' />
-                                            <asp:HiddenField ID="hfRemark" runat="server" Value='<%# Bind("Remark") %>' />
-                                            <asp:HiddenField ID="hfCompleted" runat="server" Value='<%# Bind("completedDate") %>' />
-                                        </EditItemTemplate>
-                                    </asp:TemplateField>
-
-                                    <asp:CommandField ShowEditButton="True" ShowDeleteButton="True"
+                                        <asp:CommandField ShowEditButton="True" ShowDeleteButton="True"
                                         CausesValidation="false" EditText="<i class='fa-solid fa-pen-to-square'></i>"
                                         DeleteText="<i class='fa-solid fa-trash'></i>"
                                         UpdateText="<i class='fa-solid fa-file-arrow-up'></i>"
                                         CancelText="<i class='fa-solid fa-xmark'></i>"
-                                        ControlStyle-CssClass="btn btn-outline-primary m-1 text-white" ControlStyle-BackColor="#158396" />
-                                </Columns>
-                            </asp:GridView>
+                                            ControlStyle-CssClass="btn btn-outline-primary m-1 text-white" ControlStyle-BackColor="#158396" />
+                                    </Columns>
+                                </asp:GridView>
+                            </div>
                         </div>
                     </div>
-                </div>
             </div>
         </div>
     </div>

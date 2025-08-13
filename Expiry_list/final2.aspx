@@ -334,7 +334,7 @@
             const filterPane = document.getElementById("filterPane");
             if (filterPane) {
                 filterPane.style.display = <%= Panel1.Visible.ToString().ToLower() %> ? "block" : "none";
-          }
+            }
 
           initializeComponents();
           setupFilterToggle();

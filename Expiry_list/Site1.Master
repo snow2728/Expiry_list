@@ -45,21 +45,30 @@
 
     <!-- Bootstrap + Popper -->
     <script src='<%= ResolveUrl("~/bootstrap/js/popper.min.js") %>'></script>
+    <%-- <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>--%>
     <script src='<%= ResolveUrl("~/bootstrap/js/bootstrap.min.js") %>'></script>
+    <%-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.min.js"></script>--%>
 
     <!-- FontAwesome -->
     <script src='<%= ResolveUrl("~/fontawesome/js/all.min.js") %>'></script>
     <script src='<%= ResolveUrl("~/sweetalert/sweetalert2@11.js") %>'></script>
+    <%--<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>--%>
 
     <!-- Select2 -->
     <script src='<%= ResolveUrl("~/select2/select2.min.js") %>'></script>
+    <%--    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>--%>
+    <%--<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/plugins/select2-multi-checkboxes.js"></script>--%>
 
     <!-- SweetAlert & Moment -->
     <script src='<%= ResolveUrl("~/sweetalert/sweetalert.min.js") %>'></script>
     <script src='<%= ResolveUrl("~/sweetalert/moment.min.js") %>'></script>
 
+    <%--<script src="https://unpkg.com/sweetalert@2.1.2/dist/sweetalert.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>--%>
+
     <!-- Ajax Unobtrusive -->
     <script src='<%= ResolveUrl("~/jquery/jquery.unobtrusive-ajax.min.js") %>'></script>
+    <%-- <script src="https://cdn.jsdelivr.net/npm/jquery-ajax-unobtrusive@3.2.6/dist/jquery.unobtrusive-ajax.min.js"></script>--%>
 
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
@@ -121,80 +130,83 @@
                                     <% } %>
                              <%
                                 }
-                            else if (activeModule == "NegativeInventory" && permissions.ContainsKey("NegativeInventory"))
-                            {
-                                string perm = permissions["NegativeInventory"];
+                                else if (activeModule == "NegativeInventory" && permissions.ContainsKey("NegativeInventory"))
+                                {
+                                    string perm = permissions["NegativeInventory"];
                                    if (perm == "admin" || perm == "super" || perm == "edit")
                                    { %>
                                         <a href="balanceQty.aspx" class="nav-link <%= (currentPage == "balanceQty.aspx" ? "active" : "") %>">
                                             <i class="fas fa-minus-circle fa-sm"></i>Negative Inventory
                                         </a>
                                    <% }
-                            }
-                            else if (activeModule == "CarWay" && permissions.ContainsKey("CarWay"))
-                            {
-                                 string perm = permissions["CarWay"];
+                                    }
+                                }
+                                else if (activeModule == "CarWay" && permissions.ContainsKey("CarWay"))
+                                {
+                                    string perm = permissions["CarWay"];
                                    if (perm == "admin")
                                    { %>
                                         <a href="main1.aspx" class="nav-link <%= (currentPage == "main1.aspx" ? "active" : "") %>">
                                             <i class="fas fa-minus-circle fa-sm"></i>CarMain Page
                                         </a>
-                                        <a href="whView.aspx" class="nav-link <%= (currentPage == "whView.aspx" ? "active" : "") %>">
+                                         <a href="whView.aspx" class="nav-link <%= (currentPage == "whView.aspx" ? "active" : "") %>">
                                             <i class="fas fa-minus-circle fa-sm"></i>CarWay View Page 1
-                                        </a>
-                                        <a href="whView2.aspx" class="nav-link <%= (currentPage == "whView2.aspx" ? "active" : "") %>">
+                                         </a>
+                                         <a href="whView2.aspx" class="nav-link <%= (currentPage == "whView2.aspx" ? "active" : "") %>">
                                             <i class="fas fa-minus-circle fa-sm"></i>CarWay View Page 2
-                                        </a>
+                                         </a>
                                         <a href="dash2.aspx" class="nav-link <%= (currentPage == "dash2.aspx" ? "active" : "") %>">
                                             <i class="fas fa-minus-circle fa-sm"></i>CarWay View Page 3
                                         </a>
                                    <% }
-                            }
-                            else if (activeModule == "SystemSettings" && permissions.ContainsKey("SystemSettings"))
-                            {
-                                string perm = permissions["SystemSettings"];
-                                   if (perm == "admin")
+                                    }
+                                }
+                                    else if (activeModule == "SystemSettings" && permissions.ContainsKey("SystemSettings"))
+                                    {
+                                        string perm = permissions["SystemSettings"];
+                                        if (perm == "admin")
                                    { %>
-                                       <a href="regeForm1.aspx" class="nav-link <%= (currentPage == "regeForm1.aspx" ? "active" : "") %>">
+                                             <a href="regeForm1.aspx" class="nav-link <%= (currentPage == "regeForm1.aspx" ? "active" : "") %>">
                                           <i class="fa-solid fa-users-line"></i>User Creation
-                                       </a>
+                                             </a>
                                    <% }
-                            }
-                            else if (activeModule == "ReorderQuantity" && permissions.ContainsKey("ReorderQuantity"))
-                            {
-                                string perm = permissions["ReorderQuantity"];
-                        %>
+                                        }
+                                    }
+                                else if (activeModule == "ReorderQuantity" && permissions.ContainsKey("ReorderQuantity"))
+                                {
+                                    string perm = permissions["ReorderQuantity"];
+                            %>
                                 <% if (perm == "admin" || perm == "edit")
-                                   { %>
-                                    <a href="rege1.aspx" class="nav-link <%= (currentPage == "rege1.aspx" ? "active1" : "") %>">
+                                    { %>
+                                        <a href="rege1.aspx" class="nav-link <%= (currentPage == "rege1.aspx" ? "active1" : "") %>">
                                         <i class="fa-solid fa-right-to-bracket"></i>Reorder Registration
-                                    </a>
-                                <% } %>
-
+                                        </a>
+                                    <% } %>
+                                    
                                 <% if (perm == "super" || perm == "admin" || perm == "edit")
-                                   { %>
-                                    <a href="approval.aspx" class="nav-link <%= (currentPage == "approval.aspx" ? "active1" : "") %>">
+                                     { %>
+                                         <a href="approval.aspx" class="nav-link <%= (currentPage == "approval.aspx" ? "active1" : "") %>">
                                         <i class="fa-solid fa-square-check"></i>Approval List
-                                    </a>
-                                <% } %>
+                                         </a>
+                                     <% } %>
 
                                 <% if (perm == "admin" || perm == "view")
-                                   { %>
-                                    <a href="viewer1.aspx" class="nav-link <%= (currentPage == "viewer1.aspx" ? "active1" : "") %>">
+                                     { %>
+                                            <a href="viewer1.aspx" class="nav-link <%= (currentPage == "viewer1.aspx" ? "active1" : "") %>">
                                         <i class="fa-solid fa-list"></i>Reorder Qty List
-                                    </a>
-                                <% } %>
+                                           </a>
+                                     <% } %>
 
                                 <% if (perm == "edit" || perm == "super")
-                                   { %>
-                                    <a href="viewer2.aspx" class="nav-link <%= (currentPage == "viewer2.aspx" ? "active1" : "") %>">
+                                    { %>
+                                        <a href="viewer2.aspx" class="nav-link <%= (currentPage == "viewer2.aspx" ? "active1" : "") %>">
                                         <i class="fa-solid fa-list"></i>Reorder Qty List
-                                    </a>
-                                <% } %>
+                                        </a>
+                                    <% } %>
 
                                 <% if (perm == "admin" || perm == "edit" || perm == "view" || perm == "super")
-                                   { %>
-                                    <a href="viewer3.aspx" class="nav-link <%= (currentPage == "viewer3.aspx" ? "active1" : "") %>">
+                                    { %>
+                                          <a href="viewer3.aspx" class="nav-link <%= (currentPage == "viewer3.aspx" ? "active1" : "") %>">
                                         <i class="fa-solid fa-list-check"></i>Completed Qty List
                                     </a>
                                 <% } %>
@@ -228,8 +240,8 @@
                                 { %>
                                     <a href="viewer3.aspx" class="nav-link <%= (currentPage == "viewer3.aspx" ? "active2" : "") %>">
                                         <i class="fas fa-check-circle fa-sm"></i>Confirmed Item
-                                    </a>
-                                <% } %>
+                                          </a>
+                                    <% } %>
                         <% }
                             else if (activeModule == "TrainingList" && permissions.ContainsKey("TrainingList"))
                             {
@@ -315,14 +327,15 @@
                                     <asp:HyperLink runat="server" CssClass="dropdown-item d-flex align-items-center gap-2 fa-1x"
                                         NavigateUrl="~/loginPage.aspx"
                                         Style="transition: all 0.3s ease; color: white;">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    <span>Logout</span>
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Logout</span>
                                     </asp:HyperLink>
                                 </li>
                             </ul>
                         </asp:Panel>
                     </div>
                 </div>
+
             </div>
         </nav>
 
@@ -333,22 +346,23 @@
             </div>
             <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server"></asp:ContentPlaceHolder>
         </div>
+
     </form>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const nav = document.querySelector(".navbar");
-            const profile = document.querySelector(".userDropdown1");
+            document.addEventListener("DOMContentLoaded", function () {
+                const nav = document.querySelector(".navbar");
+                    const profile = document.querySelector(".userDropdown1");
             const profile2 = document.querySelector(".schedule1");
-            const path = window.location.pathname.toLowerCase();
+                    const path = window.location.pathname.toLowerCase();
 
-            const reorderPages = [
-                "/reorderform/rege1.aspx",
-                "/reorderform/viewer1.aspx",
-                "/reorderform/viewer2.aspx",
-                "/reorderform/viewer3.aspx",
-                "/reorderform/approval.aspx"
-            ];
+                    const reorderPages = [
+                    "/reorderform/rege1.aspx",
+                    "/reorderform/viewer1.aspx",
+                    "/reorderform/viewer2.aspx",
+                    "/reorderform/viewer3.aspx",
+                    "/reorderform/approval.aspx"
+                    ];
 
             const consignPages = [
                 "/consignitem/rege1.aspx",
@@ -369,7 +383,7 @@
                 "/training/schedulelist.aspx"
             ];
 
-            if (reorderPages.includes(path)) {
+                    if (reorderPages.includes(path)) {
                 if (nav) nav.style.backgroundColor = "#A10D54";
                 if (profile) profile.style.backgroundColor = "#A10D54";
             } else if (consignPages.includes(path)) {
@@ -379,8 +393,8 @@
                 if (nav) nav.style.backgroundColor = "#022F56";
                 if (profile) profile.style.backgroundColor = "#022F56";
                 if (profile2) profile.style.backgroundColor = "#022F56";
-            }
-        });
+                }
+            });
     </script>
 
     <%-- ှ့Showing Errors when Jquery is not work properly 

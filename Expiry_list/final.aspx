@@ -17,6 +17,7 @@
                 InitializeStoreFilter();
             }
 
+            // Hook into ASP.NET AJAX postback
             if (typeof (Sys) !== 'undefined') {
                 Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
                     updateFilterVisibility();
@@ -26,6 +27,7 @@
                         InitializeStoreFilter();
                     }
 
+                    // Reattach filter checkbox change handlers
                     Object.keys(filterMap).forEach(key => {
                         const checkbox = document.getElementById(filterMap[key].checkboxId);
                         if (checkbox) {
@@ -181,15 +183,18 @@
             const monthInput = document.getElementById("monthFilter");
             const now = new Date();
             const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0'); 
             monthInput.value = `${year}-${month}`;
 
             const filterPane = document.getElementById("filterPane");
             if (filterPane) {
+                // Use server-side ViewState value or default to 'none'
                 filterPane.style.display = "<%= ViewState["FilterPanelVisible"] != null ? (bool)ViewState["FilterPanelVisible"] ? "block" : "none" : "none" %>";
             }
 
             updateLocationPillsDisplay();
+
+            // Set up event listeners
             const listBox = document.getElementById('<%= lstStoreFilter.ClientID %>');
             if (listBox) {
                 listBox.addEventListener('change', updateLocationPillsDisplay);
@@ -210,8 +215,8 @@
                  '<%= filterStaff.ClientID %>': '<%= staffFilterGroup.ClientID %>',
                  '<%= filterBatch.ClientID %>': '<%= batchFilterGroup.ClientID %>',
                  '<%= filterVendor.ClientID %>': '<%= vendorFilterGroup.ClientID %>',
-                '<%= filterRegistrationDate.ClientID %>': '<%= regeDateFilterGroup.ClientID %>'
-            };
+                 '<%= filterRegistrationDate.ClientID %>': '<%= regeDateFilterGroup.ClientID %>'
+             };
 
              Object.entries(filterMappings).forEach(([checkboxId, filterGroupId]) => {
                  const checkbox = document.getElementById(checkboxId);
@@ -227,7 +232,7 @@
              });
         }
 
-       function initializeFilterVisibility() {
+        function initializeFilterVisibility() {
             const filterMap = {
                 action: {
                     checkboxId: '<%= filterAction.ClientID %>',
@@ -236,38 +241,38 @@
                 },
                 status: {
                     checkboxId: '<%= filterStatus.ClientID %>',
-                     groupId: '<%= statusFilterGroup.ClientID %>'
-                            },
+                    groupId: '<%= statusFilterGroup.ClientID %>'
+                },
                 store: {
-                     checkboxId: '<%= filterStore.ClientID %>',
-                     groupId: '<%= storeFilterGroup.ClientID %>'
-                            },
+                    checkboxId: '<%= filterStore.ClientID %>',
+                    groupId: '<%= storeFilterGroup.ClientID %>'
+                },
                 item: {
-                     checkboxId: '<%= filterItem.ClientID %>',
-                     groupId: '<%= itemFilterGroup.ClientID %>'
-                            },
+                    checkboxId: '<%= filterItem.ClientID %>',
+                    groupId: '<%= itemFilterGroup.ClientID %>'
+                },
                 vendor: {
-                     checkboxId: '<%= filterVendor.ClientID %>',
-                     groupId: '<%= vendorFilterGroup.ClientID %>'
-                 },
-                 expiryDate: { 
-                     checkboxId: '<%= filterExpiryDate.ClientID %>', 
-                     groupId: '<%= expiryDateFilterGroup.ClientID %>'
-                 },
-                 staff: { 
-                     checkboxId: '<%= filterStaff.ClientID %>', 
-                     groupId: '<%= staffFilterGroup.ClientID %>'
-                 },
-                 batch: { 
-                     checkboxId: '<%= filterBatch.ClientID %>',
-                     groupId: '<%= batchFilterGroup.ClientID %>'
-                 },
-                 registrationDate: { 
-                     checkboxId: '<%= filterRegistrationDate.ClientID %>',
+                    checkboxId: '<%= filterVendor.ClientID %>',
+                    groupId: '<%= vendorFilterGroup.ClientID %>'
+                },
+                expiryDate: { 
+                    checkboxId: '<%= filterExpiryDate.ClientID %>', 
+                    groupId: '<%= expiryDateFilterGroup.ClientID %>'
+                },
+                staff: { 
+                    checkboxId: '<%= filterStaff.ClientID %>', 
+                    groupId: '<%= staffFilterGroup.ClientID %>'
+                },
+                batch: { 
+                    checkboxId: '<%= filterBatch.ClientID %>', 
+                    groupId: '<%= batchFilterGroup.ClientID %>'
+                },
+                registrationDate: { 
+                    checkboxId: '<%= filterRegistrationDate.ClientID %>', 
                     groupId: '<%= regeDateFilterGroup.ClientID %>'
                 }
             };
-       
+
 
             Object.keys(filterMap).forEach(key => {
                 const mapping = filterMap[key];
@@ -275,6 +280,8 @@
                 const filterGroup = document.getElementById(mapping.groupId);
 
                 if (checkbox && filterGroup) {
+                    // Set initial visibility
+                    filterGroup.style.display = checkbox.checked ? "block" : "none";
 
                     filterGroup.style.display = checkbox.checked ? "block" : "none";
                     checkbox.addEventListener("change", function () {
@@ -296,20 +303,20 @@
                  '<%= filterBatch.ClientID %>': '<%= batchFilterGroup.ClientID %>',
                  '<%= filterVendor.ClientID %>': '<%= vendorFilterGroup.ClientID %>',
                 '<%= filterRegistrationDate.ClientID %>': '<%= regeDateFilterGroup.ClientID %>'
-            };
+           };
 
-            Object.entries(filterMappings).forEach(([checkboxId, filterGroupId]) => {
-                const checkbox = document.getElementById(checkboxId);
-                const filterGroup = document.getElementById(filterGroupId);
+           Object.entries(filterMappings).forEach(([checkboxId, filterGroupId]) => {
+               const checkbox = document.getElementById(checkboxId);
+               const filterGroup = document.getElementById(filterGroupId);
 
-                if (checkbox && filterGroup) {
-                    filterGroup.style.display = checkbox.checked ? "block" : "none";
+               if (checkbox && filterGroup) {
+                   filterGroup.style.display = checkbox.checked ? "block" : "none";
 
-                    checkbox.addEventListener("change", function () {
-                        filterGroup.style.display = this.checked ? "block" : "none";
-                    });
-                }
-            });
+                   checkbox.addEventListener("change", function () {
+                       filterGroup.style.display = this.checked ? "block" : "none";
+                   });
+               }
+           });
         }
 
         function toggleFilter() {
@@ -322,41 +329,41 @@
                 gridCol.classList.add("col-md-10");
 
                 document.getElementById("<%= btnExport.ClientID %>").style.display = "block";
-                 document.getElementById("<%= excel.ClientID %>").style.display = "none";
-             } else {
-                 filterPane.style.display = "none";
-                 gridCol.classList.remove("col-md-10");
-                 gridCol.classList.add("col-md-12");
+                document.getElementById("<%= excel.ClientID %>").style.display = "none";
+            } else {
+                filterPane.style.display = "none";
+                gridCol.classList.remove("col-md-10");
+                gridCol.classList.add("col-md-12");
 
-                 document.getElementById("<%= excel.ClientID %>").style.display = "block";
-                 document.getElementById("<%= btnExport.ClientID %>").style.display = "none";
+                document.getElementById("<%= excel.ClientID %>").style.display = "block";
+                document.getElementById("<%= btnExport.ClientID %>").style.display = "none";
             }
         }
 
         const filterMap = {
             action: {
                 checkboxId: '<%= filterAction.ClientID %>',
-                controlId: '<%= ddlActionFilter.ClientID %>',
-                groupId: '<%= actionFilterGroup.ClientID %>'
-            },
-            status: {
-                checkboxId: '<%= filterStatus.ClientID %>',
-                 controlId: '<%= ddlStatusFilter.ClientID %>',
-                 groupId: '<%= statusFilterGroup.ClientID %>'
-                    },
-            store: {
-                  checkboxId: '<%= filterStore.ClientID %>',
-                 controlId: '<%= lstStoreFilter.ClientID %>',
-                 groupId: '<%= storeFilterGroup.ClientID %>'
-                    },
-            item: {
+                 controlId: '<%= ddlActionFilter.ClientID %>',
+                 groupId: '<%= actionFilterGroup.ClientID %>'
+             },
+             status: {
+                 checkboxId: '<%= filterStatus.ClientID %>',
+                controlId: '<%= ddlStatusFilter.ClientID %>',
+                groupId: '<%= statusFilterGroup.ClientID %>'
+             },
+             store: {
+                 checkboxId: '<%= filterStore.ClientID %>',
+                controlId: '<%= lstStoreFilter.ClientID %>',
+                groupId: '<%= storeFilterGroup.ClientID %>'
+             },
+             item: {
                  checkboxId: '<%= filterItem.ClientID %>',
-                 controlId: '<%= item.ClientID %>',
-                 groupId: '<%= itemFilterGroup.ClientID %>'
-                    },
+                controlId: '<%= item.ClientID %>',
+                groupId: '<%= itemFilterGroup.ClientID %>'
+             },
              vendor: {
-                        checkboxId: '<%= filterVendor.ClientID %>',
-                 controlId: '<%= vendor.ClientID %>',
+                 checkboxId: '<%= filterVendor.ClientID %>',
+                controlId: '<%= vendor.ClientID %>',
                  groupId: '<%= vendorFilterGroup.ClientID %>'
              },
              expiryDate: { 
@@ -701,17 +708,18 @@
                 filterPane.style.display = <%= Panel1.Visible.ToString().ToLower() %> ? "block" : "none";
           }
 
-            initializeComponents();
-            setupFilterToggle();
+          // Rest of your initialization code...
+          initializeComponents();
+          setupFilterToggle();
             setupEventDelegation();
 
             if (canViewOnly) {
-                InitializeStoreFilter();
+          InitializeStoreFilter();
             }
 
-            InitializeItemVendorFilter();
+          InitializeItemVendorFilter();
             setupFilterToggle();
-        });
+      });
 
 
         function refreshDataTable() {
@@ -730,7 +738,7 @@
     </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
- <%
+    <%
      var permissions = Session["formPermissions"] as Dictionary<string, string>;
      string expiryPerm = permissions != null && permissions.ContainsKey("ExpiryList") ? permissions["ExpiryList"] : null;
      bool canViewOnly = !string.IsNullOrEmpty(expiryPerm) && expiryPerm != "edit";

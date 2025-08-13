@@ -167,6 +167,15 @@
                                               <ItemStyle HorizontalAlign="Justify" />
                                           </asp:TemplateField>
 
+                                      <%--<asp:TemplateField HeaderText="Serial No" SortExpression="srno" HeaderStyle-ForeColor="White" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify">
+                                          <ItemTemplate>
+                                              <asp:Label ID="srno" runat="server" Text='<%# Eval("srno") %>' />
+                                          </ItemTemplate>
+                                          <ControlStyle Width="120px" />
+                                          <HeaderStyle ForeColor="White" BackColor="Gray" />
+                                          <ItemStyle HorizontalAlign="Justify" />
+                                      </asp:TemplateField>--%>
+
                                      <asp:TemplateField HeaderText="Item No" SortExpression="ItemNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify">
                                       <ItemTemplate>
                                        <asp:Label ID="itemNo" runat="server" Text='<%# Eval("ItemNo") %>' />

@@ -74,6 +74,36 @@ namespace Expiry_list
             }
         }
 
+        private string GetLoggedInUserStoreName()
+        {
+            int storeId = Convert.ToInt32(Session["storeNo"] ?? 0);
+
+            if (storeId == 0 || Session["storeNo"] == null)
+            {
+                Response.Redirect("login.aspx");
+                return null;
+            }
+
+            string storeName = null;
+            string query = "SELECT StoreNo FROM Stores WHERE id = @StoreId";
+
+            using (SqlConnection conn = new SqlConnection(strcon))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@StoreId", storeId);
+                conn.Open();
+
+                storeName = cmd.ExecuteScalar()?.ToString();
+            }
+
+            if (string.IsNullOrEmpty(storeName))
+            {
+                Response.Write("Error: StoreName not found.<br>");
+            }
+
+            return storeName;
+        }
+
         private void RespondWithData()
         {
             using (SqlConnection conn = new SqlConnection(strcon))

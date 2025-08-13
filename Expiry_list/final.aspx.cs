@@ -146,11 +146,11 @@ namespace Expiry_list
                 }
 
                 string[] columns = {
-            "id", "no", "itemNo", "description", "barcodeNo", "qty", "uom",
-            "packingInfo", "expiryDate", "storeNo", "staffName", "batchNo",
-            "vendorNo", "vendorName", "regeDate", "action", "status", "note",
-            "remark", "completedDate"
-        };
+                    "id", "no", "itemNo", "description", "barcodeNo", "qty", "uom",
+                    "packingInfo", "expiryDate", "storeNo", "staffName", "batchNo",
+                    "vendorNo", "vendorName", "regeDate", "action", "status", "note",
+                    "remark", "completedDate"
+                };
                 string orderBy = columns.ElementAtOrDefault(orderColumnIndex) ?? "id";
 
                 string dataQuery = $@"
@@ -632,6 +632,7 @@ namespace Expiry_list
                 cmd.Parameters.AddWithValue("@PageSize", pageSize);
 
                 // Execute and bind
+
                 conn.Open();
                 DataTable dt = new DataTable();
                 using (SqlDataAdapter da = new SqlDataAdapter(cmd))

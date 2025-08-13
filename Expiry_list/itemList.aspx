@@ -700,13 +700,13 @@
                                 OnClientClick="toggleFilter(); return false;" />
                         </div>
 
-                         <!-- Edit Button -->
-                         <div class="col-6 col-md-auto">
-                             <asp:Button Text="Edit" runat="server"
-                                 CssClass="btn btn-secondary text-white w-100 py-2"
-                                 ID="btnEdit"
-                                 OnClick="btnEdit_Click" />
-                         </div>
+                        <!-- Edit Button -->
+                        <div class="col-6 col-md-auto">
+                            <asp:Button Text="Edit" runat="server"
+                                CssClass="btn btn-secondary text-white w-100 py-2"
+                                ID="btnEdit"
+                                OnClick="btnEdit_Click" />
+                        </div>
 
                           <%
                             var panelPermissions = Session["formPermissions"] as Dictionary<string, string>;
@@ -716,48 +716,48 @@
 
                          <% if (panelCanViewOnly) { %>
         
-                                  <!-- Action Dropdown -->
-                                   <div class="col-12 col-md-auto">
-                                       <asp:DropDownList ID="ddlAction" runat="server" 
-                                           CssClass="form-select w-100 py-2">
-                                          <asp:ListItem Text="-- Select Action --" Value="0" />
-                                          <asp:ListItem Text="Informed To Supplier" Value="1" />
-                                          <asp:ListItem Text="Informed To Owner" Value="2" />
-                                          <asp:ListItem Text="Supplier Sales" Value="3" />
-                                          <asp:ListItem Text="Owner Sales" Value="4" />
-                                          <asp:ListItem Text="Store's Responsibility" Value="5" />
-                                          <asp:ListItem Text="Store Exchange" Value="6" />
-                                          <asp:ListItem Text="Store Return" Value="7" />
-                                          <asp:ListItem Text="No Date To Check" Value="8" />
-                                      </asp:DropDownList>
-                                </div>
+                        <!-- Action Dropdown -->
+                        <div class="col-12 col-md-auto">
+                            <asp:DropDownList ID="ddlAction" runat="server" 
+                                CssClass="form-select w-100 py-2">
+                               <asp:ListItem Text="-- Select Action --" Value="0" />
+                               <asp:ListItem Text="Informed To Supplier" Value="1" />
+                               <asp:ListItem Text="Informed To Owner" Value="2" />
+                               <asp:ListItem Text="Supplier Sales" Value="3" />
+                               <asp:ListItem Text="Owner Sales" Value="4" />
+                               <asp:ListItem Text="Store's Responsibility" Value="5" />
+                               <asp:ListItem Text="Store Exchange" Value="6" />
+                               <asp:ListItem Text="Store Return" Value="7" />
+                               <asp:ListItem Text="No Date To Check" Value="8" />
+                           </asp:DropDownList>
+                     </div>
 
-                                   <div class="col-12 col-md-auto">
-                                       <asp:Button ID="btnUpdateSelected" runat="server"
-                                           CssClass="btn text-white w-100 py-2"
-                                           style="background:#1995ad;"
-                                           Text="Update Action"
-                                           OnClick="btnUpdateSelected_Click" />
-                                   </div>
+                        <div class="col-12 col-md-auto">
+                            <asp:Button ID="btnUpdateSelected" runat="server"
+                                CssClass="btn text-white w-100 py-2"
+                                style="background:#1995ad;"
+                                Text="Update Action"
+                                OnClick="btnUpdateSelected_Click" />
+                        </div>
 
-                                     <div class="col-12 col-md-auto">
-                                       <asp:DropDownList ID="ddlStatus" runat="server"
-                                           CssClass="form-select w-100 py-2">
-                                          <asp:ListItem Text="-- Select Status --" Value="0" />
-                                          <asp:ListItem Value="1" Text="Progess" />
-                                          <asp:ListItem Value="2" Text="Exchange" />
-                                          <asp:ListItem Value="3" Text="No Exchange" />
-                                          <asp:ListItem Value="4" Text="No Action" />
-                                      </asp:DropDownList>
-                                     </div>
+                          <div class="col-12 col-md-auto">
+                            <asp:DropDownList ID="ddlStatus" runat="server"
+                                CssClass="form-select w-100 py-2">
+                               <asp:ListItem Text="-- Select Status --" Value="0" />
+                               <asp:ListItem Value="1" Text="Progess" />
+                               <asp:ListItem Value="2" Text="Exchange" />
+                               <asp:ListItem Value="3" Text="No Exchange" />
+                               <asp:ListItem Value="4" Text="No Action" />
+                           </asp:DropDownList>
+                          </div>
 
-                                      <div class="col-12 col-md-auto">
-                                           <asp:Button ID="btnStatusSelected" runat="server"
-                                               CssClass="btn text-white w-100 py-2"
-                                               style="background:#1995ad;"
-                                               Text="Update Status"
-                                               OnClick="btnStatusSelected_Click" />
-                                       </div>
+                           <div class="col-12 col-md-auto">
+                                <asp:Button ID="btnStatusSelected" runat="server"
+                                    CssClass="btn text-white w-100 py-2"
+                                    style="background:#1995ad;"
+                                    Text="Update Status"
+                                    OnClick="btnStatusSelected_Click" />
+                            </div>
 
                          <% } %>
 
@@ -874,7 +874,7 @@
                                                 <div class="form-group mt-3 filter-group" id="storeFilterGroup" runat="server" style="display:none">
                                                     <label for="<%=lstStoreFilter.ClientID %>">Location</label>
                                                     <%--<asp:ListBox ID="lstStoreFilter" runat="server" CssClass="form-control select2-multi-check" SelectionMode="Multiple"></asp:ListBox>--%>
-                                               
+            
                                                     <asp:ListBox ID="lstStoreFilter" runat="server" CssClass="form-control select2-multi-check" 
                                                         SelectionMode="Multiple" style="display:none"></asp:ListBox>
    
@@ -1063,9 +1063,9 @@
                                         </asp:TemplateField>
 
                                      <asp:TemplateField HeaderText="Qty" SortExpression="qty" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-7">
-                                       <ItemTemplate>
-                                           <asp:Label ID="lblQty" runat="server" Text='<%# Eval("qty") %>' />
-                                       </ItemTemplate>
+                                            <ItemTemplate>
+                                                <asp:Label ID="lblQty" runat="server" Text='<%# Eval("qty") %>' />
+                                            </ItemTemplate>
                                        <EditItemTemplate>
                                            <asp:PlaceHolder ID="phEditQty" runat="server" Visible='<%# (Eval("FormPermission") != DBNull.Value ? Eval("FormPermission").ToString() : "") == "super1" %>'>
                                                <asp:TextBox ID="txtQty" runat="server" Text='<%# Bind("qty") %>' CssClass="form-control" />
@@ -1074,10 +1074,10 @@
                                                <asp:Label ID="lblQty" runat="server" Text='<%# Eval("qty") %>' />
                                            </asp:PlaceHolder>
                                        </EditItemTemplate>
-                                       <ControlStyle Width="97px" />
-                                       <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                       <ItemStyle HorizontalAlign="Justify" />
-                                    </asp:TemplateField>
+                                            <ControlStyle Width="97px" />
+                                            <HeaderStyle ForeColor="White" BackColor="Gray" />
+                                            <ItemStyle HorizontalAlign="Justify" />
+                                        </asp:TemplateField>
 
                                         <asp:TemplateField HeaderText="UOM" SortExpression="uom" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-8">
                                             <ItemTemplate>
@@ -1127,9 +1127,9 @@
                                                       Text='<%# Eval("expiryDate") != DBNull.Value ? String.Format("{0:MMM/yyyy}", Eval("expiryDate")) : "" %>' />
                                               </asp:PlaceHolder>
                                           </EditItemTemplate>
-                                          <ControlStyle Width="120px" />
-                                          <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                          <ItemStyle HorizontalAlign="Justify" />
+                                            <ControlStyle Width="120px" />
+                                            <HeaderStyle ForeColor="White" BackColor="Gray" />
+                                            <ItemStyle HorizontalAlign="Justify" />
                                         </asp:TemplateField>
 
                                         <asp:TemplateField HeaderText="Location" SortExpression="storeNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-51">
@@ -1151,9 +1151,9 @@
                                         </asp:TemplateField>
 
                                         <asp:TemplateField HeaderText="Batch No" SortExpression="batchNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-53">
-                                          <ItemTemplate>
+                                            <ItemTemplate>
                                               <asp:Label ID="lblBatchNo" runat="server" Text='<%# Eval("batchNo") != DBNull.Value ? Eval("batchNo").ToString() : "" %>' />
-                                          </ItemTemplate>
+                                            </ItemTemplate>
                                           <EditItemTemplate>
                                               <asp:PlaceHolder ID="phEditBatchNo" runat="server" Visible='<%# (Eval("FormPermission") != DBNull.Value ? Eval("FormPermission").ToString() : "") == "super1" %>'>
                                                   <asp:TextBox ID="txtBatchNo" runat="server" Text='<%# Bind("batchNo") %>' CssClass="form-control" />
@@ -1162,9 +1162,9 @@
                                                   <asp:Label ID="lblBatchNo" runat="server" Text='<%# Eval("batchNo") != DBNull.Value ? Eval("batchNo").ToString() : "" %>' />
                                               </asp:PlaceHolder>
                                           </EditItemTemplate>
-                                          <ControlStyle Width="120px" />
-                                          <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                          <ItemStyle HorizontalAlign="Justify" />
+                                            <ControlStyle Width="120px" />
+                                            <HeaderStyle ForeColor="White" BackColor="Gray" />
+                                            <ItemStyle HorizontalAlign="Justify" />
                                         </asp:TemplateField>
 
                                         <asp:TemplateField HeaderText="Vendor No" SortExpression="vendorNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-54">
@@ -1198,17 +1198,17 @@
                                             <EditItemTemplate>
                                                  <!-- Show dropdown only for view-only users -->
                                                  <asp:PlaceHolder runat="server" Visible='<%# (Eval("FormPermission") != DBNull.Value ? Eval("FormPermission").ToString() : "") != "super1" %>'>
-                                                     <asp:DropDownList ID="ddlActionEdit" runat="server">
-                                                        <asp:ListItem Text="-- Select Action --" Value="0" />
-                                                        <asp:ListItem Text="Informed To Supplier" Value="1" />
-                                                        <asp:ListItem Text="Informed To Owner" Value="2" />
-                                                        <asp:ListItem Text="Supplier Sales" Value="3" />
-                                                        <asp:ListItem Text="Owner Sales" Value="4" />
-                                                        <asp:ListItem Text="Store's Responsibility" Value="5" />
-                                                        <asp:ListItem Text="Store Exchange" Value="6" />
-                                                        <asp:ListItem Text="Store Return" Value="7" />
-                                                        <asp:ListItem Text="No Date To Check" Value="8" />
-                                                    </asp:DropDownList>
+                                                <asp:DropDownList ID="ddlActionEdit" runat="server">
+                                                    <asp:ListItem Text="-- Select Action --" Value="0" />
+                                                    <asp:ListItem Text="Informed To Supplier" Value="1" />
+                                                    <asp:ListItem Text="Informed To Owner" Value="2" />
+                                                    <asp:ListItem Text="Supplier Sales" Value="3" />
+                                                    <asp:ListItem Text="Owner Sales" Value="4" />
+                                                    <asp:ListItem Text="Store's Responsibility" Value="5" />
+                                                    <asp:ListItem Text="Store Exchange" Value="6" />
+                                                    <asp:ListItem Text="Store Return" Value="7" />
+                                                    <asp:ListItem Text="No Date To Check" Value="8" />
+                                                </asp:DropDownList>
                                                  </asp:PlaceHolder>
         
                                                  <!-- Show read-only label for edit-permission users -->
@@ -1228,13 +1228,13 @@
                                         <asp:TemplateField HeaderText="Status" SortExpression="status" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-58">
                                             <EditItemTemplate>
                                                  <asp:PlaceHolder runat="server" Visible='<%# (Eval("FormPermission") != DBNull.Value ? Eval("FormPermission").ToString() : "") != "super1" %>'>
-                                                     <asp:DropDownList ID="ddlStatusEdit" runat="server">
-                                                        <asp:ListItem Text="-- Select Status --" Value="0" />
-                                                        <asp:ListItem Value="1" Text="Progress"></asp:ListItem>
-                                                        <asp:ListItem Value="2" Text="Exchange"></asp:ListItem>
-                                                        <asp:ListItem Value="3" Text="No Exchange"></asp:ListItem>
-                                                        <asp:ListItem Value="4" Text="No Action"></asp:ListItem>
-                                                    </asp:DropDownList>
+                                                <asp:DropDownList ID="ddlStatusEdit" runat="server">
+                                                    <asp:ListItem Text="-- Select Status --" Value="0" />
+                                                    <asp:ListItem Value="1" Text="Progress"></asp:ListItem>
+                                                    <asp:ListItem Value="2" Text="Exchange"></asp:ListItem>
+                                                    <asp:ListItem Value="3" Text="No Exchange"></asp:ListItem>
+                                                    <asp:ListItem Value="4" Text="No Action"></asp:ListItem>
+                                                </asp:DropDownList>
                                                  </asp:PlaceHolder>
         
                                                  <!-- Show read-only label for edit-permission users -->
@@ -1261,7 +1261,7 @@
                                         </asp:TemplateField>
 
                                         <asp:TemplateField HeaderText="Remark" SortExpression="remark" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-60">
-                                           <ItemTemplate>
+                                            <ItemTemplate>
                                                 <asp:Label ID="lblRemark" runat="server" Text='<%# Eval("Remark") %>'></asp:Label>
                                             </ItemTemplate>
                                             <EditItemTemplate>
@@ -1283,7 +1283,7 @@
                                             </ItemTemplate>
                                             <EditItemTemplate>
                                                 <asp:PlaceHolder ID="phEditCompleted" runat="server" Visible='<%# (Eval("FormPermission") != DBNull.Value ? Eval("FormPermission").ToString() : "") != "super1" %>'>
-                                                    <asp:TextBox ID="txtCompleted" runat="server" type="date" Text='<%# Bind("completedDate", "{0:yyyy-MM-dd}") %>' Width="157px"></asp:TextBox>
+                                                <asp:TextBox ID="txtCompleted" runat="server" type="date" Text='<%# Bind("completedDate", "{0:yyyy-MM-dd}") %>' Width="157px"></asp:TextBox>
                                                 </asp:PlaceHolder>
                                                 <asp:PlaceHolder ID="phLabelCompleted" runat="server" Visible='<%# (Eval("FormPermission") != DBNull.Value ? Eval("FormPermission").ToString() : "") == "super1" %>'>
                                                     <asp:Label ID="lblCompletedEdit" runat="server" type="date" Text='<%# Eval("completedDate", "{0:yyyy-MM-dd}") %>' Width="157px"></asp:Label>
@@ -1298,9 +1298,9 @@
                                           EditText="-" UpdateText="<i class='fa-solid fa-file-arrow-up'></i>"
                                           CancelText="<i class='fa-solid fa-xmark'></i>">
                                           <ControlStyle CssClass="btn m-1 text-white" Width="105px" BackColor="#1995ad" />
-                                          <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                          <ItemStyle HorizontalAlign="Justify" />
-                                      </asp:CommandField>
+                                            <HeaderStyle ForeColor="White" BackColor="Gray" />
+                                            <ItemStyle HorizontalAlign="Justify" />
+                                        </asp:CommandField>
 
                                     </Columns>
 
