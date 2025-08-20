@@ -33,13 +33,22 @@ namespace Expiry_list.Training
         protected global::System.Web.UI.WebControls.TextBox timeTb;
 
         /// <summary>
-        /// topicDp control.
+        /// topicName control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox topicDp;
+        protected global::System.Web.UI.WebControls.DropDownList topicName;
+
+        /// <summary>
+        /// RequiredFieldValidator1 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator RequiredFieldValidator1;
 
         /// <summary>
         /// locationDp control.

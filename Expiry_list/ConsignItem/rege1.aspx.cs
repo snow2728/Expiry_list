@@ -225,45 +225,45 @@ namespace Expiry_list.ConsignItem
                         i.ItemNo LIKE @SearchTerm OR 
                         i.description LIKE @SearchTerm OR 
                         b.barcodeNo LIKE @SearchTerm)", con))
+                    {
+                        cmd.Parameters.AddWithValue("@vendorNo", request.vendorNo);
+                        cmd.Parameters.AddWithValue("@SearchTerm", "%" + (request.searchTerm ?? "") + "%");
+
+                        using (var reader = cmd.ExecuteReader())
                         {
-                            cmd.Parameters.AddWithValue("@vendorNo", request.vendorNo);
-                            cmd.Parameters.AddWithValue("@SearchTerm", "%" + (request.searchTerm ?? "") + "%");
-
-                            using (var reader = cmd.ExecuteReader())
+                            while (reader.Read())
                             {
-                                while (reader.Read())
+                                var itemNo = reader["ItemNo"].ToString();
+                                var barcode = reader["barcodeNo"]?.ToString();
+
+                                if (!items.TryGetValue(itemNo, out var item))
                                 {
-                                    var itemNo = reader["ItemNo"].ToString();
-                                    var barcode = reader["barcodeNo"]?.ToString();
-
-                                    if (!items.TryGetValue(itemNo, out var item))
+                                    item = new ItemDTO
                                     {
-                                        item = new ItemDTO
-                                        {
-                                            ItemNo = itemNo,
-                                            ItemDescription = reader["description"].ToString(),
-                                            UOM = reader["uom"].ToString(),
-                                            PackingInfo = reader["packingInfo"].ToString(),
-                                            Barcode = new List<string>()
-                                        };
-                                        items.Add(itemNo, item);
-                                    }
+                                        ItemNo = itemNo,
+                                        ItemDescription = reader["description"].ToString(),
+                                        UOM = reader["uom"].ToString(),
+                                        PackingInfo = reader["packingInfo"].ToString(),
+                                        Barcode = new List<string>()
+                                    };
+                                    items.Add(itemNo, item);
+                                }
 
-                                    if (!string.IsNullOrEmpty(barcode) && !item.Barcode.Contains(barcode))
-                                    {
-                                        item.Barcode.Add(barcode);
-                                    }
+                                if (!string.IsNullOrEmpty(barcode) && !item.Barcode.Contains(barcode))
+                                {
+                                    item.Barcode.Add(barcode);
                                 }
                             }
                         }
                     }
-
-                    return items.Values.ToList();
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Trace.TraceError($"GetItems error: {ex}");
-                    return new List<ItemDTO> {
+
+                return items.Values.ToList();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError($"GetItems error: {ex}");
+                return new List<ItemDTO> {
                     new ItemDTO {
                         ItemNo = "ERROR",
                         ItemDescription = "An error occurred: " + ex.Message
@@ -357,11 +357,27 @@ namespace Expiry_list.ConsignItem
                 dt.Columns.Add("StaffName", typeof(string));
                 dt.Columns.Add("Note", typeof(string));
                 dt.Columns.Add("registrationDate", typeof(DateTime));
+                dt.Columns.Add("VendorNo", typeof(string)); // Add this
+                dt.Columns.Add("VendorName", typeof(string)); // Add this
+            }
+            else
+            {
+                // Check if VendorNo column exists, add if not
+                if (!dt.Columns.Contains("VendorNo"))
+                {
+                    dt.Columns.Add("VendorNo", typeof(string));
+                }
+
+                // Check if VendorName column exists, add if not
+                if (!dt.Columns.Contains("VendorName"))
+                {
+                    dt.Columns.Add("VendorName", typeof(string));
+                }
             }
 
             // Check if item already exists in the DataTable
             bool itemExists = dt.AsEnumerable().Any(row =>
-                row["ItemNo"].ToString() == itemNo.SelectedValue );
+                row["ItemNo"].ToString() == itemNo.SelectedValue);
 
             if (!itemExists)
             {
@@ -378,10 +394,12 @@ namespace Expiry_list.ConsignItem
                 newRow["StaffName"] = staffName.Text;
                 newRow["registrationDate"] = DateTime.Now;
                 newRow["Note"] = note.Text;
+                newRow["VendorNo"] = vendorNo.SelectedValue; // Add vendor info
+                newRow["VendorName"] = vendorNo.SelectedItem?.Text ?? "";
 
                 dt.Rows.Add(newRow);
                 Session["Consign"] = dt;
-                
+
                 BindGridView();
                 clearForm();
 
@@ -417,7 +435,7 @@ namespace Expiry_list.ConsignItem
                     dt.Columns.Add("StaffName", typeof(string));
                     dt.Columns.Add("Note", typeof(string));
                     dt.Columns.Add("CompletedDate", typeof(DateTime));
-                    dt.Columns.Add("registrationDate", typeof(DateTime)); 
+                    dt.Columns.Add("registrationDate", typeof(DateTime));
 
                     Session["Consign"] = dt;
                 }
@@ -480,8 +498,8 @@ namespace Expiry_list.ConsignItem
 
         protected void GridView_RowUpdating(object sender, GridViewUpdateEventArgs e)
         {
-            DataView dv = Session["SortedConsign"] as DataView; 
-            DataTable dt = dv.ToTable(); 
+            DataView dv = Session["SortedConsign"] as DataView;
+            DataTable dt = dv.ToTable();
 
             if (dt != null)
             {
@@ -519,7 +537,7 @@ namespace Expiry_list.ConsignItem
         protected void GridView_RowDeleting(object sender, GridViewDeleteEventArgs e)
         {
             DataView dv = Session["SortedConsign"] as DataView;
-            DataTable dt = Session["Consign"] as DataTable; 
+            DataTable dt = Session["Consign"] as DataTable;
 
             if (dv != null && dt != null && e.RowIndex >= 0 && e.RowIndex < dv.Count)
             {
@@ -607,8 +625,8 @@ namespace Expiry_list.ConsignItem
 
                         foreach (DataRow row in dt.Rows)
                         {
-                            string vendorNoVal = DBNull.Value.ToString();
-                            string vendorName = DBNull.Value.ToString();
+                            string vendorNoVal = row["VendorNo"].ToString();
+                            string vendorName = row["VendorName"].ToString();
 
                             GetVendorInfo(row["ItemNo"].ToString(), conn, transaction,
                                          out vendorNoVal, out vendorName);
@@ -627,7 +645,6 @@ namespace Expiry_list.ConsignItem
                                 (no, ItemNo, Description, BarcodeNo, Qty, UOM, PackingInfo, StoreNo, StaffName, VendorNo, VendorName, Note) 
                                 VALUES 
                                 (@no, @ItemNo, @Description, @BarcodeNo, @Qty, @UOM, @PackingInfo, @storeNo, @StaffName, @VendorNo, @VendorName, @Note)";
-
                             using (SqlCommand cmd = new SqlCommand(insertQuery, conn, transaction))
                             {
                                 cmd.Parameters.AddWithValue("@no", batchNo);
@@ -677,7 +694,7 @@ namespace Expiry_list.ConsignItem
             ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
                 "swal('Success!', 'All items added successfully!', 'success');", true);
 
-            ScriptManager.RegisterStartupScript(this, this.GetType(), "Reload", "setTimeout(function(){ window.location = window.location.href; }, 500);", true);
+            //ScriptManager.RegisterStartupScript(this, this.GetType(), "Reload", "setTimeout(function(){ window.location = window.location.href; }, 500);", true);
         }
 
         private void GetVendorInfo(string itemNo, SqlConnection conn, SqlTransaction transaction, out string vendorNo, out string vendorName)
@@ -686,10 +703,9 @@ namespace Expiry_list.ConsignItem
             vendorName = null;
 
             string query = @"SELECT TOP 1 v.VendorNo, v.VendorName 
-            FROM Vendors v 
-            INNER JOIN Items i ON REPLACE(v.VendorNo, ' ', '') = REPLACE(i.VendorNo, ' ', '')
-            WHERE i.ItemNo = @ItemNo";
-
+                    FROM Vendors v 
+                    INNER JOIN Items i ON v.VendorNo = i.VendorNo
+                    WHERE i.ItemNo = @ItemNo";
             try
             {
                 using (SqlCommand cmd = new SqlCommand(query, conn, transaction))

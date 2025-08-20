@@ -1078,9 +1078,6 @@
                                                     <ItemTemplate>
                                                         <asp:Label ID="lblCompleted" runat="server" Text=' <%# Eval("completedDate", "{0:dd-MM-yyyy}") %>' />
                                                     </ItemTemplate>
-                                                    <EditItemTemplate>
-                                                        <asp:TextBox ID="txtCompleted" runat="server" type="date" Text='<%# Bind("completedDate", "{0:yyyy-MM-dd}") %>' Width="157px"></asp:TextBox>
-                                                    </EditItemTemplate>
                                                     <ControlStyle Width="125px" />
                                                     <HeaderStyle ForeColor="White" BackColor="#477023" />
                                                     <ItemStyle HorizontalAlign="Justify" />

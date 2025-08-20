@@ -1,136 +1,127 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Site1.Master" AutoEventWireup="true" CodeBehind="scheduleList.aspx.cs" Inherits="Expiry_list.Training.scheduleList" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 
-    <script type="text/javascript">
+<script type="text/javascript">
+    $(document).ready(function () {
+        initializeDataTable();
+    });
 
-        $(document).ready(function () {
+    function initializeDataTable() {
+        const grid = $("#<%= GridView2.ClientID %>");
 
-            initializeComponents();
-        });
+        if ($.fn.DataTable.isDataTable(grid)) {
+            grid.DataTable().destroy();
+        }
 
-        let isDataTableInitialized = false;
+        if (grid.find('thead').length === 0 && grid.find('tr').length > 0) {
+            grid.prepend($('<thead></thead>').append(grid.find('tr:first').clone()));
+            grid.find('tbody').remove();
+            grid.append($('<tbody></tbody>'));
+        }
 
-        function initializeComponents() {
-            const grid = $("#<%= GridView2.ClientID %>");
+        grid.DataTable({
+            responsive: true,
+            ordering: true,
+            serverSide: true,
+            paging: true,
+            filter: true,
+            scrollY: 589,
+            scrollCollapse: true,
+            autoWidth: false,
+            stateSave: true,
+            processing: true,
+            ajax: {
+                url: 'scheduleList.aspx',
+                type: 'POST',
+                data: function (d) {
+                    return {
+                        draw: d.draw,
+                        start: d.start,
+                        length: d.length,
+                        order: d.order,
+                        search: d.search.value,
 
-            if (!$.fn.DataTable.isDataTable(grid)) {
-                if (grid.find('thead').length === 0) {
-                    grid.prepend($('<thead/>').append(grid.find('tr:first').detach()));
+                        filterDate: $('#<%= dateTb.ClientID %>').val(),
+                        filterTime: $('#<%= timeTb.ClientID %>').val(),
+                        filterTopic: $('#<%= topicName.ClientID %>').val(),
+                        filterLocation: $('#<%= locationDp.ClientID %>').val()
+                    };
                 }
-
-                grid.DataTable({
-                    responsive: true,
-                    ordering: true,
-                    serverSide: true,
-                    paging: true,
-                    filter: true,
-                    scrollY: 589,
-                    scrollCollapse: true,
-                    autoWidth: false,
-                    stateSave: true,
-                    processing: true,
-                    ajax: {
-                        url: 'scheduleList.aspx', 
-                        type: 'POST',
-                        data: function (d) {
-                            return {
-                                draw: d.draw,
-                                start: d.start,
-                                length: d.length,
-                                order: d.order,
-                                search: d.search.value
-                            };
-                        }
-                    },
-                    columns: [
-                        {
-                            data: null,
-                            width: "50px",
-                            render: function (data, type, row, meta) {
-                                return meta.row + 1;
-                            }
-                        },
-                        { data: 'tranNo', width: "150px", },
-                        { data: 'topicName', width: "470px", },
-                        { data: 'description', width: "110px", },
-                        { data: 'room', width: "70px", },
-                        { data: 'trainerName', width: "130px", },
-                        { data: 'position', width: "130px", },
-                        {
-                            data: 'date',
-                            width: "130px",
-                            render: function (data) {
-                                if (!data) return '';
-                                const date = new Date(data);
-                                return date.toLocaleDateString('en-GB', {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric'
-                                });
-                            }
-                        },
-                        {
-                            data: 'time',
-                            width: "150px",
-                            render: function (data) {
-                                if (!data) return '';
-
-                                if (data.includes(':')) {
-                                    const parts = data.split(':');
-                                    const hours = parseInt(parts[0]);
-                                    const minutes = parts[1];
-                                    const ampm = hours >= 12 ? 'PM' : 'AM';
-                                    const hours12 = hours % 12 || 12; 
-                                    return `${hours12}:${minutes} ${ampm}`;
-                                }
-                                return data;
-                            }
-                        }
-                    ],
-                    order: [[1, 'asc']],
-                    select: { style: 'multi', selector: 'td:first-child' },
-                    lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
-                    initComplete: function (settings) {
-                        var api = this.api();
-                        setTimeout(function () {
-                            api.columns.adjust();
-                        }, 50);
-                    },
-                    "error": function (xhr, error, thrown) {
-                        console.error("DataTables error:", error, thrown);
-                        alert("Error loading data. Check console for details.");
+            },
+            columns: [
+                {
+                    data: null,
+                    width: "50px",
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
                     }
-              
-              });
+                },
+                { data: 'tranNo', width: "150px" },
+                { data: 'topicName', width: "470px" },
+                { data: 'description', width: "110px" },
+                { data: 'room', width: "70px" },
+                { data: 'trainerName', width: "130px" },
+                { data: 'position', width: "130px" },
+                {
+                    data: 'date',
+                    width: "130px",
+                    render: function (data) {
+                        if (!data) return '';
+                        const date = new Date(data);
+                        return date.toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                        });
+                    }
+                },
+                {
+                    data: 'time',
+                    width: "150px",
+                    render: function (data) {
+                        if (!data) return '';
+
+                        if (data.includes(':')) {
+                            const parts = data.split(':');
+                            const hours = parseInt(parts[0]);
+                            const minutes = parts[1];
+                            const ampm = hours >= 12 ? 'PM' : 'AM';
+                            const hours12 = hours % 12 || 12;
+                            return `${hours12}:${minutes} ${ampm}`;
+                        }
+                        return data;
+                    }
+                }
+            ],
+            order: [[1, 'asc']],
+            lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
+            initComplete: function (settings) {
+                var api = this.api();
+                setTimeout(function () {
+                    api.columns.adjust();
+                }, 50);
+            },
+            error: function (xhr, error, thrown) {
+                console.error("DataTables error:", error, thrown);
+                alert("Error loading data. Check console for details.");
             }
-        }
-
-      Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
-         
-          initializeComponents();
-      });
-
-        function refreshDataTable() {
-            const grid = $("#<%= GridView2.ClientID %>");
-                if ($.fn.DataTable.isDataTable(grid)) {
-                    grid.DataTable().ajax.reload();
-            }
-        }
-
-
-        history.pushState(null, null, location.href);
-        window.addEventListener("popstate", function (event) {
-            location.reload();
         });
+    }
 
-    </script>
+    $("#<%= showBtn.ClientID %>").click(function (e) {
+        e.preventDefault();
+        const dataTable = $("#<%= GridView2.ClientID %>").DataTable();
+        dataTable.ajax.reload();
+    });
+
+</script>
 
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     
     <div class="container-fluid">
         <div class="row card">
-            <div class="card-header d-flex justify-content-around col-8 p-2 offset-2">
+            <div class="card-header d-flex justify-content-between col-10 offset-1">
                 <div class="col-2">
                     <asp:TextBox ID="dateTb" runat="server" TextMode="Date"></asp:TextBox>
                 </div>
@@ -138,7 +129,13 @@
                      <asp:TextBox ID="timeTb" runat="server" TextMode="Time"></asp:TextBox>
                  </div>
                  <div class="col-2">
-                     <asp:TextBox ID="topicDp" runat="server" placeholder="Topic dropdown..." ></asp:TextBox>
+                   <asp:DropDownList ID="topicName" runat="server" CssClass="form-control form-control-sm dropdown-icon" AppendDataBoundItems="True"> 
+                   </asp:DropDownList>
+                  <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server"
+                       ControlToValidate="topicName"
+                       ErrorMessage="Topic is required!"
+                       CssClass="text-danger small d-block mt-1"
+                       Display="Dynamic" />
                  </div>
                  <div class="col-2">
                         <asp:DropDownList ID="locationDp" runat="server" CssClass="form-control form-control-sm dropdown-icon">
@@ -153,7 +150,7 @@
                             Display="Dynamic" />
                  </div>
                  <div class="col-2">
-                     <asp:Button ID="showBtn" runat="server" Text="Show Avaliable Schedule" />
+                     <asp:Button ID="showBtn" runat="server" Text="Show" OnClick="showBtn_Click" OnClientClick="return false;" CssClass="dt-filter-button" />
                  </div>
             </div>
 
@@ -165,7 +162,7 @@
                               <div class="alert alert-info">No items to Filter</div>
                         </asp:Panel>
 
-                        <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true">
+                        <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true" >
                            <Scripts>
                                <asp:ScriptReference Name="MicrosoftAjax.js" />
                                <asp:ScriptReference Name="MicrosoftAjaxWebForms.js" />
@@ -178,7 +175,6 @@
                                  AutoGenerateColumns="False"
                                  DataKeyNames="id"
                                  UseAccessibleHeader="true"
-                                
                                  AllowPaging="false"
                                  PageSize="100"
                                  CellPadding="4"
@@ -300,11 +296,9 @@
                              </asp:GridView>
                          </div>
                      </ContentTemplate>
-<%--                     <Triggers>
-                          <asp:PostBackTrigger ControlID="excel" />
-                         <asp:AsyncPostBackTrigger ControlID="btnApplyFilter" EventName="Click" />
-                         <asp:AsyncPostBackTrigger ControlID="btnResetFilter" EventName="Click" />
-                     </Triggers>--%>
+                    <Triggers>
+                        <asp:AsyncPostBackTrigger ControlID="showBtn" EventName="Click" />
+                    </Triggers>
                 </asp:UpdatePanel>
             </div>
 

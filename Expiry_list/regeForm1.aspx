@@ -311,13 +311,13 @@
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
-     <a href="AdminDashboard.aspx" class="btn text-white ms-2" style="background-color : #158396;"><i class="fa-solid fa-left-long"></i> Home</a>
-
-        <div class="container py-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>User Management</h2>
-                <a href="regeForm.aspx" class="btn text-white" style="background-color:#188fa6;"><i class="fa-solid fa-user-plus"></i> Add New User</a>
-            </div>
+       <a href="AdminDashboard.aspx" class="btn text-white ms-2" style="background-color : #158396;"><i class="fa-solid fa-left-long"></i> Home</a>
+       <div class="d-flex justify-content-lg-around align-items-center">
+           <h2>User Management</h2>
+           <a href="regeForm.aspx" class="btn text-white" style="background-color:#188fa6;"><i class="fa-solid fa-user-plus"></i> Add New User</a>
+       </div>
+        <div class="container overflow-x-scroll overflow-y-scroll" style="height:557px;">
+         
 
             <asp:HiddenField ID="hfSelectedRows" runat="server" />
             <asp:HiddenField ID="hfSelectedIDs" runat="server" />
@@ -328,7 +328,7 @@
             <asp:ScriptManager ID="ScriptManager1" runat="server" />
             <asp:UpdatePanel ID="upGrid" runat="server">
               <ContentTemplate>
-                 <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-scroll"
+                 <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1"
                      DataKeyNames="id" OnRowEditing="GridView2_RowEditing"
                      OnRowUpdating="GridView2_RowUpdating" OnRowDeleting="GridView2_RowDeleting" OnRowCancelingEdit="GridView2_RowCancelingEdit"
                      OnRowDataBound="GridView2_RowDataBound">
@@ -406,7 +406,7 @@
                                     <asp:RadioButton ID="rdoExpiry_Super1" runat="server" GroupName="ExpiryList" Text="Super1" CssClass="form-check-input bg-transparent me-1" /> 
                                   </div>
           
-                                    <div class="form-check">
+                                   <div class="form-check">
                                     <asp:CheckBox ID="chkNegative_Enable" runat="server" CssClass="form-check-input perm-toggle bg-transparent" />
                                     <label class="form-check-label" for="chkNegative_Enable">Negative Inventory</label>
                                   </div>
@@ -478,9 +478,9 @@
                                  <ItemStyle HorizontalAlign="Justify" />
                              </asp:TemplateField>
         
-                         <asp:CommandField ShowEditButton="true" ButtonType="Button" 
+                         <asp:CommandField ShowEditButton="true" ButtonType="Button" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1"
                              ControlStyle-CssClass="btn btn-sm m-1 text-white" ControlStyle-BackColor="#188fa6" ItemStyle-CssClass="fixed-column-1" HeaderStyle-BackColor="Gray" HeaderStyle-ForeColor="White" />
-                         <asp:CommandField ShowDeleteButton="true" ButtonType="Button" 
+                         <asp:CommandField ShowDeleteButton="true" ButtonType="Button" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1"
                              ControlStyle-CssClass="btn btn-sm m-1 btn-danger" ItemStyle-CssClass="fixed-column-1" HeaderStyle-BackColor="Gray" HeaderStyle-ForeColor="White" />
                      </Columns>
                  </asp:GridView>

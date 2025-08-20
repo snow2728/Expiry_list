@@ -3,10 +3,15 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 
     <%-- Viewer1 Form For Ethical Dept (itemList) --%>
-
     <script type="text/javascript">
 
         $(document).ready(function () {
+            const initialSearch = $('#<%= hfLastSearch.ClientID %>').val();
+            if (initialSearch) {
+                $('#<%= searchValue.ClientID %>').val(initialSearch);
+            }
+
+            setupEditMode();
             InitializeStoreFilter();
             if (typeof (Sys) !== 'undefined') {
                 Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
@@ -22,37 +27,125 @@
                     });
                 });
             }
+            $(document).on('keyup', '.dataTables_filter input', function () {
+                $('#<%= hfLastSearch.ClientID %>').val(this.value);
+            });
 
-            scrollToEditedRow(); 
+            scrollToEditedRow();
             initializeComponents();
             setupEventDelegation();
-            /*InitializeStoreFilter();*/
             InitializeItemVendorFilter();
-            //focusOnEditedRow();
             setupFilterToggle();
         });
 
-        let isDataTableInitialized = false;
+        $(document).on('click', '.truncated-note', function (e) {
+            e.preventDefault();
 
-        function initializeComponents() {
-            <%--const grid = $("#<%= GridView2.ClientID %>");
+            var fullNote = $(this).data('fullnote');
+            $('#noteModal .modal-body').text(fullNote);
 
-            if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %>) {
-                if ($.fn.DataTable.isDataTable(grid)) {
-                    grid.DataTable().destroy();
-                    grid.removeAttr('style');
+            var modal = new bootstrap.Modal(document.getElementById('noteModal'));
+            modal.show();
+        });
+
+        function applyManualSearchHighlighting(searchTerm) {
+            if (!searchTerm) return;
+
+            console.log("Applying search highlighting for term: " + searchTerm);
+            const lowerTerm = searchTerm.toLowerCase().trim();
+            let foundMatch = false;
+
+            $('.gridview-container tr:not(.static-header)').each(function () {
+                const $row = $(this);
+                const rowText = $row.text().toLowerCase();
+                const isMatch = rowText.includes(lowerTerm);
+
+                $row.toggleClass('highlight-match', isMatch);
+
+                if (isMatch && !foundMatch) {
+                    foundMatch = true;
+                    $('html, body').animate({
+                        scrollTop: $row.offset().top - 200
+                    }, 500);
                 }
-                return;
-            }--%>
+            });
 
+            if (!foundMatch) {
+                console.log("No matches found for search term: " + searchTerm);
+            }
+        }
+
+        function toggleSearchContainer(show) {
+            const $container = $('#searchContainer');
+            if (!$container.length) return;
+            if (show) $container.show();
+            else $container.hide();
+        }
+
+        function storeSearchAndEdit() {
+            const searchTerm = $('.dataTables_filter input').val();
+            $('#<%= hfLastSearch.ClientID %>').val(searchTerm);
+            $('#<%= searchValue.ClientID %>').val(searchTerm);
+
+            __doPostBack('<%= btnEdit.UniqueID %>', '');
+        }
+
+        $(document).on('click', '#<%= btnEdit.ClientID %>', function () {
+            storeSearchAndEdit();
+            return false;
+        });
+
+        function setupEditMode() {
+            if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %>) {
+                toggleSearchContainer(true);
+                $('.static-header').css('display', 'table-header-group');
+                $('#<%= searchLabel.ClientID %>').css('display', 'inline');
+                $('#<%= searchValue.ClientID %>').css('display', 'inline');
+
+                const grid = $("#<%= GridView2.ClientID %>");
+                if (grid.find('thead').length === 0 && grid.find('tr.static-header').length) {
+                    grid.prepend($('<thead/>').append(grid.find('tr.static-header').detach()));
+                }
+
+                setTimeout(() => {
+                    const searchTerm = $('#<%= hfLastSearch.ClientID %>').val();
+                    if (searchTerm) {
+                        applyManualSearchHighlighting(searchTerm);
+                    }
+                    scrollToEditedRow();
+                }, 300);
+            }
+        }
+
+        let isDataTableInitialized = false;
+        function initializeComponents() {
             const grid = $("#<%= GridView2.ClientID %>");
             const isFiltered = $('#<%= hfIsFiltered.ClientID %>').val() === 'true';
+            const isEditMode = <%= GridView2.EditIndex >= 0 ? "true" : "false" %>;
 
-            if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %> || isFiltered) {
+            if (isEditMode || isFiltered) {
+                toggleSearchContainer(true);
                 if ($.fn.DataTable.isDataTable(grid)) {
-                    grid.DataTable().destroy();
-                    grid.removeAttr('style');
+                    try {
+                        const table = grid.DataTable();
+                        const $header = $('<thead/>').append(table.header());
+
+                        table.destroy(true);
+                        grid.find('thead').remove();
+                        grid.prepend($header);
+
+                        grid.parent().find('.dataTables_scrollHead, .dtfc-fixed-left, .dtfc-fixed-right, .dataTables_wrapper').remove();
+                        grid.removeAttr('style');
+
+                    } catch (err) {
+                        console.warn('Error destroying DataTable:', err);
+                    }
                 }
+
+                if (isEditMode) {
+                    setTimeout(() => scrollToEditedRow(), 100);
+                }
+                scrollToEditedRow();
                 return;
             }
 
@@ -61,14 +154,14 @@
                     grid.prepend($('<thead/>').append(grid.find('tr:first').detach()));
                 }
 
-                grid.DataTable({
+               grid.DataTable({
                     responsive: true,
                     ordering: true,
                     serverSide: true,
                     paging: true,
-                    searching: true, 
+                    searching: true,
                     scrollX: true,
-                    scrollY: 497,
+                    scrollY: 417,
                     scrollCollapse: true,
                     autoWidth: false,
                     stateSave: true,
@@ -86,12 +179,12 @@
                                 "search[value]": d.search.value,
 
                                 action: $('#<%= ddlActionFilter.ClientID %>').val(),
-                               status: $('#<%= ddlStatusFilter.ClientID %>').val(),
-                               store: $('#<%= lstStoreFilter.ClientID %>').val(),
-                               item: $('#<%= item.ClientID %>').val(),
-                               staff: $('#<%= txtstaffFilter.ClientID %>').val(),
-                               vendor: $('#<%= vendor.ClientID %>').val(),
-                               regDate: $('#<%= txtRegDateFilter.ClientID %>').val()
+                                status: $('#<%= ddlStatusFilter.ClientID %>').val(),
+                                store: $('#<%= lstStoreFilter.ClientID %>').val(),
+                                item: $('#<%= item.ClientID %>').val(),
+                                staff: $('#<%= txtstaffFilter.ClientID %>').val(),
+                                vendor: $('#<%= vendor.ClientID %>').val(),
+                                regDate: $('#<%= txtRegDateFilter.ClientID %>').val()
                            };
                        },
                        error: function (xhr) {
@@ -107,18 +200,18 @@
                        {
                            data: 'checkbox',
                            orderable: false,
-                           width: "30px",
+                           width: "50px",
                            render: function (data, type, row, meta) {
                                return '<input type="checkbox" class="rowCheckbox" data-id="' + row.id + '" onclick="handleSingleSelection(this)"/>';
                            }
                        },
                        {
                            data: null,
-                           width: "30px",
+                           width: "50px",
                            orderable: false,
                            visible: false,
                            render: function (data, type, row, meta) {
-                               return meta.row + 1; 
+                               return meta.row + 1;
                            }
                        },
                        { data: 'no', width: "100px" },
@@ -134,29 +227,44 @@
                                return date.toLocaleDateString('en-GB');
                            }
                        },
-                       { data: 'itemNo', width: "50px" },
-                       { data: 'description', width: "297px" },
-                       { data: 'packingInfo', width: "120px" },
+                       { data: 'itemNo', width: "117px" },
+                       { data: 'description', width: "257px" },
+                       { data: 'packingInfo', width: "110px" },
                        { data: 'barcodeNo', width: "127px" },
                        {
                            data: 'qty',
                            width: "97px",
-                           type: 'num' 
+                           type: 'num'
                        },
                        { data: 'uom', width: "97px" },
                        { data: 'action', width: "120px" },
                        { data: 'status', width: "120px" },
                        { data: 'remark', width: "125px" },
                        { data: 'approver', width: "120px" },
-                       { data: 'note', width: "125px" },
+                       {
+                           data: 'note',
+                           width: "125px",
+                           render: function (data, type, row) {
+                               if (type === 'display') {
+                                   var words = data.split(/\s+/);
+                                   var truncated = words.slice(0, 5).join(' ');
+                                   if (words.length > 5) {
+                                       truncated += ' ...';
+                                   }
+                                   return '<span class="truncated-note text-black-50" data-fullnote="' +
+                                       $('<div/>').text(data).html() + '">' + truncated + '</span>';
+                               }
+                               return data;
+                           }
+                       },
                        { data: 'vendorNo', width: "120px" },
                        { data: 'vendorName', width: "170px" },
                        {
                            data: 'regeDate',
                            width: "120px",
-                           type: 'date', 
+                           type: 'date',
                            render: function (data, type) {
-                               if (type === 'sort') return data; 
+                               if (type === 'sort') return data;
                                const date = new Date(data);
                                return date.toLocaleDateString('en-GB');
                            }
@@ -166,7 +274,7 @@
                            width: "125px",
                            type: 'date',
                            render: function (data, type, row) {
-                               if (type === 'sort') return data || ''; 
+                               if (type === 'sort') return data || '';
                                if (data) {
                                    const date = new Date(data);
                                    return date.toLocaleDateString('en-GB');
@@ -182,7 +290,7 @@
                            visible: false
                        },
                    ],
-                   order: [[2, 'asc']], 
+                   order: [[1, 'asc'], [2, 'asc']],
                    columnDefs: [
                        {
                            targets: [20],
@@ -190,6 +298,27 @@
                            searchable: false
                        }
                    ],
+                   drawCallback: function (settings) {
+                       const api = this.api();
+                       const searchTerm = api.search();
+
+                       api.rows().nodes().to$().removeClass('highlight-match');
+
+                       if (searchTerm) {
+                           api.rows({ search: 'applied' }).nodes().to$().addClass('highlight-match');
+
+                           const firstMatch = api.rows({ search: 'applied' }).nodes()[0];
+                           if (firstMatch) {
+                               const $firstMatch = $(firstMatch);
+                               const gridContainer = $('.gridview-container');
+                               const headerHeight = gridContainer.find('thead').outerHeight() || 0;
+
+                               gridContainer.stop().animate({
+                                   scrollTop: $firstMatch.position().top - headerHeight + gridContainer.scrollTop()
+                               }, 500);
+                           }
+                       }
+                   },
                    select: { style: 'multi', selector: 'td:first-child' },
                    lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
                    initComplete: function (settings, json) {
@@ -219,8 +348,56 @@
                     allowClear: true,
                     minimumResultsForSearch: 5
                 });
+
             };
         };
+
+        function applyManualSearchHighlighting(searchTerm) {
+            if (!searchTerm) return;
+
+            const lowerTerm = searchTerm.toLowerCase().trim();
+            const editedRowId = $('#<%= hfEditedRowId.ClientID %>').val();
+
+            $('.gridview-container tr').each(function () {
+                if ($(this).hasClass('static-header')) return;
+
+                const $row = $(this);
+                const rowId = $row.data('id');
+                const isEditedRow = editedRowId && rowId === editedRowId;
+
+                // Always show edited row
+                if (isEditedRow) {
+                    $row.show();
+                    $row.addClass('edited-row');
+                    return;
+                }
+
+                const rowText = $row.text().toLowerCase();
+                const isMatch = rowText.includes(lowerTerm);
+
+                $row.toggleClass('highlight-match', isMatch);
+                $row.toggle(isMatch);
+            });
+        }
+
+        $(document).on('input', '#<%= searchValue.ClientID %>', function () {
+            const searchTerm = $(this).val();
+            $('#<%= hfLastSearch.ClientID %>').val(searchTerm);
+            applyManualSearchHighlighting(searchTerm);
+        });
+
+        function initSearchHandling() {
+            if ($('#<%= hfIsSearchEdit.ClientID %>').val() === 'true') {
+               const searchTerm = $('#<%= hfLastSearch.ClientID %>').val();
+                applyManualSearchHighlighting(searchTerm);
+                scrollToEditedRow();
+                $('#<%= hfIsSearchEdit.ClientID %>').val('false');
+           }
+
+           $(document).on('keyup', '.dataTables_filter input', function () {
+               $('#<%= hfLastSearch.ClientID %>').val(this.value);
+            });
+        }
 
         function scrollToEditedRow(rowId) {
             if (!rowId) {
@@ -230,12 +407,12 @@
 
             const $row = $(`tr[data-id='${rowId}']`);
             if ($row.length) {
+                $row.show();
+
                 const gridContainer = $('.gridview-container');
                 const $header = gridContainer.find('thead');
-
                 const headerHeight = $header.outerHeight() || 0;
-                const extraGap = 70; 
-                const rowTop = $row.position().top - headerHeight - extraGap;
+                const rowTop = $row.position().top - headerHeight;
 
                 gridContainer.animate({
                     scrollTop: rowTop
@@ -245,6 +422,90 @@
                         $row.removeClass('highlight-row').css('animation', '');
                     }, 3000);
                 });
+            }
+        }
+
+        function updateSelectedRows(updatedRows) {
+            updatedRows.forEach(row => {
+                const rowElement = document.querySelector(`tr[data-id='${row.id}']`);
+                if (rowElement) {
+                    const actionCell = rowElement.querySelector('.action-cell');
+                    if (actionCell) {
+                        actionCell.textContent = row.action;
+                    }
+
+                    const lblAction = rowElement.querySelector('span[id*="lblAction"]');
+                    if (lblAction) {
+                        lblAction.textContent = row.action;
+                    }
+
+                    // Add temporary highlight
+                    rowElement.classList.add('updated-row');
+                    setTimeout(() => rowElement.classList.remove('updated-row'), 3000);
+                }
+            });
+        }
+
+        function updateSelectedStatusRows(updatedRows) {
+            updatedRows.forEach(row => {
+                const rowElement = document.querySelector(`tr[data-id='${row.id}']`);
+                if (rowElement) {
+                    // If status is "Reorder Done" or "No Reordering", hide the row
+                    if (row.status === "Reorder Done" || row.status === "No Reordering") {
+                        rowElement.style.display = "none";  // Hide row
+                        return;
+                    }
+
+                    // Update Status cell
+                    const statusCell = rowElement.querySelector('.status-cell');
+                    if (statusCell) {
+                        statusCell.textContent = row.status;
+                    }
+
+                    // Update Label control if present
+                    const lblStatus = rowElement.querySelector('span[id*="lblStatus"]');
+                    if (lblStatus) {
+                        lblStatus.textContent = row.status;
+                    }
+
+                    // Update CompletedDate if provided
+                    if (row.completedDate) {
+                        const completedDateCell = rowElement.querySelector('.completedDate-cell');
+                        if (completedDateCell) {
+                            completedDateCell.textContent = row.completedDate;
+                        }
+                        const lblCompletedDate = rowElement.querySelector('span[id*="lblCompletedDate"]');
+                        if (lblCompletedDate) {
+                            lblCompletedDate.textContent = row.completedDate;
+                        }
+                    }
+
+                    // Update Owner if provided
+                    if (row.owner) {
+                        const ownerCell = rowElement.querySelector('.owner-cell');
+                        if (ownerCell) {
+                            ownerCell.textContent = row.owner;
+                        }
+                        const lblOwner = rowElement.querySelector('span[id*="lblOwner"]');
+                        if (lblOwner) {
+                            lblOwner.textContent = row.owner;
+                        }
+                    }
+
+                    // Add temporary highlight
+                    rowElement.classList.add('updated-row');
+                    setTimeout(() => rowElement.classList.remove('updated-row'), 3000);
+                }
+            });
+        }
+
+        function reloadGrid() {
+            if ($.fn.DataTable.isDataTable("#<%= GridView2.ClientID %>")) {
+                $("#<%= GridView2.ClientID %>").DataTable().ajax.reload(null, false);
+            } else if (<%= hfIsFiltered.Value == "true" ? "true" : "false" %>) {
+                __doPostBack('<%= btnFilter.UniqueID %>', '');
+            } else {
+                BindGrid();
             }
         }
 
@@ -375,7 +636,6 @@
             var $select = $('#<%= lstStoreFilter.ClientID %>');
             var allOptionId = "all";
 
-            // Remove duplicate "All" option if exists
             $select.find('option').filter(function () {
                 return $(this).val() === allOptionId;
             }).slice(1).remove();
@@ -389,7 +649,6 @@
                 minimumResultsForSearch: 1,
                 escapeMarkup: function (m) { return m; },
 
-                // Add search configuration
                 language: {
                     noResults: function () {
                         return "No stores found";
@@ -656,7 +915,6 @@
         function handleApplyFilters() {
             let anyFilterActive = false;
 
-            // Check each filter
             for (const [key, mapping] of Object.entries(filterMap)) {
                 const checkbox = document.getElementById(mapping.checkboxId);
                 const control = document.getElementById(mapping.controlId);
@@ -666,7 +924,6 @@
                 if (checkbox.checked) {
                     let hasValue = false;
 
-                    // Handle different control types
                     if (control.tagName === 'SELECT') {
                         hasValue = control.multiple ?
                             control.selectedOptions.length > 0 :
@@ -699,6 +956,11 @@
             InitializeItemVendorFilter();
             scrollToEditedRow();
 
+            const searchTerm = $('#<%= hfLastSearch.ClientID %>').val();
+            if (searchTerm) {
+                $('#<%= searchValue.ClientID %>').val(searchTerm);
+                applyManualSearchHighlighting(searchTerm);
+            }
         });
 
         history.pushState(null, null, location.href);
@@ -729,7 +991,6 @@
          <div class="card-header" style="background-color:#BD467F;">
              <a href="../AdminDashboard.aspx" class="btn d-inline text-white ms-2 me-5" style="background-color: #A10D54;"><i class="fa-solid fa-left-long"></i> Home</a>
              <h4 class="text-align-center text-white d-inline" style="margin-left:433px;">Reorder Quantity List</h4>
-
          </div>
 
          <div class="card-body">
@@ -738,7 +999,7 @@
                      <!-- Filter Button -->
                      <div class="col-6 col-md-auto">
                          <asp:Button ID="btnFilter" runat="server" 
-                             CssClass="btn text-white w-100 py-2" 
+                             CssClass="btn text-white w-100" 
                              style="background:#A10D54;" 
                              Text="Show Filter" 
                              OnClientClick="toggleFilter(); return false;" />
@@ -747,15 +1008,15 @@
                      <!-- Edit Button -->
                      <div class="col-6 col-md-auto">
                          <asp:Button Text="Edit" runat="server"
-                             CssClass="btn btn-secondary text-white w-100 py-2"
-                             ID="btnEdit"
+                             CssClass="btn btn-secondary text-white w-100"
+                             ID="btnEdit" OnClientClick="document.getElementById('<%= hfLastSearch.ClientID %>').value = $('.dataTables_filter input').val();"
                              OnClick="btnEdit_Click" />
                      </div>
 
                      <!-- Action Dropdown -->
                      <div class="col-12 col-md-auto">
                          <asp:DropDownList ID="ddlAction" runat="server" 
-                             CssClass="form-select w-100 py-2">
+                             CssClass="form-select w-100">
                             <asp:ListItem Text="-- Select Reason --" Value="0" />
                             <asp:ListItem Text="None" Value="1" />
                             <asp:ListItem Text="Overstock and Redistribute" Value="2" />
@@ -770,12 +1031,14 @@
                             <asp:ListItem Text="No Hierarchy" Value="11" />
                             <asp:ListItem Text="Near Expiry Item" Value="12" />
                             <asp:ListItem Text="Reorder Qty is large, Need to adjust Qty" Value="13" />
+                            <asp:ListItem Text="Discon Item" Value="14" />
+                            <asp:ListItem Text="Supplier Discon" Value="15" />
                         </asp:DropDownList>
                   </div>
 
                      <div class="col-12 col-md-auto">
                          <asp:Button ID="btnUpdateSelected" runat="server"
-                             CssClass="btn text-white w-100 py-2"
+                             CssClass="btn text-white w-100"
                              style="background:#A10D54;"
                              Text="Update Reason"
                              OnClick="btnUpdateSelected_Click" />
@@ -783,7 +1046,7 @@
 
                        <div class="col-12 col-md-auto">
                          <asp:DropDownList ID="ddlStatus" runat="server"
-                             CssClass="form-select w-100 py-2">
+                             CssClass="form-select w-100">
                             <asp:ListItem Text="-- Select Action --" Value="0" />
                             <asp:ListItem Value="1" Text="Reorder Done"></asp:ListItem>
                             <asp:ListItem Value="2" Text="No Reordering"></asp:ListItem>
@@ -792,15 +1055,20 @@
 
                         <div class="col-12 col-md-auto">
                              <asp:Button ID="btnStatusSelected" runat="server"
-                                 CssClass="btn text-white w-100 py-2"
+                                 CssClass="btn text-white w-100"
                                  style="background:#A10D54;"
                                  Text="Update Action"
                                  OnClick="btnStatusSelected_Click" />
                          </div>
+
+                      <div id="searchContainer" class="col-12 col-md-auto" style="margin-left: 177px;">
+                          <asp:Label ID="searchLabel" style="display:none;" Text="Search :" runat="server" />
+                          <asp:TextBox style="display:none;"  ID="searchValue" runat="server" />
+                      </div>
                </div>
              </div>
 
-             <div class="d-flex p-2 col-lg-12 col-md-12 overflow-x-auto overflow-y-auto">
+             <div class="d-flex ps-2 pe-2 pt-1 col-lg-12 col-md-12 overflow-x-auto overflow-y-auto">
                  <div class="row">
                      <!-- Filter Panel (Hidden by default) -->
                      <div class="col" id="filterPane" style="display: none;">
@@ -887,6 +1155,8 @@
                                                          <asp:ListItem Text="No Hierarchy" Value="11" />
                                                          <asp:ListItem Text="Near Expiry Item" Value="12" />
                                                          <asp:ListItem Text="Reorder Qty is large, Need to adjust Qty" Value="13" />
+                                                         <asp:ListItem Text="Discon Item" Value="14" />
+                                                         <asp:ListItem Text="Supplier Discon" Value="15" />
                                                  </asp:DropDownList>
                                              </div>
 
@@ -974,6 +1244,7 @@
                                      <Triggers>
                                          <asp:AsyncPostBackTrigger ControlID="btnApplyFilter" EventName="Click" />
                                          <asp:AsyncPostBackTrigger ControlID="btnResetFilter" EventName="Click" />
+                                         <asp:AsyncPostBackTrigger ControlID="btnUpdateSelected" EventName="Click" />
                                      </Triggers>
                                  </asp:UpdatePanel>
                              </div>
@@ -987,6 +1258,9 @@
                  <asp:HiddenField ID="hfEditId" runat="server" />
                  <asp:HiddenField ID="hfEditedRowId" runat="server" />
                  <asp:HiddenField ID="hfIsFiltered" runat="server" Value="false" />
+                 <asp:HiddenField ID="hfEditInitiatedByButton" runat="server" />
+                 <asp:HiddenField ID="hfLastSearch" runat="server" />
+                 <asp:HiddenField ID="hfIsSearchEdit" runat="server" />
 
                  <!-- Table -->
                  <div class="col-md-12 " id="gridCol">
@@ -997,9 +1271,9 @@
                               <div class="alert alert-info">No items to Filter</div>
                         </asp:Panel>
 
-                          <div class="table-responsive gridview-container ps-3 pe-1" style="height: 645px; overflow: auto;">
+                          <div class="table-responsive gridview-container ps-3 pe-1 responsive-grid-container" style="height: 535px;">
                             <asp:GridView ID="GridView2" runat="server"
-                                 CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg mt-1 overflow-x-auto overflow-y-auto"
+                                 CssClass="table table-striped table-bordered mt-1 table-hover shadow-lg overflow-x-auto overflow-y-auto"
                                  AutoGenerateColumns="False"
                                  DataKeyNames="id"
                                  UseAccessibleHeader="true"
@@ -1019,7 +1293,7 @@
                                  <EditRowStyle BackColor="white" />
                                  <FooterStyle BackColor="#5D7B9D" Font-Bold="True" ForeColor="White" />
 
-                                 <HeaderStyle Wrap="true" BackColor="#BD467F" Font-Bold="True" ForeColor="White"></HeaderStyle>
+                                 <HeaderStyle Wrap="false" BackColor="#BD467F" Font-Bold="True" ForeColor="White"></HeaderStyle>
                                  <PagerStyle CssClass="pagination-wrapper" HorizontalAlign="Center" VerticalAlign="Middle" />
                                  <RowStyle CssClass="table-row data-row" BackColor="#F7F6F3" ForeColor="#333333"></RowStyle>
                                  <AlternatingRowStyle CssClass="table-alternating-row" BackColor="White" ForeColor="#284775"></AlternatingRowStyle>
@@ -1043,7 +1317,7 @@
                                          <ItemTemplate>
                                              <input type="checkbox" class="rowCheckbox" data-id='<%# Eval("id") %>' runat="server" id="CheckBox1" />
                                          </ItemTemplate>
-                                        <ControlStyle Width="50px" />
+                                        <ControlStyle Width="70px" />
                                          <HeaderStyle ForeColor="White" BackColor="#BD467F" />
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
@@ -1074,8 +1348,7 @@
                                           <ItemStyle HorizontalAlign="Justify" />
                                       </asp:TemplateField>
 
-                                     
-                                     <asp:TemplateField HeaderText="Division Code" SortExpression="divisionCode" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-6">
+                                     <asp:TemplateField HeaderText="Division" SortExpression="divisionCode" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-6">
                                         <ItemTemplate>
                                             <asp:Label ID="lblDivisionCode" runat="server" Text='<%# Eval("divisionCode") %>' />
                                         </ItemTemplate>
@@ -1120,7 +1393,7 @@
                                      <ItemStyle HorizontalAlign="Justify" />
                                  </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="Barcode No" SortExpression="barcodeNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-51">
+                                     <asp:TemplateField HeaderText="Barcode" SortExpression="barcodeNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-51">
                                        <ItemTemplate>
                                            <asp:Label ID="lblBarcode" runat="server" Text='<%# Eval("barcodeNo") %>' />
                                        </ItemTemplate>
@@ -1164,6 +1437,8 @@
                                                     <asp:ListItem Text="No Hierarchy" Value="11" />
                                                     <asp:ListItem Text="Near Expiry Item" Value="12" />
                                                     <asp:ListItem Text="Reorder Qty is large, Need to adjust Qty" Value="13" />
+                                                    <asp:ListItem Text="Discon Item" Value="14" />
+                                                    <asp:ListItem Text="Supplier Discon" Value="15" />
                                             </asp:DropDownList>
                                         </EditItemTemplate>
                                         <ItemTemplate>
@@ -1202,24 +1477,26 @@
                                         <ItemStyle HorizontalAlign="Justify" />
                                     </asp:TemplateField>
 
-                                     
-                                          <asp:TemplateField HeaderText="Approver" SortExpression="approver" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-58">
-                                             <ItemTemplate>
-                                                 <asp:Label ID="lblStaff" runat="server" Text='<%# Eval("approver") %>' />
-                                             </ItemTemplate>
-                                             <ControlStyle Width="120px" />
-                                             <HeaderStyle ForeColor="White" BackColor="#BD467F" />
-                                             <ItemStyle HorizontalAlign="Justify" />
-                                         </asp:TemplateField>
+                                    <asp:TemplateField HeaderText="Approver" SortExpression="approver" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-58">
+                                        <ItemTemplate>
+                                            <asp:Label ID="lblStaff" runat="server" Text='<%# Eval("approver") %>' />
+                                        </ItemTemplate>
+                                        <ControlStyle Width="120px" />
+                                        <HeaderStyle ForeColor="White" BackColor="#BD467F" />
+                                        <ItemStyle HorizontalAlign="Justify" />
+                                    </asp:TemplateField>
 
-                                      <asp:TemplateField HeaderText="Note" SortExpression="note" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-59">
-                                         <ItemTemplate>
-                                             <asp:Label ID="lblNote" runat="server" Text=' <%# Eval("note") %>'></asp:Label>
-                                         </ItemTemplate>
-                                         <ControlStyle Width="125px" />
-                                         <HeaderStyle ForeColor="White" BackColor="#BD467F" />
-                                         <ItemStyle HorizontalAlign="Justify" />
-                                     </asp:TemplateField>
+                                   <asp:TemplateField HeaderText="Note" SortExpression="note" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-59">
+                                        <ItemTemplate>
+                                            <asp:Label ID="lblNote" runat="server" 
+                                                Text='<%# TruncateWords(Eval("note").ToString(), 5) %>'
+                                                data-fullnote='<%# HttpUtility.HtmlEncode(Eval("note").ToString()) %>'
+                                                CssClass="truncated-note text-black-50" />
+                                        </ItemTemplate>
+                                        <ControlStyle Width="125px" />
+                                        <HeaderStyle ForeColor="White" BackColor="#BD467F" />
+                                        <ItemStyle HorizontalAlign="Justify" />
+                                    </asp:TemplateField>
 
                                      <asp:TemplateField HeaderText="Vendor No" SortExpression="vendorNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-61">
                                          <ItemTemplate>
@@ -1239,7 +1516,7 @@
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="Registration Date" SortExpression="regeDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-56">
+                                     <asp:TemplateField HeaderText="Regi Date" SortExpression="regeDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-56">
                                          <ItemTemplate>
                                              <asp:Label ID="lblRege" runat="server" Text='<%# Eval("regeDate", "{0:dd-MM-yyyy}") %>' />
                                          </ItemTemplate>
@@ -1248,14 +1525,14 @@
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="Completed Date" SortExpression="completedDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-61">
+                                    <%-- <asp:TemplateField HeaderText="Completed Date" SortExpression="completedDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-61">
                                          <ItemTemplate>
                                              <asp:Label ID="lblCompleted" runat="server" Text=' <%# Eval("completedDate", "{0:dd-MM-yyyy}") %>' />
                                          </ItemTemplate>
                                          <ControlStyle Width="125px" />
                                          <HeaderStyle ForeColor="White" BackColor="#BD467F" />
                                          <ItemStyle HorizontalAlign="Justify" />
-                                     </asp:TemplateField>
+                                     </asp:TemplateField>--%>
 
                                      <asp:CommandField ShowEditButton="true" ShowCancelButton="true" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-BackColor="white" ControlStyle-CssClass="btn m-1 text-white"
                                          EditText="-" UpdateText="<i class='fa-solid fa-file-arrow-up'></i>"
@@ -1278,6 +1555,7 @@
                          <Triggers>
                              <asp:AsyncPostBackTrigger ControlID="btnApplyFilter" EventName="Click" />
                              <asp:AsyncPostBackTrigger ControlID="btnResetFilter" EventName="Click" />
+                             <asp:AsyncPostBackTrigger ControlID="btnUpdateSelected" EventName="Click" />
                          </Triggers>
                      </asp:UpdatePanel>
                  </div>
@@ -1286,5 +1564,23 @@
          </div>
      </div>
  </div>
+
+<!-- Note Modal -->
+<div class="modal fade" id="noteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Full Note</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Full note will appear here -->
+            </div>
+            <div class="modal-footer">
+               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 </asp:Content>

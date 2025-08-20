@@ -3,20 +3,14 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.Data;
-using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using Newtonsoft.Json;
-using OfficeOpenXml.Style;
-using OfficeOpenXml;
-using System.IO;
 using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Wordprocessing;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
+using System.Diagnostics;
+using System.IO;
 
 namespace Expiry_list.Training
 {
@@ -26,7 +20,6 @@ namespace Expiry_list.Training
 
         protected void Page_Load(object sender, EventArgs e)
         {
-
             if (Request.HttpMethod == "POST" && !string.IsNullOrEmpty(Request["draw"]))
             {
                 RespondWithData();
@@ -35,41 +28,24 @@ namespace Expiry_list.Training
 
             if (!IsPostBack)
             {
-                BindGrid();  
+                BindTopic();
             }
-
         }
 
-        protected void GridView1_Sorting(object sender, GridViewSortEventArgs e)
+        private void BindTopic()
         {
-            string sortExpression = e.SortExpression;
-            string sortDirection = GetSortDirection(sortExpression);
-
-            ViewState["SortExpression"] = sortExpression;
-            ViewState["SortDirection"] = sortDirection;
-
-        }
-
-        protected void GridView1_RowCreated(object sender, GridViewRowEventArgs e)
-        {
-            if (e.Row.RowType == DataControlRowType.Header)
+            using (SqlConnection con = new SqlConnection(strcon))
             {
-                if (ViewState["SortExpression"] != null && ViewState["SortDirection"] != null)
+                con.Open();
+                string query = "SELECT topicName FROM topicT ORDER BY topicName";
+                using (SqlCommand cmd = new SqlCommand(query, con))
                 {
-                    string sortExpression = ViewState["SortExpression"].ToString();
-                    string sortDirection = ViewState["SortDirection"].ToString();
-
-                    for (int i = 0; i < GridView2.Columns.Count; i++)
-                    {
-                        if (GridView2.Columns[i].SortExpression == sortExpression)
-                        {
-                            LinkButton lb = (LinkButton)e.Row.Cells[i].Controls[0];
-                            string iconHtml = sortDirection == "ASC" ? " ▲" : " ▼";
-                            lb.Text += iconHtml;
-
-                        }
-                    }
+                    topicName.DataSource = cmd.ExecuteReader();
+                    topicName.DataTextField = "topicName";
+                    topicName.DataValueField = "topicName";
+                    topicName.DataBind();
                 }
+                topicName.Items.Insert(0, new ListItem("Select Topic", ""));
             }
         }
 
@@ -83,6 +59,12 @@ namespace Expiry_list.Training
                 if (len == 0) len = 100;
                 int orderCol = Convert.ToInt32(Request["order[0][column]"]);
                 string orderDir = (Request["order[0][dir]"] ?? "asc").ToLower();
+
+                // Get filter parameters from request
+                string filterDate = Request.Form["filterDate"] ?? "";
+                string filterTime = Request.Form["filterTime"] ?? "";
+                string filterTopic = Request.Form["filterTopic"] ?? "";
+                string filterLocation = Request.Form["filterLocation"] ?? "";
 
                 string username = User.Identity.Name;
                 Dictionary<string, string> perms = GetAllowedFormsByUser(username);
@@ -103,16 +85,59 @@ namespace Expiry_list.Training
                 var whereClauses = new List<string>();
                 var parameters = new List<SqlParameter>();
 
+                // Apply store permissions
                 if (!isHOUser && storeNos.Count > 0)
                 {
-                    whereClauses.Add($"LocationCode IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))}");
+                    whereClauses.Add($"room IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})");
                     for (int i = 0; i < storeNos.Count; i++)
                     {
                         parameters.Add(new SqlParameter($"@store{i}", storeNos[i]));
                     }
                 }
 
-                string[] searchable = { "tranNo", "topicName", "description", "room", "trainerName", "position", "date", "time" };
+                // Apply date filter
+                if (!string.IsNullOrEmpty(filterDate))
+                {
+                    DateTime parsedDate;
+                    if (DateTime.TryParse(filterDate, out parsedDate))
+                    {
+                        whereClauses.Add("CAST([date] AS DATE) = @Date");
+                        parameters.Add(new SqlParameter("@Date", parsedDate.Date));
+                    }
+                }
+
+                // Apply time filter
+                if (!string.IsNullOrEmpty(filterTime))
+                {
+                    TimeSpan parsedTime;
+                    if (TimeSpan.TryParse(filterTime, out parsedTime))
+                    {
+                        // Create 1-minute window for time comparison
+                        TimeSpan startTime = new TimeSpan(parsedTime.Hours, parsedTime.Minutes, 0);
+                        TimeSpan endTime = startTime.Add(TimeSpan.FromMinutes(1));
+
+                        whereClauses.Add("CAST([time] AS TIME) >= @StartTime AND CAST([time] AS TIME) < @EndTime");
+                        parameters.Add(new SqlParameter("@StartTime", startTime));
+                        parameters.Add(new SqlParameter("@EndTime", endTime));
+                    }
+                }
+
+                // Apply topic filter
+                if (!string.IsNullOrEmpty(filterTopic))
+                {
+                    whereClauses.Add("topicName = @TopicName");
+                    parameters.Add(new SqlParameter("@TopicName", filterTopic));
+                }
+
+                // Apply location filter
+                if (!string.IsNullOrEmpty(filterLocation))
+                {
+                    whereClauses.Add("room = @Location");
+                    parameters.Add(new SqlParameter("@Location", filterLocation));
+                }
+
+                // Apply search filter
+                string[] searchable = { "tranNo", "topicName", "description", "room", "trainerName", "position" };
                 if (!string.IsNullOrEmpty(searchValue))
                 {
                     var searchConditions = searchable.Select(c => $"{c} LIKE @Search").ToList();
@@ -153,7 +178,7 @@ namespace Expiry_list.Training
 
                 var data = dt.AsEnumerable().Select(r => new {
                     tranNo = r["tranNo"],
-                    topicName = r["topicName"], 
+                    topicName = r["topicName"],
                     description = r["Description"],
                     room = r["Room"],
                     trainerName = r["TrainerName"],
@@ -178,83 +203,36 @@ namespace Expiry_list.Training
             }
         }
 
-        private string GetSortDirection(string sortExpression)
-        {
-            if (ViewState["SortExpression"] != null && ViewState["SortExpression"].ToString() == sortExpression)
-            {
-                if (ViewState["SortDirection"] != null && ViewState["SortDirection"].ToString() == "ASC")
-                {
-                    return "DESC";
-                }
-                else
-                {
-                    return "ASC";
-                }
-            }
-            else
-            {
-                return "ASC";
-            }
-        }
 
-        protected void GridView1_PageIndexChanging(object sender, GridViewPageEventArgs e)
+        private List<string> GetLoggedInUserStoreNames()
         {
-            GridView2.PageIndex = e.NewPageIndex;
-            BindGrid();
-        }
+            List<string> storeNos = Session["storeListRaw"] as List<string>;
+            List<string> storeNames = new List<string>();
 
-        private void BindGrid(int pageNumber = 1, int pageSize = 100)
-        {
+            if (storeNos == null || storeNos.Count == 0)
+                return storeNames;
+
+            string query = $"SELECT storeNo FROM Stores WHERE storeNo IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})";
+
             using (SqlConnection conn = new SqlConnection(strcon))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
             {
-                //string orderBy = string.IsNullOrEmpty(hfSelectedIDs.Value)
-                //    ? "ORDER BY srno"
-                //    : $"ORDER BY CASE WHEN srno = @SelectedSr THEN 0 ELSE 1 END, srno";
-
-                string username = User.Identity.Name;
-                var permissions = GetAllowedFormsByUser(username);
-
-                if (!permissions.TryGetValue("ExpiryList", out string perm))
+                for (int i = 0; i < storeNos.Count; i++)
                 {
-                    Response.Write("{\"error\":\"Unauthorized\"}");
-                    Response.End();
-                    return;
+                    cmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
                 }
 
-                List<string> storeNos = GetLoggedInUserStoreNames();
-                //bool isHOUser = storeNos.Any(s => s.Equals("HO", StringComparison.OrdinalIgnoreCase));
-
-                StringBuilder sql = new StringBuilder(@"
-                    SELECT * FROM scheduleT order by id;");
-
-                //if (!isHOUser && storeNos.Count > 0)
-                //{
-                //    string inClause = string.Join(",", storeNos.Select((s, i) => $"@Store{i}"));
-                //    sql.Append($" AND LocationCode IN ({inClause})");
-                //}
-
-                //sql.Append($" {orderBy} OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY");
-
-                SqlCommand cmd = new SqlCommand(sql.ToString(), conn);
-                cmd.Parameters.AddWithValue("@Offset", (pageNumber - 1) * pageSize);
-                cmd.Parameters.AddWithValue("@PageSize", pageSize);
-                //cmd.Parameters.AddWithValue("@SelectedSr", hfSelectedIDs.Value ?? "");
-
-                //if (!isHOUser && storeNos.Count > 0)
-                //{
-                //    for (int i = 0; i < storeNos.Count; i++)
-                //        cmd.Parameters.AddWithValue($"@Store{i}", storeNos[i]);
-                //}
-
-                DataTable dt = new DataTable();
                 conn.Open();
-                new SqlDataAdapter(cmd).Fill(dt);
-                conn.Close();
-
-                GridView2.DataSource = dt;
-                GridView2.PageIndex = 0;
-                GridView2.DataBind();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        storeNames.Add(reader["storeNo"].ToString());
+                    }
+                }
             }
+
+            return storeNames;
         }
 
         protected void btnExport_Click(object sender, EventArgs e)
@@ -318,28 +296,28 @@ namespace Expiry_list.Training
                 query = @"
                         SELECT tranNo,topicName,description,room,trainerName, position,date,time
                         FROM scheduleT order by id";
-            
 
-            // If "HO" exists in store list, return all data
-            //if (storeNos.Any(s => s.Equals("HO", StringComparison.OrdinalIgnoreCase)))
-            //{
-            //    query = @"
-            //        SELECT TakenDate, itemNo, Description, LocationCode, BalanceQty, UnitofMeasure, itemFamily
-            //        FROM negLocation
-            //        WHERE TakenTime = (SELECT MAX(TakenTime) FROM negLocation)";
-            //}
-            //else
-            //{
-            //    // Dynamically build parameterized IN clause
-            //    var whereIn = string.Join(",", storeNos.Select((s, i) => $"@store{i}"));
-            //    query = $@"
-            //    SELECT TakenDate, itemNo, Description, LocationCode, BalanceQty, UnitofMeasure, itemFamily
-            //    FROM negLocation
-            //    WHERE TakenTime = (SELECT MAX(TakenTime) FROM negLocation)
-            //    AND LocationCode IN ({whereIn})";
-            //}
 
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+                //If "HO" exists in store list, return all data
+                if (storeNos.Any(s => s.Equals("HO", StringComparison.OrdinalIgnoreCase)))
+                {
+                    query = @"
+                        SELECT TakenDate, itemNo, Description, LocationCode, BalanceQty, UnitofMeasure, itemFamily
+                        FROM negLocation
+                        WHERE TakenTime = (SELECT MAX(TakenTime) FROM negLocation)";
+                }
+                else
+                {
+                    // Dynamically build parameterized IN clause
+                    var whereIn = string.Join(",", storeNos.Select((s, i) => $"@store{i}"));
+                    query = $@"
+                    SELECT TakenDate, itemNo, Description, LocationCode, BalanceQty, UnitofMeasure, itemFamily
+                    FROM negLocation
+                    WHERE TakenTime = (SELECT MAX(TakenTime) FROM negLocation)
+                    AND LocationCode IN ({whereIn})";
+                    }
+
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     if (!storeNos.Any(s => s.Equals("HO", StringComparison.OrdinalIgnoreCase)))
                     {
@@ -406,37 +384,6 @@ namespace Expiry_list.Training
             return forms;
         }
 
-        private List<string> GetLoggedInUserStoreNames()
-        {
-            List<string> storeNos = Session["storeListRaw"] as List<string>;
-            List<string> storeNames = new List<string>();
-
-            if (storeNos == null || storeNos.Count == 0)
-                return storeNames;
-
-            string query = $"SELECT storeNo FROM Stores WHERE storeNo IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})";
-
-            using (SqlConnection conn = new SqlConnection(strcon))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                for (int i = 0; i < storeNos.Count; i++)
-                {
-                    cmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
-                }
-
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        storeNames.Add(reader["storeNo"].ToString());
-                    }
-                }
-            }
-
-            return storeNames;
-        }
-
         protected string FormatDisplayDate(object dateValue)
         {
             if (dateValue == null || dateValue == DBNull.Value)
@@ -454,19 +401,19 @@ namespace Expiry_list.Training
             if (timeValue == null || timeValue == DBNull.Value)
                 return string.Empty;
 
-            if (TimeSpan.TryParse(timeValue.ToString(), out TimeSpan time))
+            if (timeValue is TimeSpan timeSpan)
             {
-                DateTime dateTime1 = DateTime.Today.Add(time);
-                return dateTime1.ToString("hh:mm tt");
+                DateTime timeDate = DateTime.Today.Add(timeSpan);
+                return timeDate.ToString("hh:mm tt");
             }
 
-            if (DateTime.TryParse(timeValue.ToString(), out DateTime dateTime))
+            if (TimeSpan.TryParse(timeValue.ToString(), out TimeSpan time))
             {
-                return dateTime.ToString("hh:mm tt");
+                DateTime timeDate = DateTime.Today.Add(time);
+                return timeDate.ToString("hh:mm tt");
             }
 
             return timeValue.ToString();
         }
-
     }
 }

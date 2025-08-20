@@ -239,9 +239,14 @@ namespace Expiry_list.ReorderForm
                     return "Near Expiry Item";
                 case "13":
                     return "Reorder Qty is large, Need to adjust Qty";
+                case "14":
+                    return "Discon Item";
+                case "15":
+                    return "Supplier Discon";
                 default:
                     return "";
             }
+            
         }
 
         protected string GetStatusText(string selectedAction)
@@ -752,6 +757,18 @@ namespace Expiry_list.ReorderForm
             }
 
             return forms;
+        }
+
+        protected string TruncateWords(string text, int maxWords)
+        {
+            if (string.IsNullOrEmpty(text))
+                return string.Empty;
+
+            string[] words = text.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length <= maxWords)
+                return text;
+
+            return string.Join(" ", words.Take(maxWords)) + " ...";
         }
 
         private void ShowAlert(string title, string message, string type)
