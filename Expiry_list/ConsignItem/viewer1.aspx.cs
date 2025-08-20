@@ -221,9 +221,7 @@ namespace Expiry_list.ConsignItem
             DropDownList ddlStatus = (DropDownList)row.FindControl("ddlStatusEdit");
             string selectedStatus = GetStatusText(ddlStatus.SelectedValue);
 
-            TextBox completed = (TextBox)row.FindControl("txtCompleted");
-
-            if ( ddlStatus == null || completed == null)
+            if ( ddlStatus == null )
             {
                 ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
                      "swal('Error!', 'Null Update Value!', 'error');", true);
@@ -236,14 +234,7 @@ namespace Expiry_list.ConsignItem
                 SqlCommand cmd = new SqlCommand(query, conn);
                 cmd.Parameters.AddWithValue("@status", selectedStatus);
 
-                if (!string.IsNullOrEmpty(completed.Text))
-                {
-                    cmd.Parameters.AddWithValue("@completedDate", completed.Text);
-                }
-                else
-                {
-                    cmd.Parameters.AddWithValue("@completedDate", DBNull.Value);
-                }
+                cmd.Parameters.AddWithValue("@completedDate", DateTime.Now.Date);
 
                 cmd.Parameters.AddWithValue("@itemId", editedId);
 
@@ -614,10 +605,11 @@ namespace Expiry_list.ConsignItem
                         }
                         else if (!string.IsNullOrEmpty(selectedStatus) && selectedStatus != "0")
                         {
-                            string updateQuery = "UPDATE itemListC SET Status = @Status WHERE id = @id ";
+                            string updateQuery = "UPDATE itemListC SET Status = @Status, completedDate = @completedDate WHERE id = @id ";
                             using (SqlCommand cmd = new SqlCommand(updateQuery, conn))
                             {
                                 cmd.Parameters.AddWithValue("@Status", selectedStatus);
+                                cmd.Parameters.AddWithValue("@completedDate", DateTime.Now.Date);
                                 cmd.Parameters.AddWithValue("@id", id);
                                 cmd.ExecuteNonQuery();
                             }

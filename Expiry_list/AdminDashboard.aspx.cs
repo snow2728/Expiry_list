@@ -71,11 +71,11 @@ namespace Expiry_list
             Session["formPermissions"] = allowedForms;
             Session["activeModule"] = "ExpiryList";
 
-          
+
 
             string redirectUrl = null;
 
-            if (allowedForms.ContainsKey("ExpiryList") && (perm == "edit" || perm == "admin" ))
+            if (allowedForms.ContainsKey("ExpiryList") && (perm == "edit" || perm == "admin"))
             {
                 redirectUrl = "registrationForm.aspx";
             }
@@ -83,7 +83,7 @@ namespace Expiry_list
             {
                 redirectUrl = "final2.aspx";
             }
-            else if ((allowedForms.ContainsKey("ExpiryList") && perm == "view") || (allowedForms.ContainsKey("ExpiryList") && perm == "super1") )
+            else if ((allowedForms.ContainsKey("ExpiryList") && perm == "view") || (allowedForms.ContainsKey("ExpiryList") && perm == "super1"))
             {
                 redirectUrl = "itemList.aspx";
             }
@@ -157,7 +157,7 @@ namespace Expiry_list
 
             string redirectUrl = null;
 
-            if (allowedForms.ContainsKey("SystemSettings") &&  perm == "admin")
+            if (allowedForms.ContainsKey("SystemSettings") && perm == "admin")
             {
                 redirectUrl = "regeForm1.aspx";
             }
@@ -290,7 +290,7 @@ namespace Expiry_list
             else
             {
                 redirectUrl = "~/AdminDashboard.aspx";
-        }
+            }
 
             if (!string.IsNullOrEmpty(redirectUrl))
             {
@@ -353,8 +353,8 @@ namespace Expiry_list
             using (SqlConnection conn = new SqlConnection(strcon))
             {
                 string query = @"
-            SELECT f.name AS FormName,
-                   CASE up.permission_level
+                    SELECT f.name AS FormName,
+                    CASE up.permission_level
                         WHEN 1 THEN 'view'
                         WHEN 2 THEN 'edit'
                         WHEN 3 THEN 'admin'
@@ -418,5 +418,4 @@ namespace Expiry_list
 
     }
 }
-
 

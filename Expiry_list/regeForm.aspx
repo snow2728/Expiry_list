@@ -461,7 +461,7 @@
                 <div class="row g-3">
                 <!-- Username -->
                     <div class="col-md-6">
-                    <label for="<%= usernameTextBox.ClientID %>" class="form-label">Username</label>
+                    <label for="<%= usernameTextBox.ClientID %>" class="form-label fw-bold">Username</label>
                     <asp:TextBox ID="usernameTextBox" runat="server" 
                         CssClass="form-control border-info shadow-sm" 
                             AutoFocus="true" AutoComplete="username" />
@@ -474,7 +474,7 @@
 
                 <!-- Password -->
                     <div class="col-md-6">
-                    <label for="<%= passwordTextBox.ClientID %>" class="form-label">Password</label>
+                    <label for="<%= passwordTextBox.ClientID %>" class="form-label fw-bold">Password</label>
                     <asp:TextBox ID="passwordTextBox" runat="server" 
                         TextMode="Password" 
                         CssClass="form-control border-info shadow-sm" 
@@ -486,7 +486,7 @@
                         Display="Dynamic" />
                 </div>
 
-                <!-- Role & Store -->
+               <%-- <!-- Role & Store -->
                 <div class="row g-3 mb-4">
                     <div class="col-12 col-md-6">
                         <label for="<%= roleTextBox.ClientID %>" class="form-label">Role</label>
@@ -503,13 +503,13 @@
                             ErrorMessage="Role is required"
                             CssClass="text-danger small d-block mt-1"
                             Display="Dynamic" />
-                    </div>
+                    </div>--%>
 
                  <div class="row g-3">
 
                       <!-- Store Selector -->
                      <div class="col-md-6 mt-4">
-                         <label for="<%= lstStoreFilter.ClientID %>" class="form-label me-3">Store(s)</label>
+                         <label for="<%= lstStoreFilter.ClientID %>" class="form-label fw-bold me-3">Store(s)</label>
                          <asp:ListBox ID="lstStoreFilter" runat="server" CssClass="form-control d-none" SelectionMode="Multiple"></asp:ListBox>
                          <div id="locationPillsContainer" class="location-pills-container mb-2"></div>
                         <asp:RequiredFieldValidator ID="storeNoRequired" runat="server"
@@ -524,12 +524,12 @@
                 </div>
 
                 <!-- Register Button -->
-                <div class="">
+                <%--<div class="">
                     <asp:Button ID="btnRegister" runat="server" Text="Register" 
                         OnClick="btnRegister_Click" 
                         CssClass="btn btn-primary btn-md fw-bold shadow-sm" 
                         style="background-color: #158396; border-color: #127485;" />
-                </div>
+                </div>--%>
 
                 <!-- Form Permissions -->
                 <div class="mt-4">

@@ -26,6 +26,18 @@
          setupFilterToggle();
      });
 
+     $(document).on('click', '.truncated-note', function (e) {
+         e.preventDefault();
+
+         var fullNote = $(this).data('fullnote');
+         $('#noteModal .modal-body').text(fullNote);
+
+         var modal = new bootstrap.Modal(document.getElementById('noteModal'));
+
+
+         modal.show();
+     });
+
      let isDataTableInitialized = false;
 
      function initializeComponents() {
@@ -115,10 +127,46 @@
                          }
                      },
                      { data: 'approver', width: "125px" },
-                     { data: 'note', width: "125px" },
+                     {
+                         data: 'note',
+                         width: "125px",
+                         render: function (data, type, row) {
+                             if (type === 'display') {
+                                 if (!data) {
+                                     return '';
+                                 }
+                                 var words = data.split(/\s+/);
+                                 var truncated = words.slice(0, 5).join(' ');
+                                 if (words.length > 5) {
+                                     truncated += ' ...';
+                                 }
+                                 return '<span class="truncated-note text-black-50" data-fullnote="' +
+                                     $('<div/>').text(data).html() + '">' + truncated + '</span>';
+                             }
+                             return data;
+                         }
+                     },
                      { data: 'action', width: "120px" },
                      { data: 'status', width: "120px" },
-                     { data: 'remark', width: "125px" },
+                     {
+                         data: 'remark',
+                         width: "125px",
+                         render: function (data, type, row) {
+                             if (type === 'display') {
+                                 if (!data) {
+                                     return '';
+                                 }
+                                 var words = data.split(/\s+/);
+                                 var truncated = words.slice(0, 5).join(' ');
+                                 if (words.length > 5) {
+                                     truncated += ' ...';
+                                 }
+                                 return '<span class="truncated-note text-black-50" data-fullnote="' +
+                                     $('<div/>').text(data).html() + '">' + truncated + '</span>';
+                             }
+                             return data;
+                         }
+                     },
                      {
                          data: 'completedDate',
                          width: "125px",
@@ -465,6 +513,8 @@
                                                 <asp:ListItem Text="No Hierarchy" Value="11" />
                                                 <asp:ListItem Text="Near Expiry Item" Value="12" />
                                                 <asp:ListItem Text="Reorder Qty is large, Need to adjust Qty" Value="13" />
+                                                <asp:ListItem Text="Discon Item" Value="14" />
+                                                <asp:ListItem Text="Supplier Discon" Value="15" />
                                             </asp:DropDownList>
                                         </div>
 
@@ -552,7 +602,7 @@
                               <div class="alert alert-info">No items to Filter</div>
                         </asp:Panel>
 
-                         <div class="table-responsive gridview-container p-1 rounded-1 " style="height: auto;">
+                         <div class="table-responsive gridview-container ps-3 pe-1 " style="height: 535px;">
                              <asp:GridView ID="GridView2" runat="server"
                                  CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto"
                                  AutoGenerateColumns="False"
@@ -570,8 +620,7 @@
 
                                     <EditRowStyle BackColor="white" />
                                     <FooterStyle BackColor="#5D7B9D" Font-Bold="True" ForeColor="White" />
-
-                                    <HeaderStyle Wrap="true" BackColor="#bd467f" Font-Bold="True" ForeColor="White"></HeaderStyle>
+                                    <HeaderStyle Wrap="false" BackColor="#bd467f" Font-Bold="True" ForeColor="White"></HeaderStyle>
                                     <PagerStyle CssClass="pagination-wrapper" HorizontalAlign="Center" VerticalAlign="Middle" />
                                     <RowStyle CssClass="table-row data-row" BackColor="#F7F6F3" ForeColor="#333333"></RowStyle>
                                     <AlternatingRowStyle CssClass="table-alternating-row" BackColor="White" ForeColor="#284775"></AlternatingRowStyle>
@@ -710,14 +759,17 @@
                                           <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
                                          
-                                         <asp:TemplateField HeaderText="Note" SortExpression="note" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0">
-                                              <ItemTemplate>
-                                                 <asp:Label ID="lblNote" runat="server" Text=' <%# Eval("note") %>'></asp:Label>
-                                             </ItemTemplate>
-                                              <ControlStyle Width="125px" />
-                                              <HeaderStyle ForeColor="White" BackColor="#bd467f" />
-                                              <ItemStyle HorizontalAlign="Justify" />
-                                         </asp:TemplateField>
+                                    <asp:TemplateField HeaderText="Note" SortExpression="note" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-59">
+                                        <ItemTemplate>
+                                            <asp:Label ID="lblNote" runat="server" 
+                                                Text='<%# TruncateWords(Eval("note").ToString(), 5) %>'
+                                                data-fullnote='<%# HttpUtility.HtmlEncode(Eval("note").ToString()) %>'
+                                                CssClass="truncated-note text-black-50" />
+                                        </ItemTemplate>
+                                        <ControlStyle Width="125px" />
+                                        <HeaderStyle ForeColor="White" BackColor="#BD467F" />
+                                        <ItemStyle HorizontalAlign="Justify" />
+                                    </asp:TemplateField>
 
                                         <asp:TemplateField HeaderText="Reason" SortExpression="action" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0">
                                             <ItemTemplate>
@@ -737,13 +789,16 @@
                                             <ItemStyle HorizontalAlign="Justify" />
                                         </asp:TemplateField>
 
-                                         <asp:TemplateField HeaderText="Remark" SortExpression="remark" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0">
+                                       <asp:TemplateField HeaderText="Remark" SortExpression="remark" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-59">
                                              <ItemTemplate>
-                                                 <asp:Label ID="lblRemark" runat="server" Text='<%# Eval("Remark") %>'></asp:Label>
+                                                 <asp:Label ID="lblRemark" runat="server" 
+                                                     Text='<%# TruncateWords(Eval("Remark").ToString(), 5) %>'
+                                                     data-fullnote='<%# HttpUtility.HtmlEncode(Eval("Remark").ToString()) %>'
+                                                     CssClass="truncated-note text-black-50" />
                                              </ItemTemplate>
-                                              <ControlStyle Width="125px" />
-                                              <HeaderStyle ForeColor="White" BackColor="#bd467f" />
-                                              <ItemStyle HorizontalAlign="Justify" />
+                                             <ControlStyle Width="125px" />
+                                             <HeaderStyle ForeColor="White" BackColor="#BD467F" />
+                                             <ItemStyle HorizontalAlign="Justify" />
                                          </asp:TemplateField>
 
                                          <asp:TemplateField HeaderText="Completed Date" SortExpression="completedDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0">
@@ -772,6 +827,24 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+</div>
+
+<!-- Note Modal -->
+<div class="modal fade" id="noteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Full Note</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Full note will appear here -->
+            </div>
+            <div class="modal-footer">
+               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>

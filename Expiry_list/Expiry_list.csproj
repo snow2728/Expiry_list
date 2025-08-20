@@ -2266,6 +2266,7 @@
     <Content Include="itemList.aspx" />
     <Content Include="jquery\jquery-3.6.0.min.js" />
     <Content Include="jquery\jquery.js" />
+    <Content Include="jquery\jquery.min.js" />
     <Content Include="jquery\jquery.unobtrusive-ajax.min.js" />
     <Content Include="js\customJS.js" />
     <Content Include="js\jquery-3.6.0.min.js" />

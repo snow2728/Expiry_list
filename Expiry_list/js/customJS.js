@@ -46,8 +46,19 @@ document.querySelectorAll('.nav-link').forEach(link => {
     });
 });
 
-// js code for dash2.aspx
+// js code for reorder/viewer3.aspx
 
+function onDeleteSuccess(result) {
+    if (result) {
+        Swal.fire('Deleted!', 'Your record has been deleted.', 'success');
+        refreshDataTable();
+    } else {
+        Swal.fire('Error!', 'Failed to delete record.', 'error');
+    }
+}
 
+function onDeleteError(error) {
+    Swal.fire('Error!', 'An error occurred while deleting: ' + error.get_message(), 'error');
+}
 
 

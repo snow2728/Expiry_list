@@ -336,7 +336,6 @@ table.dataTable thead th:first-child {
     color: white !important;
 }
 
-
 #<%= GridView2.ClientID % > tr.editing {
     display: table-row !important;
 }
@@ -545,7 +544,7 @@ table.dataTable {
 .fixed-column-4a,
 .fixed-column-5a {
     position: sticky;
-    z-index: ;
+/*    z-index: ;*/
     background: #F7F6F3 !important;
     border-right: 1px solid #dee2e6;
 }
@@ -588,7 +587,6 @@ table.dataTable {
     height: 517px;
     background: white;
     position: relative;
-    overflow-x: auto;
 }
 
 /* Positions */
@@ -915,7 +913,7 @@ a[commandname="Edit"] {
 }
 
 .highlight-row {
-    box-shadow: 0 0 10px 2px #ffcc00;
+    box-shadow: 0 0 10px 2px #f55d33;
     position: relative;
 }
 
@@ -934,14 +932,72 @@ a[commandname="Edit"] {
 }
 
 .select2-search__field {
-    width: auto !important;
+   /* width: auto !important;*/
     padding: 4px 6px !important;
     border: 1px solid #ced4da !important;
     border-radius: 4px !important;
-}*/
+}
 
-/* Style for no results message */
-/*.select2-results__option--no-results {
-    color: #6c757d;
-    font-style: italic;
-}*/
+.truncated-note {
+    cursor: pointer;
+    color: #007bff;
+    text-decoration: underline dotted;
+}
+
+.truncated-note:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* Add this CSS */
+.static-header {
+    display: table-header-group !important;
+    background-color: #f8f9fa !important;
+    font-weight: bold;
+}
+
+.gridview-container thead.static-header tr {
+    display: table-row !important;
+}
+
+/* Add to your styles */
+.search-textbox {
+    display: none; 
+}
+
+.updated-row {
+    background-color: #fc9e83;
+    animation: highlight-fade 2s ease;
+}
+
+@keyframes highlight-fade {
+    0% {
+        background-color: #943631;
+    }
+
+    100% {
+        background-color: #ade0b1;
+    }
+}
+
+/* css for viewTrainee */
+#topicsModal .modal-body {
+    max-height: 70vh; /* Adjust as needed */
+    overflow-y: auto;
+}
+
+/* Sticky header inside scrollable table */
+#topicsModal table thead.sticky-top th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    background-color: #cfe2ff;
+}
+
+/* Truncate long topic names */
+#topicsModal table td:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+

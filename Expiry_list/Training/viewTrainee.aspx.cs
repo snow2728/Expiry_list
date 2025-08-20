@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data.SqlClient;
 using System.Data;
-using System.Linq;
+using System.Data.SqlClient;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using static Expiry_list.regeForm1;
 
 namespace Expiry_list.Training
 {
@@ -16,97 +16,252 @@ namespace Expiry_list.Training
 
         protected void Page_Load(object sender, EventArgs e)
         {
-
             if (!IsPostBack)
             {
                 BindUserGrid();
+                BindTopicDropdown(storeDp);
             }
         }
 
         private void BindUserGrid()
         {
-            using (var conn = new SqlConnection(strcon))
-            using (var cmd = conn.CreateCommand())
+            try
             {
-                cmd.CommandText = @"
-            SELECT t.id,
-                   t.topicName,
-                   t.description,
-                   t.trainerId,
-                   ISNULL(tr.name, '') AS trainerName
-            FROM topicT t
-            LEFT JOIN trainerT tr ON t.trainerId = tr.id
-            ORDER BY t.id ASC;
-        ";
-
-                conn.Open();
-                using (var da = new SqlDataAdapter(cmd))
-                using (var dt = new DataTable())
+                using (var conn = new SqlConnection(strcon))
+                using (var cmd = conn.CreateCommand())
                 {
-                    da.Fill(dt);
-                    GridView2.DataSource = dt;
-                    GridView2.DataBind();
+                    cmd.CommandText = "SELECT * FROM traineeT ORDER BY id ASC";
+                    conn.Open();
+                    using (var da = new SqlDataAdapter(cmd))
+                    using (var dt = new DataTable())
+                    {
+                        da.Fill(dt);
+                        GridView2.DataSource = dt;
+                        GridView2.DataBind();
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                ShowMessage("Error loading data: " + ex.Message, "error");
             }
         }
 
-        private void BindTrainerDropdown(DropDownList dropdown)
+        private void BindTopicDropdown(DropDownList dropdown)
         {
             using (SqlConnection con = new SqlConnection(strcon))
             {
                 con.Open();
-                string query = "SELECT id, name FROM trainerT ORDER BY name";
+                string query = "SELECT id, storeNo FROM stores ORDER BY storeNo";
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
                         dropdown.DataSource = reader;
-                        dropdown.DataTextField = "name";
-                        dropdown.DataValueField = "id";
+                        dropdown.DataTextField = "storeNo";
+                        dropdown.DataValueField = "storeNo";
                         dropdown.DataBind();
                     }
                 }
-                dropdown.Items.Insert(0, new ListItem("Select Trainer", ""));
+                dropdown.Items.Insert(0, new ListItem("Select Store", ""));
             }
+        }
+
+        [System.Web.Services.WebMethod]
+        public static List<object> GetTraineeTopics(int traineeId)
+        {
+            var topics = new List<object>();
+            string connStr = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string query = @"
+            SELECT t.id,
+                   tpName.topicName,
+                   ISNULL(tp.status, 'Registered') AS Status,
+                   ISNULL(tp.exam, 'Not Taken') AS Exam
+            FROM topicWLT t
+            INNER JOIN traineeT tr ON tr.id = @traineeId
+            LEFT JOIN traineeTopicT tp
+                ON tp.topicId = t.id AND tp.traineeId = tr.id
+            INNER JOIN TopicT tpName
+                ON tpName.id = t.topic
+            WHERE t.traineeLevel = tr.position
+            ORDER BY tpName.topicName";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@traineeId", traineeId);
+
+                conn.Open();
+                SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    topics.Add(new
+                    {
+                        id = dr["id"].ToString(),
+                        name = dr["topicName"].ToString(), 
+                        status = dr["Status"].ToString(),
+                        exam = dr["Exam"].ToString()
+                    });
+                }
+            }
+            return topics;
+        }
+
+        //[System.Web.Services.WebMethod]
+        //public static bool SaveTraineeTopics(int traineeId, List<TopicStatus> topicStatuses)
+        //{
+        //    if (topicStatuses == null || topicStatuses.Count == 0)
+        //        return false;
+
+        //    string connStr = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
+
+        //    using (SqlConnection conn = new SqlConnection(connStr))
+        //    {
+        //        conn.Open();
+        //        using (SqlTransaction transaction = conn.BeginTransaction())
+        //        {
+        //            try
+        //            {
+        //                foreach (var topic in topicStatuses)
+        //                {
+        //                    // Use MERGE to update if exists, insert if not
+        //                    string mergeQuery = @"
+        //                        MERGE INTO traineeTopicT AS target
+        //                        USING (SELECT @traineeId AS traineeId, @topicId AS topicId) AS source
+        //                        ON target.traineeId = source.traineeId AND target.topicId = source.topicId
+        //                        WHEN MATCHED THEN
+        //                            UPDATE SET status = @status, exam = @exam, updatedAt = GETDATE()
+        //                        WHEN NOT MATCHED THEN
+        //                            INSERT (traineeId, topicId, status, exam, updatedAt)
+        //                            VALUES (@traineeId, @topicId, @status, @exam, GETDATE());";
+
+        //                    using (SqlCommand cmd = new SqlCommand(mergeQuery, conn, transaction))
+        //                    {
+        //                        cmd.Parameters.Add("@traineeId", SqlDbType.Int).Value = traineeId;
+        //                        cmd.Parameters.Add("@topicId", SqlDbType.Int).Value = topic.TopicId;
+        //                        cmd.Parameters.Add("@status", SqlDbType.NVarChar, 50).Value = topic.Status ?? (object)DBNull.Value;
+        //                        cmd.Parameters.Add("@exam", SqlDbType.NVarChar, 50).Value = topic.Exam ?? (object)DBNull.Value;
+        //                        cmd.ExecuteNonQuery();
+        //                    }
+        //                }
+
+        //                transaction.Commit();
+        //                return true;
+        //            }
+        //            catch (Exception ex)
+        //            {
+        //                transaction.Rollback();
+        //                System.Diagnostics.Debug.WriteLine("Error saving topics: " + ex.Message);
+        //                return false;
+        //            }
+        //        }
+        //    }
+        //}
+
+        public class TopicStatus
+        {
+            public int TopicId { get; set; }
+            public string Status { get; set; }
+            public string Exam { get; set; }
         }
 
         protected void GridView2_RowEditing(object sender, GridViewEditEventArgs e)
         {
-            GridView2.EditIndex = e.NewEditIndex;
-            BindUserGrid();
+            try
+            {
+                GridView2.EditIndex = e.NewEditIndex;
+                BindUserGrid();
+            }
+            catch (Exception ex)
+            {
+                ShowMessage("Error entering edit mode: " + ex.Message, "error");
+            }
         }
 
         protected void GridView2_RowUpdating(object sender, GridViewUpdateEventArgs e)
         {
-            int id = Convert.ToInt32(GridView2.DataKeys[e.RowIndex].Value);
-
-            TextBox txtTopicName = (TextBox)GridView2.Rows[e.RowIndex].FindControl("txtTopicName");
-            TextBox txtDescription = (TextBox)GridView2.Rows[e.RowIndex].FindControl("txtDescription");
-            DropDownList traineDp = (DropDownList)GridView2.Rows[e.RowIndex].FindControl("traineDp");
-
-            using (SqlConnection con = new SqlConnection(strcon))
+            try
             {
-                string query = @"UPDATE topicT 
-                        SET topicName = @topicName, 
-                            description = @description,
-                            trainerId = @trainerId
-                        WHERE id = @id";
+                int id = Convert.ToInt32(GridView2.DataKeys[e.RowIndex].Value);
+                GridViewRow row = GridView2.Rows[e.RowIndex];
 
-                using (SqlCommand cmd = new SqlCommand(query, con))
+                // Find controls
+                TextBox txtName = (TextBox)row.FindControl("txtName");
+                DropDownList storeDb = (DropDownList)row.FindControl("storeDp");
+                DropDownList PositionDb = (DropDownList)row.FindControl("PositionDb");
+
+                if (txtName == null || storeDb == null || PositionDb == null)
                 {
-                    cmd.Parameters.AddWithValue("@topicName", txtTopicName.Text);
-                    cmd.Parameters.AddWithValue("@description", txtDescription.Text);
-                    cmd.Parameters.AddWithValue("@trainerId",
-                        string.IsNullOrEmpty(traineDp.SelectedValue) ? DBNull.Value : (object)traineDp.SelectedValue);
-                    cmd.Parameters.AddWithValue("@id", id);
+                    ShowMessage("Could not find form controls!", "error");
+                    return;
+                }
 
-                    con.Open();
-                    cmd.ExecuteNonQuery();
+                using (SqlConnection con = new SqlConnection(strcon))
+                {
+                    string query = "UPDATE traineeT SET name=@name, store=@store, position=@level WHERE id=@id";
+                    using (SqlCommand cmd = new SqlCommand(query, con))
+                    {
+                        cmd.Parameters.AddWithValue("@name", txtName.Text.Trim());
+                        cmd.Parameters.AddWithValue("@store", storeDb.SelectedValue);
+                        cmd.Parameters.AddWithValue("@level", PositionDb.SelectedValue);
+                        cmd.Parameters.AddWithValue("@id", id);
+
+                        con.Open();
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        if (rowsAffected > 0)
+                        {
+                            ShowMessage("Trainee updated successfully!", "success");
+                        }
+                        else
+                        {
+                            ShowMessage("No records were updated.", "info");
+                        }
+                    }
+                }
+
+                GridView2.EditIndex = -1;
+                BindUserGrid();
+            }
+            catch (Exception ex)
+            {
+                ShowMessage("Error updating record: " + ex.Message, "error");
+            }
+        }
+
+        protected void GridView2_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType == DataControlRowType.DataRow &&
+                (e.Row.RowState & DataControlRowState.Edit) == DataControlRowState.Edit)
+            {
+                // Set the value for the store textbox
+                DropDownList storeDp = (DropDownList)e.Row.FindControl("storeDp");
+
+                if (storeDp != null)
+                {
+                    BindTopicDropdown(storeDp);
+                    DataRowView rowVeiew = (DataRowView)e.Row.DataItem;
+                    if (rowVeiew["store"] != DBNull.Value)
+                    {
+                        storeDp.SelectedValue = rowVeiew["store"].ToString(); ;
+                    }
+                }
+
+                DropDownList PositionDb = (DropDownList)e.Row.FindControl("PositionDb");
+                if (PositionDb != null)
+                {
+                    DataRowView drv = (DataRowView)e.Row.DataItem;
+                    if (drv["position"] != DBNull.Value)
+                    {
+                        string posValue = drv["position"].ToString();
+                        if (PositionDb.Items.FindByValue(posValue) != null)
+                        {
+                            PositionDb.SelectedValue = posValue;
+                        }
+                    }
                 }
             }
-
-            GridView2.EditIndex = -1;
-            BindUserGrid();
         }
 
         protected void GridView2_RowDeleting(object sender, GridViewDeleteEventArgs e)
@@ -117,31 +272,21 @@ namespace Expiry_list.Training
 
                 using (SqlConnection con = new SqlConnection(strcon))
                 {
-                    con.Open();
-
-                    string query = "DELETE FROM topicT WHERE id = @id";
-
+                    string query = "DELETE FROM traineeT WHERE id = @id";
                     using (SqlCommand cmd = new SqlCommand(query, con))
                     {
                         cmd.Parameters.AddWithValue("@id", id);
+                        con.Open();
                         cmd.ExecuteNonQuery();
                     }
                 }
 
-                ScriptManager.RegisterStartupScript(
-                    this, GetType(), "DeleteSuccess",
-                    "Swal.fire('Deleted!', 'Topic deleted successfully.', 'success');", true);
-
+                ShowMessage("Trainee deleted successfully!", "success");
                 BindUserGrid();
             }
             catch (Exception ex)
             {
-                string safeMsg = HttpUtility.JavaScriptStringEncode(
-                    "An error occurred while deleting the topic: " + ex.Message);
-
-                ScriptManager.RegisterStartupScript(
-                    this, GetType(), "DeleteError",
-                    $"Swal.fire('Error!', '{safeMsg}', 'error');", true);
+                ShowMessage("Error deleting record: " + ex.Message, "error");
             }
         }
 
@@ -149,29 +294,58 @@ namespace Expiry_list.Training
         {
             GridView2.EditIndex = -1;
             BindUserGrid();
-            Response.Redirect("viewTopic.aspx");
         }
 
-        protected void GridView2_RowDataBound(object sender, GridViewRowEventArgs e)
+        protected void btnaddTrainee_Click(object sender, EventArgs e)
         {
-            if (e.Row.RowType == DataControlRowType.DataRow)
+            try
             {
-                if ((e.Row.RowState & DataControlRowState.Edit) == DataControlRowState.Edit)
+                string trainee = traineeName.Text.Trim();
+                string level = levelDb.SelectedValue;
+                string store = storeDp.SelectedValue;
+
+                if (string.IsNullOrEmpty(trainee) || string.IsNullOrEmpty(level) || string.IsNullOrEmpty(store))
                 {
-                    DropDownList traineDp = (DropDownList)e.Row.FindControl("traineDp");
+                    ShowMessage("All fields are required!", "error");
+                    return;
+                }
 
-                    if (traineDp != null)
+                using (SqlConnection con = new SqlConnection(strcon))
+                {
+                    string query = "INSERT INTO traineeT (name, store, position) VALUES (@name, @store, @level)";
+                    using (SqlCommand cmd = new SqlCommand(query, con))
                     {
-                        BindTrainerDropdown(traineDp);
-
-                        DataRowView rowView = (DataRowView)e.Row.DataItem;
-                        if (rowView["trainerId"] != DBNull.Value)
-                        {
-                            traineDp.SelectedValue = rowView["trainerId"].ToString();
-                        }
+                        cmd.Parameters.AddWithValue("@name", trainee);
+                        cmd.Parameters.AddWithValue("@store", store);
+                        cmd.Parameters.AddWithValue("@level", level);
+                        con.Open();
+                        cmd.ExecuteNonQuery();
                     }
                 }
+
+                ShowMessage("Trainee added successfully!", "success");
+                traineeName.Text = "";
+                levelDb.SelectedIndex = 0;
+                storeDp.SelectedIndex = 0;
+                BindUserGrid();
+
+                // Close the modal
+                ScriptManager.RegisterStartupScript(this, GetType(), "closeModal",
+                    "$('#traineeModal').modal('hide');", true);
             }
+            catch (Exception ex)
+            {
+                ShowMessage("Error adding trainee: " + ex.Message, "error");
+            }
+        }
+
+        private void ShowMessage(string message, string type)
+        {
+            // Encode message to prevent JavaScript errors
+            string safeMessage = HttpUtility.JavaScriptStringEncode(message);
+            string script = $"swal('{type.ToUpper()}', '{safeMessage}', '{type}');";
+
+            ScriptManager.RegisterStartupScript(this, GetType(), "showMessage", script, true);
         }
     }
 }

@@ -14,22 +14,31 @@
               <!-- New Topic Card -->
                 <asp:Panel ID="pnlAddTrainee" runat="server" style="background-color: #CCDEE4;">
                    <!-- Card Header -->
-                   <div class="card-header fw-bolder text-center"
-                       style="background-color: #022F56; color:#c9b99f; border-top-left-radius: 10px; border-top-right-radius: 10px;">
-                       <h2 class="mb-0">New Trainee</h2>
-                   </div>
+                    <div class="card-header fw-bolder text-center d-flex justify-content-between align-items-center p-3"
+                         style="background-color: #022F56; color:#c9b99f; border-top-left-radius: 10px; border-top-right-radius: 10px;">
+                         <h2 class="mb-0">New Trainee</h2>
+                         <a href="viewTrainee.aspx" class="btn text-white" style="background-color:#488db4;"><i class="fa-solid fa-user-plus"></i>View Trainee List</a>
+                     </div>
                     <div class="card-body text-white text-center">
                         <!-- Trainee Field -->
                         <div class="row g-2 mb-3">
                             <label for="<%= traineeName.ClientID %>" class="col-sm-4 col-form-label fa-1x fw-bolder" style="color:#076585;">Trainee Name</label>
                             <div class="col-sm-8">
-                                <asp:TextBox runat="server" CssClass="form-control form-control-sm" ID="traineeName" ReadOnly="true" />
+                                <asp:TextBox runat="server" CssClass="form-control form-control-sm" ID="traineeName" />
                                 <%--<asp:DropDownList ID="traineeName" runat="server" CssClass="form-control form-control-sm dropdown-icon" > 
                                 </asp:DropDownList>--%>
                                  <asp:RequiredFieldValidator ID="RequiredFieldValidator7" runat="server"
                                    ErrorMessage="Name is required!"
                                    ControlToValidate="traineeName" Display="Dynamic"
                                    CssClass="text-danger d-block" SetFocusOnError="True" />
+                            </div>
+                        </div>
+
+                        <!-- store Field -->
+                        <div class="row g-2 mb-3">
+                            <label for="" class="col-sm-4 col-form-label fa-1x fw-bolder" style="color:#076585;">Store</label>
+                            <div class="col-sm-8">
+                                <asp:TextBox runat="server" ID="txtStore" CssClass="form-control form-control-sm" />
                             </div>
                         </div>
 
@@ -49,26 +58,12 @@
                             </div>
                         </div>
 
-                         <!-- Trainer Field -->
-                        <div class="row g-2 mb-3">
-                          <label for="<%= trainerDp.ClientID %>" class="col-sm-4 col-form-label fa-1x fw-bolder" style="color:#076585;">Trainer</label>
-                          <div class="col-sm-8">
-                          <%--  <asp:TextBox runat="server" CssClass="form-control form-control-sm" ID="storeNo" ReadOnly="true" />--%>
-                              <asp:DropDownList ID="trainerDp" runat="server" CssClass="form-control form-control-sm">
-                              </asp:DropDownList>
-                              <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server"
-                                  ErrorMessage="Trainer is required!"
-                                  ControlToValidate="trainerDp" Display="Dynamic"
-                                  CssClass="text-danger d-block" SetFocusOnError="True" />
-                          </div>
-                      </div>
-
                         <!-- Add Btn - Trainee -->
                         <div class="row g-2 mb-3">
                             <div class="col-sm-8 text-center">
                                 <asp:Button Text="Add Trainee" runat="server" CssClass="btn fw-bolder px-4 me-2"
                                     Style="background-color: #022F56; color:#c9b99f; border-radius: 20px;"
-                                    ID="addTraineeBtn1" />
+                                    ID="addTraineeBtn1" OnClick="btnaddTrainee_Click" />
                             </div>
                       </div>
 
