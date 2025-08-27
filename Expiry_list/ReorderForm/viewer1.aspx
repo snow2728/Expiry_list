@@ -455,6 +455,27 @@
             });
         }
 
+        function updateSelectedRows(updatedRows) {
+            updatedRows.forEach(row => {
+                const rowElement = document.querySelector(`tr[data-id='${row.id}']`);
+                if (rowElement) {
+                    const actionCell = rowElement.querySelector('.action-cell');
+                    if (actionCell) {
+                        actionCell.textContent = row.action;
+                    }
+
+                    const lblAction = rowElement.querySelector('span[id*="lblAction"]');
+                    if (lblAction) {
+                        lblAction.textContent = row.action;
+                    }
+
+                    // Add temporary highlight
+                    rowElement.classList.add('updated-row');
+                    setTimeout(() => rowElement.classList.remove('updated-row'), 3000);
+                }
+            });
+        }
+
         function updateSelectedStatusRows(updatedRows) {
             updatedRows.forEach(row => {
                 const rowElement = document.querySelector(`tr[data-id='${row.id}']`);
