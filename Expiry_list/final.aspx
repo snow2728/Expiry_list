@@ -747,7 +747,7 @@
 
      <div class="container-fluid col-lg-12">
       <div class="card shadow-md border-dark-subtle">
-          <div class="card-header" style="background-color:#1995ad;">
+          <div class="card-header" style="background-color:var(--primary-cyan);">
               <h4 class="text-center text-white">Expiry List</h4>
           </div>
             <div class="card-body">
@@ -755,14 +755,14 @@
                 <div class="d-flex align-items-center flex-wrap mb-2">
                     
                     <div>
-                        <asp:Button ID="btnFilter" class="btn me-1 text-white" style="background:#1995ad" runat="server" Text="Show Filter" CausesValidation="false" OnClientClick="toggleFilter(); return false;" OnClick="btnFilter_Click1" />
+                        <asp:Button ID="btnFilter" class="btn me-1 text-white" style="background:var(--primary-cyan)" runat="server" Text="Show Filter" CausesValidation="false" OnClientClick="toggleFilter(); return false;" OnClick="btnFilter_Click1" />
                     </div>
                     
                         <% if (canViewOnly) { %>
                             <div class="d-flex align-items-center">
                                 <asp:LinkButton ID="excel" runat="server"
                                     CssClass="btn text-white me-2"
-                                    Style="background:#1995ad; display:block;"
+                                    Style="background:var(--primary-cyan); display:block;"
                                     ForeColor="White" Font-Bold="True" Font-Size="Medium"
                                     OnClientClick="exportToExcel(); return false;">
                                     Export To Excel <i class="ms-1 fa fa-file-excel fa-1x" aria-hidden="true"></i>
@@ -771,7 +771,7 @@
                                 <asp:Button ID="btnExport" runat="server"
                                     Text="Export to Excel"
                                     CssClass="btn text-white me-2"
-                                    Style="background:#1995ad; display:none;"
+                                    Style="background:var(--primary-cyan); display:none;"
                                     ForeColor="White" Font-Bold="True" Font-Size="Medium"
                                     OnClick="btnExport_Click" />
                             </div>
@@ -804,7 +804,7 @@
                                         <div class="mb-3">
                                             <label for="<%= filterDropdownButton.ClientID %>">Choose Fields to Filter</label>
                                             <div class="dropdown">
-                                                <button class="btn dropdown-toggle text-white" style="background-color:#1995ad;"
+                                                <button class="btn dropdown-toggle text-white" style="background-color:var(--primary-cyan);"
                                                     type="button" id="filterDropdownButton" data-bs-toggle="dropdown"
                                                     aria-haspopup="true" aria-expanded="false" runat="server">
                                                     Select Filters
@@ -948,14 +948,14 @@
                                             <div class="form-group mt-3">
                                                 <asp:Button ID="btnApplyFilter" runat="server" 
                                                     CssClass="btn text-white mb-1" 
-                                                    style="background-color:#1995ad;" 
+                                                    style="background-color:var(--primary-cyan);" 
                                                     Text="Apply Filters" 
                                                     OnClientClick="return handleApplyFilters();" OnClick="ApplyFilters_Click" 
                                                     CausesValidation="false" />
                         
                                                 <asp:Button ID="btnResetFilter" runat="server" 
                                                     CssClass="btn text-white" 
-                                                    style="background-color:#1995ad;" 
+                                                    style="background-color:var(--primary-cyan);" 
                                                     Text="Reset Filters" 
                                                     OnClick="ResetFilters_Click" 
                                                     CausesValidation="false"
