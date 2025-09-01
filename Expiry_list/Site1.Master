@@ -9,6 +9,9 @@
     <!-- Bootstrap CSS -->
     <link href="bootstrap\css\bootstrap.min.css" rel="stylesheet" />
 
+    <!-- global CSS -->
+    <link href="css\global.css" rel="stylesheet" />
+
     <!-- DataTables Core + Extensions -->
     <link href="datatables\css\jquery.dataTables.min.css" rel="stylesheet" />
     <link href="datatables\css\fixedColumns.dataTables.min.css" rel="stylesheet" />
