@@ -30,7 +30,6 @@ body {
 }
 
 .nav-link {
-    padding: 0.75rem 1rem;
     border-radius: 0.5rem;
     transition: all 0.3s ease;
     color: rgba(255,255,255,0.85) !important;
@@ -359,7 +358,6 @@ input[type=number].no-spinners {
 /* Style for Site1.Master */
 .nav-link {
     color: #e9ecef !important;
-    padding: 0.3rem 1rem !important;
     border-radius: 4px;
     transition: all 0.2s ease;
     text-decoration: none !important;
@@ -419,7 +417,7 @@ input[type=number].no-spinners {
 
 /* Nav link styling */
 .nav-link {
-    padding: 8px 15px;
+    padding: 0px 15px;
     border-radius: 4px;
     transition: all 0.3s ease;
     color: #333;
@@ -1163,6 +1161,25 @@ a[commandname="Edit"] {
 #topicsTable th,
 #topicsTable td {
     text-align: left !important;
+}
+
+.home-menu-item {
+    align-items: center;
+}
+
+@media (max-width: 990px) {
+    .home-menu {
+        padding: 10px;
+        position: absolute;
+        top: 60px;
+        background-color: dimgrey;
+        border-radius: 10px;
+    }
+
+    .home-menu-item {
+        flex-direction: column;
+        align-items: start;
+    }
 }
 
 
