@@ -44,7 +44,17 @@ namespace Expiry_list
                     panel1.Visible = false;
                     tabs.Visible = false;
                 }
-                
+                if (Request.Url.AbsolutePath == "/" || Request.Url.AbsolutePath == "" || Request.Url.AbsolutePath == "/loginPage.aspx")
+                {
+                    div_content_container.Style["margin-top"] = "0px";
+                    div_content_container.Style["margin-bottom"] = "0px";
+                    string currentClass = div_content_container.Attributes["class"] ?? "";
+                    div_content_container.Attributes["class"] = currentClass.Replace("pt-5", "").Trim();
+                }
+                else if (Request.Url.AbsolutePath == "/AdminDashboard.aspx")
+                {
+                    btn_navbar.Style["display"] = "none";                    
+                }
             }
         }
 
@@ -100,7 +110,7 @@ namespace Expiry_list
             Response.Headers.Add("Content-Security-Policy", "frame-ancestors 'none'");
             Response.Headers.Add("X-Frame-Options", "DENY");
             Response.Headers.Add("Referrer-Policy", "no-referrer");
-        }
+            }
         }
 
     }

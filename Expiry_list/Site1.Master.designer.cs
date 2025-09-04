@@ -33,6 +33,15 @@ namespace Expiry_list
         protected global::System.Web.UI.HtmlControls.HtmlForm form2;
 
         /// <summary>
+        /// btn_navbar control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlButton btn_navbar;
+
+        /// <summary>
         /// tabs control.
         /// </summary>
         /// <remarks>
@@ -58,6 +67,15 @@ namespace Expiry_list
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label usernameSpan;
+
+        /// <summary>
+        /// div_content_container control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl div_content_container;
 
         /// <summary>
         /// ContentPlaceHolder1 control.

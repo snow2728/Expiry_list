@@ -6,7 +6,8 @@
 
         window.addEventListener("popstate", function (event) {
             location.reload();
-        });
+        });       
+
     </script>
 
 </asp:Content>
