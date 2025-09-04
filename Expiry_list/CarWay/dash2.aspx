@@ -151,6 +151,10 @@
             });
         });
 
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById("link_home").href = "../AdminDashboard.aspx";
+        });
+
         function disableRow($row) {
             // Disable inputs
             $row.find('.packing-type').prop('disabled', true);
@@ -575,13 +579,8 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:HiddenField ID="hdnGridData" runat="server" />
     
-      <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #996FD6;"><i class="fa-solid fa-left-long"></i> Home</a>
-
     <div class="container py-4">
-        <a href="main1.aspx" class="btn text-white mb-2" style="background-color: #158396;">
-            <i class="fa-solid fa-left-long"></i> Home
-        </a>
-
+        
         <!-- Header Section -->
         <div class="header-section p-4 mb-4 rounded-2" style="background: gray;">
             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">

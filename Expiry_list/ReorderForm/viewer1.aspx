@@ -361,6 +361,10 @@
             };
         };
 
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById("link_home").href = "../AdminDashboard.aspx";
+        });
+
         function applyManualSearchHighlighting(searchTerm) {
             if (!searchTerm) return;
 
@@ -1025,7 +1029,6 @@
  <div class="container-fluid col-lg-12 col-md-12 mt-0">
      <div class="card shadow-md border-dark-subtle" style="background-color: #F1B4D1;">
          <div class="card-header" style="background-color:#BD467F;">
-             <a href="../AdminDashboard.aspx" class="btn d-inline text-white ms-2 me-5" style="background-color: #A10D54;"><i class="fa-solid fa-left-long"></i> Home</a>
              <h4 class="text-align-center text-white d-inline" style="margin-left:433px;">Reorder Quantity List</h4>
          </div>
 

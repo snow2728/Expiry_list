@@ -230,6 +230,7 @@
             if (listBox) {
                 listBox.addEventListener('change', updateLocationPillsDisplay);
             }
+            document.getElementById("link_home").href = "../AdminDashboard.aspx";
         });
 
         function setupFilterToggle() {
@@ -664,8 +665,6 @@
 
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-
-    <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #0d330e;"><i class="fa-solid fa-left-long"></i>Home</a>
 
     <div class="container-fluid col-lg-12 col-md-12">
         <div class="card shadow-md border-dark-subtle">

@@ -89,7 +89,7 @@
                     <% if (System.IO.Path.GetFileName(Request.Url.AbsolutePath) != "AdminDashboard.aspx")
                        { %>
                     <asp:Panel runat="server" ID="tabs" CssClass="d-flex gap-2 home-menu-item">
-                        <a href="AdminDashboard.aspx" class="nav-link">
+                        <a id="link_home" href="AdminDashboard.aspx" class="nav-link">
                             <i class="fa fa-home" aria-hidden="true"></i>Home
                         </a>
                         <%

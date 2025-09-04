@@ -26,6 +26,10 @@
          setupFilterToggle();
      });
 
+     document.addEventListener('DOMContentLoaded', function () {
+         document.getElementById("link_home").href = "../AdminDashboard.aspx";
+     });
+
      $(document).on('click', '.truncated-note', function (e) {
          e.preventDefault();
 
@@ -410,9 +414,7 @@
 
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-
-     <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #A10D54;"><i class="fa-solid fa-left-long"></i> Home</a>
-
+     
 <div class="container-fluid col-lg-12 col-md-12">
     <div class="card shadow-md border-0" style="background-color: #F1B4D1;">
         <div class="card-header" style="background-color: #BD467F;">

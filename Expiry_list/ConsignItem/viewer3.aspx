@@ -186,6 +186,8 @@
             if (listBox) {
                 listBox.addEventListener('change', updateLocationPillsDisplay);
             }
+
+            document.getElementById("link_home").href = "../AdminDashboard.aspx";
         });
 
         function exportToExcel() {
@@ -703,7 +705,6 @@
         string expiryPerm = permissions != null && permissions.ContainsKey("ConsignmentList") ? permissions["ConsignmentList"] : null;
         bool canViewOnly = !string.IsNullOrEmpty(expiryPerm) && expiryPerm != "edit";
     %>
-    <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color :#0d330e;"><i class="fa-solid fa-left-long"></i> Home</a>
 
     <div class="container-fluid col-lg-12">
      <div class="card shadow-md border-dark-subtle">

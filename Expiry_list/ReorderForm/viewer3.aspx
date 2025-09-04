@@ -43,6 +43,10 @@
 
           });
 
+          document.addEventListener('DOMContentLoaded', function () {
+              document.getElementById("link_home").href = "../AdminDashboard.aspx";
+          });
+
           $(document).on('click', '.truncated-note', function (e) {
               e.preventDefault();
 
@@ -828,7 +832,6 @@
 <div class="container-fluid col-lg-12 col-md-12">
     <div class="card shadow-md border-0" style="background-color: #F1B4D1;">
         <div class="card-header" style="background-color: #BD467F;">
-            <a href="../AdminDashboard.aspx" class="btn d-inline text-white ms-2 me-5" style="background-color: #A10D54;"><i class="fa-solid fa-left-long"></i> Home</a>
             <h4 class="text-align-center text-white d-inline" style="margin-left:433px;">Completed Qty List</h4>
       </div>
 

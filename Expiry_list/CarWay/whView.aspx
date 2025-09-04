@@ -1,10 +1,12 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Site1.Master" AutoEventWireup="true" CodeBehind="whView.aspx.cs" Inherits="Expiry_list.CarWay.whView" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
-
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById("link_home").href = "../AdminDashboard.aspx";
+        });
+     </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-
-      <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #996FD6;"><i class="fa-solid fa-left-long"></i> Home</a>
 
   <%--  <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true">
          <Scripts>

@@ -224,6 +224,10 @@
 
             });
 
+            document.addEventListener('DOMContentLoaded', function () {
+                    document.getElementById("link_home").href = "../AdminDashboard.aspx";
+            });
+
             function isNumberKey(evt) {
                 var charCode = (evt.which) ? evt.which : evt.keyCode;
                 if (charCode == 8 || charCode == 9 || charCode == 13 || charCode == 27 || charCode == 46)
@@ -291,9 +295,6 @@
 
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-
-
-    <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #0D330E;"><i class="fa-solid fa-left-long"></i>Home</a>
 
     <div class="container-fluid" style="background-color: #f1f1f2;">
         <div class="row g-2">
