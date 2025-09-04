@@ -602,7 +602,7 @@
                               <div class="alert alert-info">No items to Filter</div>
                         </asp:Panel>
 
-                         <div class="table-responsive gridview-container p-1 rounded-1 " style="height: auto;">
+                         <div class="table-responsive gridview-container ps-3 pe-1 " style="height: 535px;">
                              <asp:GridView ID="GridView2" runat="server"
                                  CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto"
                                  AutoGenerateColumns="False"
@@ -620,8 +620,7 @@
 
                                     <EditRowStyle BackColor="white" />
                                     <FooterStyle BackColor="#5D7B9D" Font-Bold="True" ForeColor="White" />
-
-                                    <HeaderStyle Wrap="true" BackColor="#bd467f" Font-Bold="True" ForeColor="White"></HeaderStyle>
+                                    <HeaderStyle Wrap="false" BackColor="#bd467f" Font-Bold="True" ForeColor="White"></HeaderStyle>
                                     <PagerStyle CssClass="pagination-wrapper" HorizontalAlign="Center" VerticalAlign="Middle" />
                                     <RowStyle CssClass="table-row data-row" BackColor="#F7F6F3" ForeColor="#333333"></RowStyle>
                                     <AlternatingRowStyle CssClass="table-alternating-row" BackColor="White" ForeColor="#284775"></AlternatingRowStyle>

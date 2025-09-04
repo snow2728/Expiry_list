@@ -29,16 +29,16 @@ namespace Expiry_list.Training
             using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = @"
-            SELECT w.id,
-                   w.topic, 
-                   t.topicName, 
-                   w.traineeLevel,
-                   ISNULL(w.trainerId, t.trainerId) AS trainerId,
-                   ISNULL(w.trainerName, tr.name) AS trainerName
-                    FROM topicWLT w
-                    LEFT JOIN topicT t ON w.topic = t.id
-                    LEFT JOIN trainerT tr ON ISNULL(w.trainerId, t.trainerId) = tr.id
-                    ORDER BY w.id ASC;";
+                    SELECT w.id,
+                           w.topic, 
+                           t.topicName, 
+                           w.traineeLevel,
+                           ISNULL(w.trainerId, t.trainerId) AS trainerId,
+                           ISNULL(w.trainerName, tr.name) AS trainerName
+                            FROM topicWLT w
+                            LEFT JOIN topicT t ON w.topic = t.id
+                            LEFT JOIN trainerT tr ON ISNULL(w.trainerId, t.trainerId) = tr.id
+                            ORDER BY w.id ASC;";
 
                 conn.Open();
                 using (var da = new SqlDataAdapter(cmd))

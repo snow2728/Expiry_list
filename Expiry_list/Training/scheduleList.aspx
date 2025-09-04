@@ -1,309 +1,192 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Site1.Master" AutoEventWireup="true" CodeBehind="scheduleList.aspx.cs" Inherits="Expiry_list.Training.scheduleList" %>
+
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
-
-<script type="text/javascript">
-    $(document).ready(function () {
-        initializeDataTable();
-    });
-
-    function initializeDataTable() {
-        const grid = $("#<%= GridView2.ClientID %>");
-
-        if ($.fn.DataTable.isDataTable(grid)) {
-            grid.DataTable().destroy();
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        /* Container */
+        .multi-select-container {
+            max-width: 300px;
+            margin: 40px auto;
+            font-family: Arial, sans-serif;
         }
 
-        if (grid.find('thead').length === 0 && grid.find('tr').length > 0) {
-            grid.prepend($('<thead></thead>').append(grid.find('tr:first').clone()));
-            grid.find('tbody').remove();
-            grid.append($('<tbody></tbody>'));
+        .multi-select-label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: block;
         }
 
-        grid.DataTable({
-            responsive: true,
-            ordering: true,
-            serverSide: true,
-            paging: true,
-            filter: true,
-            scrollY: 589,
-            scrollCollapse: true,
-            autoWidth: false,
-            stateSave: true,
-            processing: true,
-            ajax: {
-                url: 'scheduleList.aspx',
-                type: 'POST',
-                data: function (d) {
-                    return {
-                        draw: d.draw,
-                        start: d.start,
-                        length: d.length,
-                        order: d.order,
-                        search: d.search.value,
+        /* Input box */
+        .multi-select-input {
+            width: 100%;
+            min-height: 45px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            padding: 5px 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            cursor: text;
+            background-color: #fff;
+            position: relative;
+        }
 
-                        filterDate: $('#<%= dateTb.ClientID %>').val(),
-                        filterTime: $('#<%= timeTb.ClientID %>').val(),
-                        filterTopic: $('#<%= topicName.ClientID %>').val(),
-                        filterLocation: $('#<%= locationDp.ClientID %>').val()
-                    };
-                }
-            },
-            columns: [
-                {
-                    data: null,
-                    width: "50px",
-                    render: function (data, type, row, meta) {
-                        return meta.row + 1;
-                    }
-                },
-                { data: 'tranNo', width: "150px" },
-                { data: 'topicName', width: "470px" },
-                { data: 'description', width: "110px" },
-                { data: 'room', width: "70px" },
-                { data: 'trainerName', width: "130px" },
-                { data: 'position', width: "130px" },
-                {
-                    data: 'date',
-                    width: "130px",
-                    render: function (data) {
-                        if (!data) return '';
-                        const date = new Date(data);
-                        return date.toLocaleDateString('en-GB', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric'
-                        });
-                    }
-                },
-                {
-                    data: 'time',
-                    width: "150px",
-                    render: function (data) {
-                        if (!data) return '';
+        .multi-select-input input {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 120px;
+            padding: 4px;
+        }
 
-                        if (data.includes(':')) {
-                            const parts = data.split(':');
-                            const hours = parseInt(parts[0]);
-                            const minutes = parts[1];
-                            const ampm = hours >= 12 ? 'PM' : 'AM';
-                            const hours12 = hours % 12 || 12;
-                            return `${hours12}:${minutes} ${ampm}`;
-                        }
-                        return data;
-                    }
+        .multi-select-input input.placeholder {
+            color: #6c757d;
+        }
+
+        /* Pills */
+        .pill {
+            display: flex;
+            align-items: center;
+            padding: 5px 12px;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 15px;
+            font-size: 0.9em;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+
+        .pill .remove-pill {
+            margin-left: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #fff;
+        }
+
+        .pill .remove-pill:hover {
+            color: #ffdcdc;
+        }
+
+        /* Dropdown */
+        .multi-select-dropdown {
+            position: absolute;
+            width: 30%;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            z-index: 100;
+            display: none;
+            margin-top: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .multi-select-dropdown div {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .multi-select-dropdown div:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Search box inside dropdown */
+        .dropdown-search {
+            padding: 6px 10px;
+            border-bottom: 1px solid #ddd;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+
+    <script>
+        $(document).ready(function () {
+            var availableItems = ["Apple", "Banana", "Orange", "Grapes", "Mango", "Pineapple", "Strawberry"];
+            var selectedItems = [];
+
+            var container = $(".multi-select-container");
+            var inputBox = $(".multi-select-input");
+            var dropdown = $(".multi-select-dropdown");
+
+            // Build dropdown with search input
+            var searchInput = $('<input type="text" class="dropdown-search w-10" placeholder="Search...">');
+            dropdown.append(searchInput);
+
+            availableItems.forEach(function (item) {
+                dropdown.append('<div data-value="' + item + '">' + item + '</div>');
+            });
+
+            // Show dropdown
+            inputBox.click(function () {
+                dropdown.show();
+                searchInput.focus();
+            });
+
+            // Filter dropdown items
+            searchInput.on("keyup", function () {
+                var val = $(this).val().toLowerCase();
+                dropdown.find('div[data-value]').each(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
+                });
+            });
+
+            // Select item
+            $(document).on("click", ".multi-select-dropdown div[data-value]", function () {
+                var value = $(this).data("value");
+                if (!selectedItems.includes(value)) {
+                    selectedItems.push(value);
+                    updateInput();
                 }
-            ],
-            order: [[1, 'asc']],
-            lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
-            initComplete: function (settings) {
-                var api = this.api();
-                setTimeout(function () {
-                    api.columns.adjust();
-                }, 50);
-            },
-            error: function (xhr, error, thrown) {
-                console.error("DataTables error:", error, thrown);
-                alert("Error loading data. Check console for details.");
+            });
+
+            // Remove pill
+            $(document).on("click", ".remove-pill", function (e) {
+                e.stopPropagation();
+                var value = $(this).data("value");
+                selectedItems = selectedItems.filter(function (v) { return v !== value; });
+                updateInput();
+            });
+
+            // Update input box
+            function updateInput() {
+                inputBox.html('');
+
+                if (selectedItems.length === 0) {
+                    inputBox.append('<input type="text" class="placeholder" placeholder="Select fruits..." readonly />');
+                } else {
+                    selectedItems.forEach(function (item) {
+                        inputBox.append('<span class="pill">' + item + '<span class="remove-pill" data-value="' + item + '">&times;</span></span>');
+                    });
+                    // Add a small invisible input to maintain focus for dropdown
+                    inputBox.append('<input type="text" style="width:2px;border:none;outline:none;" readonly />');
+                }
             }
+
+            // Click outside to close dropdown
+            $(document).click(function (e) {
+                if (!$(e.target).closest(".multi-select-container").length) {
+                    dropdown.hide();
+                    searchInput.val('');
+                    dropdown.find('div[data-value]').show();
+                }
+            });
+
+            // Initialize
+            updateInput();
         });
-    }
-
-    $("#<%= showBtn.ClientID %>").click(function (e) {
-        e.preventDefault();
-        const dataTable = $("#<%= GridView2.ClientID %>").DataTable();
-        dataTable.ajax.reload();
-    });
-
-</script>
-
+    </script>
 </asp:Content>
+
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-    
-    <div class="container-fluid">
-        <div class="row card">
-            <div class="card-header d-flex justify-content-between col-10 offset-1">
-                <div class="col-2">
-                    <asp:TextBox ID="dateTb" runat="server" TextMode="Date"></asp:TextBox>
-                </div>
-                 <div class="col-2">
-                     <asp:TextBox ID="timeTb" runat="server" TextMode="Time"></asp:TextBox>
-                 </div>
-                 <div class="col-2">
-                   <asp:DropDownList ID="topicName" runat="server" CssClass="form-control form-control-sm dropdown-icon" AppendDataBoundItems="True"> 
-                   </asp:DropDownList>
-                  <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server"
-                       ControlToValidate="topicName"
-                       ErrorMessage="Topic is required!"
-                       CssClass="text-danger small d-block mt-1"
-                       Display="Dynamic" />
-                 </div>
-                 <div class="col-2">
-                        <asp:DropDownList ID="locationDp" runat="server" CssClass="form-control form-control-sm dropdown-icon">
-                            <asp:ListItem Text="Select Loction" Value="" />
-                            <asp:ListItem Value="aungthapyay" Text="Aung Tha Pyay"></asp:ListItem>
-                            <asp:ListItem Value="yankin" Text="Yan Kin"></asp:ListItem>
-                        </asp:DropDownList>
-                        <asp:RequiredFieldValidator ID="storeNoRequired" runat="server"
-                            ControlToValidate="locationDp"
-                            ErrorMessage="Location is required!"
-                            CssClass="text-danger small d-block mt-1"
-                            Display="Dynamic" />
-                 </div>
-                 <div class="col-2">
-                     <asp:Button ID="showBtn" runat="server" Text="Show" OnClick="showBtn_Click" OnClientClick="return false;" CssClass="dt-filter-button" />
-                 </div>
-            </div>
+    <div class="multi-select-container">
+        <label class="multi-select-label">Select Fruits</label>
+        <div class="multi-select-input"></div>
+        <div class="multi-select-dropdown"></div>
 
-            <div class="card-body" id="gridCol">
-                  <asp:UpdatePanel ID="UpdatePanel2" runat="server" UpdateMode="Conditional">
-                     <ContentTemplate>
-
-                        <asp:Panel ID="pnlNoData" runat="server" Visible="false">
-                              <div class="alert alert-info">No items to Filter</div>
-                        </asp:Panel>
-
-                        <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true" >
-                           <Scripts>
-                               <asp:ScriptReference Name="MicrosoftAjax.js" />
-                               <asp:ScriptReference Name="MicrosoftAjaxWebForms.js" />
-                           </Scripts>
-                       </asp:ScriptManager>
-
-                         <div class="table-responsive gridview-container " style="height: 673px">
-                             <asp:GridView ID="GridView2" runat="server"
-                                 CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto"
-                                 AutoGenerateColumns="False"
-                                 DataKeyNames="id"
-                                 UseAccessibleHeader="true"
-                                 AllowPaging="false"
-                                 PageSize="100"
-                                 CellPadding="4"
-                                 ForeColor="#333333"
-                                 GridLines="None"
-                                 AutoGenerateEditButton="false" ShowHeaderWhenEmpty="true"  >
-
-                                 <EditRowStyle BackColor="#999999" />
-                                 <FooterStyle BackColor="#5D7B9D" Font-Bold="True" ForeColor="White" />
-
-                                 <HeaderStyle Wrap="true" BackColor="#808080" Font-Bold="True" ForeColor="White"></HeaderStyle>
-                                 <PagerStyle CssClass="pagination-wrapper" HorizontalAlign="Center" VerticalAlign="Middle" />
-                                 <RowStyle CssClass="table-row data-row" BackColor="#F7F6F3" ForeColor="#333333"></RowStyle>
-                                 <AlternatingRowStyle CssClass="table-alternating-row" BackColor="White" ForeColor="#284775"></AlternatingRowStyle>
-
-                                 <EmptyDataTemplate>
-                                     <div class="alert alert-info">No items to Filter</div>
-                                 </EmptyDataTemplate>
-
-                                 <Columns>
-
-                                     <asp:TemplateField ItemStyle-HorizontalAlign="Justify" HeaderText="No" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" >
-                                         <ItemTemplate>
-                                             <asp:Label ID="lblLinesNo" runat="server" Text='<%# Container.DataItemIndex + 1 %>' />
-                                         </ItemTemplate>
-                                         <ControlStyle Width="50px" />
-                                         <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                         <ItemStyle HorizontalAlign="Justify" />
-                                     </asp:TemplateField>
-
-                                     <asp:TemplateField HeaderText="Trans No" ItemStyle-Width="100px" SortExpression="tranNo" HeaderStyle-ForeColor="White" ItemStyle-HorizontalAlign="Justify" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" >
-                                         <ItemTemplate>
-                                             <asp:Label ID="lblNo" runat="server" Text='<%# Eval("tranNo") %>' />
-                                         </ItemTemplate><HeaderStyle ForeColor="White" BackColor="Gray" />
-                                         <ControlStyle Width="100px" />
-                                         <ItemStyle HorizontalAlign="Justify" />
-                                     </asp:TemplateField>
-
-                                     <asp:TemplateField HeaderText="Topic Name" SortExpression="topicName" HeaderStyle-ForeColor="White" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" >
-                                         <ItemTemplate>
-                                             <asp:Label ID="lblTopicName" runat="server" Text='<%# Eval("topicName") %>' />
-                                         </ItemTemplate>
-                                         <ControlStyle Width="117px" />
-                                         <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                         <ItemStyle HorizontalAlign="Justify" />
-                                     </asp:TemplateField>
-
-                                     <asp:TemplateField HeaderText="Description" SortExpression="description" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" >
-                                         <ItemTemplate>
-                                             <asp:Label ID="lblDesc" runat="server" Text='<%# Eval("description") %>' />
-                                         </ItemTemplate>
-                                         <ControlStyle Width="257px" />
-                                         <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                         <ItemStyle HorizontalAlign="Justify" />
-                                     </asp:TemplateField>
-
-                                   <asp:TemplateField HeaderText="Room" SortExpression="room" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" >
-                                      <ItemTemplate>
-                                          <asp:Label ID="lblRoom" runat="server" Text='<%# Eval("room") %>' />
-                                      </ItemTemplate>
-                                      <ControlStyle Width="100px" />
-                                      <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                      <ItemStyle HorizontalAlign="Justify" />
-                                  </asp:TemplateField>
-
-                                   <asp:TemplateField HeaderText="Trainer Name" SortExpression="trainerName" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" >
-                                      <ItemTemplate>
-                                          <asp:Label ID="lblTrainerName" runat="server" Text='<%# Eval("trainerName") %>' />
-                                      </ItemTemplate>
-                                      <ControlStyle Width="100px" />
-                                      <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                      <ItemStyle HorizontalAlign="Justify" />
-                                  </asp:TemplateField>
-
-                                 <asp:TemplateField HeaderText="Trainee Level" SortExpression="position" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" >
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblTraineeLevel" runat="server" Text='<%# Eval("position") %>' />
-                                    </ItemTemplate>
-                                    <ControlStyle Width="100px" />
-                                    <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                    <ItemStyle HorizontalAlign="Justify" />
-                                </asp:TemplateField>
-
-                                <asp:TemplateField HeaderText="Training Date" SortExpression="date" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" >
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblDate" runat="server" 
-                                            Text='<%# FormatDisplayDate(Eval("date")) %>' />
-                                    </ItemTemplate>
-                                    <ControlStyle Width="100px" />
-                                    <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                    <ItemStyle HorizontalAlign="Justify" />
-                                </asp:TemplateField>
-
-                               <asp:TemplateField HeaderText="Training Time" SortExpression="time" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" >
-                                    <ItemTemplate>
-                                        <asp:Label ID="lblTime" runat="server" 
-                                            Text='<%# FormatDisplayTime(Eval("time")) %>' />
-                                    </ItemTemplate>
-                                    <ControlStyle Width="100px" />
-                                    <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                    <ItemStyle HorizontalAlign="Justify" />
-                                </asp:TemplateField>
-
-                              <%--       <asp:CommandField ShowEditButton="true" ShowCancelButton="true" ControlStyle-CssClass="btn btn-outline-primary m-1 text-white"
-                                         EditText="-" UpdateText="<i class='fa-solid fa-file-arrow-up'></i> Update"
-                                         CancelText="<i class='fa-solid fa-xmark'></i> Cancel">
-                                         <ControlStyle CssClass="btn btn-outline-primary m-1 text-white" Width="105px" BackColor="#158396" />
-                                         <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                         <ItemStyle HorizontalAlign="Justify" />
-                                     </asp:CommandField>--%>
-
-                                 </Columns>
-
-                                 <SelectedRowStyle BackColor="#E2DED6" Font-Bold="True" ForeColor="#333333" />
-                                 <SortedAscendingCellStyle BackColor="#E9E7E2" />
-                                 <SortedAscendingHeaderStyle BackColor="#506C8C" />
-                                 <SortedDescendingCellStyle BackColor="#FFFDF8" />
-                                 <SortedDescendingHeaderStyle BackColor="#6F8DAE" />
-                             </asp:GridView>
-                         </div>
-                     </ContentTemplate>
-                    <Triggers>
-                        <asp:AsyncPostBackTrigger ControlID="showBtn" EventName="Click" />
-                    </Triggers>
-                </asp:UpdatePanel>
-            </div>
-
-        </div>
-
-     </div>
-
+        <br />
+        <asp:Button ID="btnSubmit" runat="server" Text="Submit" CssClass="btn btn-primary" OnClick="btnSubmit_Click" />
+        <br /><br />
+        <asp:Label ID="lblResult" runat="server" ForeColor="Green"></asp:Label>
+    </div>
 </asp:Content>

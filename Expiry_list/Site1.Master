@@ -262,37 +262,31 @@
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="addTrainer.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "addTrainer.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
-                                                    <i class="fas fa-user-plus"></i><span>New Trainer</span>
+                                                <a href="viewTrainer.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "addTrainer.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
+                                                    <i class="fas fa-user-plus"></i><span>Trainer List</span>
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="addTopic.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "addTopic.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
-                                                    <i class="fas fa-lightbulb"></i><span>New Topic</span>
+                                                <a href="viewTopic.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "addTopic.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
+                                                    <i class="fas fa-lightbulb"></i><span>Topic List</span>
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="addTopicWL.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "addTopicWL.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
-                                                    <i class="fas fa-add"></i><span>New Topic Via Level</span>
+                                                <a href="viewTopicWL.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "addTopicWL.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
+                                                    <i class="fas fa-add"></i><span>Topic Via Level List</span>
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="addTrainee.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "addTrainee.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
-                                                    <i class="fas fa-add"></i><span>New Trainee</span>
+                                                <a href="viewTrainee.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "addTrainee.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
+                                                    <i class="fas fa-add"></i><span>Trainee List</span>
                                                 </a>
                                             </li>
                                         </ul>
                                     </div>
                              <% }
 
-                                if (perm == "admin" || perm == "view" || perm == "edit" || perm == "super")
-                                { %>
-                                    <a href="viewer3.aspx" class="nav-link <%= (currentPage == "viewer3.aspx" ? "active3" : "") %>">
-                                       <i class="fas fa-check-circle fa-sm"></i>Confirmed Item
-                                    </a>
-                                <% }
+                           
 
-                                
                                 if (perm == "admin" || perm == "super")
                                 { %>
                                     <a href="scheduleList.aspx" class="nav-link <%= (currentPage == "scheduleList.aspx" ? "active3" : "") %>">
@@ -376,6 +370,7 @@
                 "/training/viewtopic.aspx",
                 "/training/viewtopicWL.aspx",
                 "/training/viewtrainer.aspx",
+                "/training/viewtrainee.aspx",
                 "/training/addtopicwl.aspx",
                 "/training/addtrainee.aspx",
                 "/training/schedulelist.aspx"

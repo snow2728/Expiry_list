@@ -7,6 +7,7 @@
      <script type="text/javascript">
          var expiryPermission = '<%= expiryPerm %>';
      </script>
+    <script type="text/javascript" src="../js/customJS.js" ></script>
       <script type="text/javascript">
 
           $(document).ready(function () {
@@ -39,6 +40,7 @@
               InitializeItemVendorFilter();
               focusOnEditedRow();
               setupFilterToggle();
+
           });
 
           $(document).on('click', '.truncated-note', function (e) {
@@ -107,7 +109,7 @@
                       }
                   },
                   fixedColumns: {
-                      leftColumns: 4,
+                      leftColumns: 4, 
                       rightColumns: 0,
                       heightMatch: 'none'
                   },
@@ -131,13 +133,19 @@
                       { data: 'vendorNo', width: "120px" },
                       { data: 'vendorName', width: "170px" },
                       {
-                          data: 'regeDate', width: "120px", render: function (data, type) {
+                          data: 'regeDate',
+                          width: "120px",
+                          render: function (data, type) {
+                              if (!data) return '';
                               const date = new Date(data);
                               return date.toLocaleDateString('en-GB');
                           }
                       },
                       {
-                          data: 'approveDate', width: "120px", render: function (data, type) {
+                          data: 'approveDate',
+                          width: "120px",
+                          render: function (data, type) {
+                              if (!data) return '';
                               const date = new Date(data);
                               return date.toLocaleDateString('en-GB');
                           }
@@ -148,14 +156,10 @@
                           width: "125px",
                           render: function (data, type, row) {
                               if (type === 'display') {
-                                  if (!data) { 
-                                      return '';
-                                  }
+                                  if (!data) return '';
                                   var words = data.split(/\s+/);
-                                  var truncated = words.slice(0, 5).join(' ');
-                                  if (words.length > 5) {
-                                      truncated += ' ...';
-                                  }
+                                  var truncated = words.slice(0, 3).join(' ');
+                                  if (words.length > 5) truncated += ' ...';
                                   return '<span class="truncated-note text-black-50" data-fullnote="' +
                                       $('<div/>').text(data).html() + '">' + truncated + '</span>';
                               }
@@ -169,14 +173,10 @@
                           width: "125px",
                           render: function (data, type, row) {
                               if (type === 'display') {
-                                  if (!data) {
-                                      return '';
-                                  }
+                                  if (!data) return '';
                                   var words = data.split(/\s+/);
-                                  var truncated = words.slice(0, 5).join(' ');
-                                  if (words.length > 5) {
-                                      truncated += ' ...';
-                                  }
+                                  var truncated = words.slice(0, 3).join(' ');
+                                  if (words.length > 5) truncated += ' ...';
                                   return '<span class="truncated-note text-black-50" data-fullnote="' +
                                       $('<div/>').text(data).html() + '">' + truncated + '</span>';
                               }
@@ -200,12 +200,13 @@
                       { data: 'owner', width: "125px" },
                       {
                           data: null,
+                          width: "107px",
                           orderable: false,
-                          defaultContent: '',
-                          className: 'dt-center',
-                          visible: false
-                      },
-
+                          render: function (data, type, row) {
+                              return '<button type="button" class="btn btn-danger btn-sm" onclick="deleteRecord(' + row.id + ')" title="Delete">' +
+                                  '<i class="fa-solid fa-trash"></i> Delete</button>';
+                          }
+                      }
                   ],
                   order: [[1, 'asc'], [2, 'asc']],
                   select: { style: 'multi', selector: 'td:first-child' },
@@ -214,8 +215,9 @@
                       var api = this.api();
                       setTimeout(function () {
                           api.columns.adjust();
-                      }, 50);
-                  }
+                          $(window).trigger('resize');
+                      }, 100);
+                  },
               });
 
                   $('.select2-init').select2({
@@ -225,6 +227,13 @@
                   });
               };
           };
+
+          $(window).on('resize', function () {
+              const grid = $("#<%= GridView2.ClientID %>");
+              if ($.fn.DataTable.isDataTable(grid)) {
+                  grid.DataTable().columns.adjust();
+              }
+          });
 
           function focusOnEditedRow() {
               const rowId = $('#<%= hfSelectedIDs.ClientID %>').val();
@@ -266,7 +275,7 @@
              $('#<%= hfSelectedIDs.ClientID %>').val('');
           }
 
-        document.addEventListener("DOMContentLoaded", function () {
+          document.addEventListener("DOMContentLoaded", function () {
 
               const monthInput = document.getElementById("monthFilter");
               const now = new Date();
@@ -560,7 +569,7 @@
                           .prop('disabled', isDisabled);
                   }
               });
-          }
+        }
 
           function InitializeItemVendorFilter() {
               try {
@@ -752,6 +761,46 @@
               location.reload();
           });
 
+          function deleteRecord(id) {
+              Swal.fire({
+                  title: 'Are you sure?',
+                  text: "You won't be able to revert this!",
+                  icon: 'warning',
+                  showCancelButton: true,
+                  confirmButtonColor: '#BD467F',
+                  cancelButtonColor: '#6c757d',
+                  confirmButtonText: 'Yes, delete it!'
+              }).then((result) => {
+                  if (result.isConfirmed) {
+                      // Use AJAX to call server-side method
+                      $.ajax({
+                          type: "POST",
+                          url: "viewer3.aspx/DeleteRecord1",
+                          data: JSON.stringify({ id: id }),
+                          contentType: "application/json; charset=utf-8",
+                          dataType: "json",
+                          success: function (response) {
+                              if (response.d === "success") {
+                                  Swal.fire('Deleted!', 'Your record has been deleted.', 'success');
+                                  refreshDataTable();
+                              } else if (response.d === "notfound") {
+                                  Swal.fire('Error!', 'Record not found.', 'error');
+                              } else if (response.d.startsWith("sqlerror:")) {
+                                  Swal.fire('Database Error!', 'A database error occurred.', 'error');
+                              } else if (response.d.startsWith("error:")) {
+                                  Swal.fire('Error!', 'An error occurred: ' + response.d.substring(6), 'error');
+                              } else {
+                                  Swal.fire('Error!', 'Failed to delete record.', 'error');
+                              }
+                          },
+                          error: function (xhr, status, error) {
+                              Swal.fire('Error!', 'An error occurred while deleting: ' + error, 'error');
+                          }
+                      });
+                  }
+              });
+          }
+
       </script>
 
     
@@ -775,13 +824,14 @@
     string expiryPerm = permissions != null && permissions.ContainsKey("ReorderQuantity") ? permissions["ReorderQuantity"] : null;
     bool canViewOnly = !string.IsNullOrEmpty(expiryPerm) && expiryPerm != "edit";
 %>
-     <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #A10D54;"><i class="fa-solid fa-left-long"></i> Home</a>
-
+     
 <div class="container-fluid col-lg-12 col-md-12">
     <div class="card shadow-md border-0" style="background-color: #F1B4D1;">
         <div class="card-header" style="background-color: #BD467F;">
-          <h4 class="text-center text-white">Completed Qty List</h4>
+            <a href="../AdminDashboard.aspx" class="btn d-inline text-white ms-2 me-5" style="background-color: #A10D54;"><i class="fa-solid fa-left-long"></i> Home</a>
+            <h4 class="text-align-center text-white d-inline" style="margin-left:433px;">Completed Qty List</h4>
       </div>
+
         <div class="card-body">
 
             <div class="d-flex align-items-center flex-wrap">
@@ -804,7 +854,7 @@
                         <asp:Panel ID="Panel1" runat="server" Visible="true" >
                             <div class="filter-panel p-2 bg-light border me-2">
                                 <h4>Filters</h4>
-                                 <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true">
+                                 <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true" EnablePageMethods="true">
                                       <Scripts>
                                           <asp:ScriptReference Name="MicrosoftAjax.js" />
                                           <asp:ScriptReference Name="MicrosoftAjaxWebForms.js" />
@@ -989,6 +1039,9 @@
                                                     CausesValidation="false"
                                                     UseSubmitBehavior="true" />
                                             </div>
+
+                                            
+                                            
                                         </ContentTemplate>
                                         <Triggers>
                                             <asp:AsyncPostBackTrigger ControlID="btnApplyFilter" EventName="Click" />
@@ -1013,26 +1066,28 @@
                               <div class="alert alert-info">No items to Filter</div>
                         </asp:Panel>
 
-                         <div class="table-responsive gridview-container p-1 rounded-1 " style="height: auto;">
-                             <asp:GridView ID="GridView2" runat="server"
-                                 CssClass="table table-striped table-bordered table-hover shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto"
-                                 AutoGenerateColumns="False"
-                                 DataKeyNames="id"
-                                 UseAccessibleHeader="true"
-                                 OnRowCancelingEdit="GridView2_RowCancelingEdit"
-                                 OnRowCreated="GridView1_RowCreated"
-                                 OnRowEditing="GridView2_RowEditing"
-                                 AllowPaging="false"
-                                 PageSize="100"
-                                 CellPadding="4"
-                                 ForeColor="#333333"
-                                 GridLines="None"
-                                 AutoGenerateEditButton="false" ShowHeaderWhenEmpty="true">
+                         <div class="table-responsive gridview-container ps-1 rounded-1 " style="height: 535px;">
+                            <asp:GridView ID="GridView2" runat="server"
+                                CssClass="table table-striped table-bordered table-hover shadow-lg"
+                                AutoGenerateColumns="False"
+                                DataKeyNames="id"
+                                UseAccessibleHeader="true"
+                                OnRowCancelingEdit="GridView2_RowCancelingEdit"
+                                OnRowCreated="GridView1_RowCreated"
+                                OnRowEditing="GridView2_RowEditing"
+                                OnRowDeleting="GridView2_RowDeleting"
+                                AllowPaging="false"
+                                PageSize="100"
+                                CellPadding="4"
+                                ForeColor="#333333"
+                                GridLines="None"
+                                AutoGenerateEditButton="false" 
+                                ShowHeaderWhenEmpty="true">
 
                                     <EditRowStyle BackColor="#999999" />
                                     <FooterStyle BackColor="#5D7B9D" Font-Bold="True" ForeColor="White" />
 
-                                    <HeaderStyle BackColor="#BD467F" Font-Bold="True" ForeColor="White"></HeaderStyle>
+                                    <HeaderStyle BackColor="#BD467F" Font-Bold="True" ForeColor="White" />
                                     <PagerStyle CssClass="pagination-wrapper" HorizontalAlign="Center" VerticalAlign="Middle" />
                                     <RowStyle CssClass="table-row data-row" BackColor="#F7F6F3" ForeColor="#333333"></RowStyle>
                                     <AlternatingRowStyle CssClass="table-alternating-row" BackColor="White" ForeColor="#284775"></AlternatingRowStyle>
@@ -1182,7 +1237,7 @@
                                          <asp:TemplateField HeaderText="Note" SortExpression="note" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-59">
                                             <ItemTemplate>
                                                 <asp:Label ID="lblNote" runat="server" 
-                                                    Text='<%# TruncateWords(Eval("note").ToString(), 5) %>'
+                                                    Text='<%# TruncateWords(Eval("note").ToString(), 3) %>'
                                                     data-fullnote='<%# HttpUtility.HtmlEncode(Eval("note").ToString()) %>'
                                                     CssClass="truncated-note text-black-50" />
                                             </ItemTemplate>
@@ -1221,7 +1276,7 @@
                                          <asp:TemplateField HeaderText="Remark" SortExpression="remark" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-59">
                                              <ItemTemplate>
                                                  <asp:Label ID="lblRemark" runat="server" 
-                                                     Text='<%# TruncateWords(Eval("Remark").ToString(), 5) %>'
+                                                     Text='<%# TruncateWords(Eval("Remark").ToString(), 3) %>'
                                                      data-fullnote='<%# HttpUtility.HtmlEncode(Eval("Remark").ToString()) %>'
                                                      CssClass="truncated-note text-black-50" />
                                              </ItemTemplate>
@@ -1232,7 +1287,7 @@
 
                                           <asp:TemplateField HeaderText="Completed Date" SortExpression="completedDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0">
                                              <ItemTemplate>
-                                                 <asp:Label ID="lblStaff" runat="server" Text=' <%# Eval("completedDate", "{0:dd-MM-yyyy}") %>' />
+                                                 <asp:Label ID="lblComplete" runat="server" Text=' <%# Eval("completedDate", "{0:dd-MM-yyyy}") %>' />
                                              </ItemTemplate>
                                              <ControlStyle Width="120px" />
                                               <HeaderStyle ForeColor="White" BackColor="#BD467F" />
@@ -1247,6 +1302,16 @@
                                              <HeaderStyle ForeColor="White" BackColor="#BD467F" />
                                              <ItemStyle HorizontalAlign="Justify" />
                                         </asp:TemplateField>
+
+                                    <asp:TemplateField HeaderText="Delete Function " ItemStyle-HorizontalAlign="Center">
+                                        <ItemTemplate>
+                                            <asp:LinkButton ID="lnkDelete" runat="server" CommandName="Delete" 
+                                                CssClass="btn btn-danger btn-sm" 
+                                                OnClientClick="return confirm('Are you sure you want to delete this record?');">
+                                                <i class="fa-solid fa-trash"></i> Delete
+                                            </asp:LinkButton>
+                                        </ItemTemplate>
+                                    </asp:TemplateField>
                                     
                                     </Columns>
                                       <SelectedRowStyle BackColor="#E2DED6" Font-Bold="True" ForeColor="#333333" />

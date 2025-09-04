@@ -14,27 +14,7 @@ namespace Expiry_list.Training
         string strcon = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
         protected void Page_Load(object sender, EventArgs e)
         {
-            BindTrainer();
-        }
-
-        private void BindTrainer()
-        {
-            using (SqlConnection con = new SqlConnection(strcon))
-            {
-                con.Open();
-                string query = "SELECT id, name FROM trainerT ORDER BY name";
-                using (SqlCommand cmd = new SqlCommand(query, con))
-                {
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        trainerDp.DataSource = reader;
-                        trainerDp.DataTextField = "name";
-                        trainerDp.DataValueField = "id";
-                        trainerDp.DataBind();
-                    }
-                }
-                trainerDp.Items.Insert(0, new ListItem("Select Trainer", ""));
-            }
+           
         }
 
         protected void btnaddTrainee_Click(object sender, EventArgs e)
@@ -43,8 +23,8 @@ namespace Expiry_list.Training
             {
                 string trainee = traineeName.Text.Trim();
                 string level = levelDb.SelectedValue;
-                string trainer = trainerDp.SelectedValue;
-                if (string.IsNullOrEmpty(trainee) || string.IsNullOrEmpty(level) || string.IsNullOrEmpty(trainer))
+                string store = txtStore.Text.Trim();
+                if (string.IsNullOrEmpty(trainee) || string.IsNullOrEmpty(level) || string.IsNullOrEmpty(store))
                 {
                     ShowAlert("Error!", "All fields are required!", "error");
                     return;
@@ -52,12 +32,12 @@ namespace Expiry_list.Training
                 using (SqlConnection con = new SqlConnection(strcon))
                 {
                     con.Open();
-                    string query = "INSERT INTO traineeT (name, email, phone) VALUES (@name, @email, @phone)";
+                    string query = "INSERT INTO traineeT (name, store, level) VALUES (@name, @store, @level)";
                     using (SqlCommand cmd = new SqlCommand(query, con))
                     {
                         cmd.Parameters.AddWithValue("@name", trainee);
-                        cmd.Parameters.AddWithValue("@email", level);
-                        cmd.Parameters.AddWithValue("@phone", trainer);
+                        cmd.Parameters.AddWithValue("@store", store);
+                        cmd.Parameters.AddWithValue("@level", level);
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -79,8 +59,8 @@ namespace Expiry_list.Training
         private void ClearForm()
         {
             traineeName.Text = "";
-            trainerDp.SelectedIndex = 0;
             levelDb.SelectedIndex = 0;
+            txtStore.Text = "";
         }
     }
 }

@@ -3,30 +3,28 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     
        <script type="text/javascript">
-           function updateTrainerAndLevel() {
-                var ddl = document.getElementById('<%= topicDP.ClientID %>');
-                var selectedOption = ddl.options[ddl.selectedIndex];
 
-                if (selectedOption.value === "") {
-                    document.getElementById('<%= trainerDp.ClientID %>').value = "";
+           function updateTrainerAndLevel() {
+               var ddl = document.getElementById('<%= topicDP.ClientID %>');
+               var selectedOption = ddl.options[ddl.selectedIndex];
+
+               if (selectedOption.value === "") {
+                   document.getElementById('<%= trainerDp.ClientID %>').value = "";
                     document.getElementById('<%= position.ClientID %>').value = "";
                     return;
                 }
-        
+      
                 var trainer = selectedOption.getAttribute("data-trainer") || '';
                 var level = selectedOption.getAttribute("data-level") || '';
-        
+      
                 document.getElementById('<%= trainerDp.ClientID %>').value = trainer;
                 document.getElementById('<%= position.ClientID %>').value = level;
            }
 
-           window.onload = function () {
-               var topicDdl = document.getElementById('<%= topicDP.ClientID %>');
-               if (topicDdl) {
-                   topicDdl.addEventListener("change", updateTrainerAndLevel);
-                   updateTrainerAndLevel(); // Initialize values
-               }
+            window.onload = function () {
+               document.getElementById('<%= topicDP.ClientID %>').addEventListener("change", updateTrainerAndLevel);
            };
+
        </script>
 
 </asp:Content>
@@ -93,8 +91,8 @@
                                     <div class="col-sm-8">
                                         <asp:DropDownList ID="locationDp" runat="server" CssClass="form-control form-control-sm dropdown-icon">
                                             <asp:ListItem Text="Select Loction" Value="" />
-                                            <asp:ListItem Value="aungthapyay" Text="Aung Tha Pyay"></asp:ListItem>
-                                            <asp:ListItem Value="yankin" Text="Yan Kin"></asp:ListItem>
+                                            <asp:ListItem Value="Aung Tha Pyay" Text="Aung Tha Pyay"></asp:ListItem>
+                                            <asp:ListItem Value="Yan Kin" Text="Yan Kin"></asp:ListItem>
                                         </asp:DropDownList>
                                         <asp:RequiredFieldValidator ID="storeNoRequired" runat="server"
                                             ControlToValidate="locationDp"
@@ -133,15 +131,20 @@
                                     </div>
                                 </div>
 
-                                <!-- Time Field -->
+                               <!-- Time Field -->
                                 <div class="row g-2 mb-3">
-                                    <label for="<%= time.ClientID %>" class="col-sm-4 col-form-label fw-bolder fa-1x" style="color: #076585;">Time</label>
+                                    <label for="<%= timeDp.ClientID %>" class="col-sm-4 col-form-label fw-bolder fa-1x" style="color: #076585;">Time</label>
                                     <div class="col-sm-8">
-                                        <asp:TextBox runat="server" CssClass="form-control form-control-sm" TextMode="Time"
-                                            ID="time" name="date" />
+                                        <asp:DropDownList ID="timeDp" runat="server" CssClass="form-control form-control-sm dropdown-icon">
+                                            <asp:ListItem Text="Select Time Range" Value="" />
+                                            <asp:ListItem Text="8:30 AM - 11:30 AM" Value="8:30 AM - 11:30 AM" />
+                                            <asp:ListItem Text="12:30 PM - 03:30 PM" Value="12:30 PM - 03:30 PM" />
+                                            <asp:ListItem Text="09:00 AM - 12:00 PM" Value="09:00 AM - 12:00 PM" />
+                                            <asp:ListItem Text="09:00 AM - 03:00 PM" Value="09:00 AM - 03:00 PM" />
+                                        </asp:DropDownList>
                                         <asp:RequiredFieldValidator ID="RequiredFieldValidator2" runat="server"
                                             ErrorMessage="Time must be selected!"
-                                            ControlToValidate="time" Display="Dynamic"
+                                            ControlToValidate="timeDp" Display="Dynamic"
                                             CssClass="text-danger" SetFocusOnError="True" />
                                     </div>
                                 </div>

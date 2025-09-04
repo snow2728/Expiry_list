@@ -2,6 +2,14 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 
+    <%
+        var permissions = Session["formPermissions"] as Dictionary<string, string>;
+        string expiryPerm = permissions != null && permissions.ContainsKey("ReorderQuantity") ? permissions["ReorderQuantity"] : "";
+    %>
+     <script type="text/javascript">
+         var expiryPermission = '<%= expiryPerm %>';
+     </script>
+
     <%-- Viewer1 Form For Ethical Dept (itemList) --%>
     <script type="text/javascript">
 
@@ -155,17 +163,18 @@
                 }
 
                grid.DataTable({
-                    responsive: true,
-                    ordering: true,
-                    serverSide: true,
-                    paging: true,
-                    searching: true,
-                    scrollX: true,
-                    scrollY: 417,
-                    scrollCollapse: true,
-                    autoWidth: false,
-                    stateSave: true,
-                    processing: true,
+                   responsive: true,
+                   ordering: true,
+                   serverSide: true,
+                   paging: true,
+                   filter: true,
+                   scrollX: true,
+                   scrollY: 407,
+                   scrollCollapse: true,
+                   autoWidth: false,
+                   stateSave: true,
+                   processing: true,
+                   searching: true,
                     ajax: {
                         url: 'viewer1.aspx',
                         type: 'POST',
@@ -423,6 +432,27 @@
                     }, 3000);
                 });
             }
+        }
+
+        function updateSelectedRows(updatedRows) {
+            updatedRows.forEach(row => {
+                const rowElement = document.querySelector(`tr[data-id='${row.id}']`);
+                if (rowElement) {
+                    const actionCell = rowElement.querySelector('.action-cell');
+                    if (actionCell) {
+                        actionCell.textContent = row.action;
+                    }
+
+                    const lblAction = rowElement.querySelector('span[id*="lblAction"]');
+                    if (lblAction) {
+                        lblAction.textContent = row.action;
+                    }
+
+                    // Add temporary highlight
+                    rowElement.classList.add('updated-row');
+                    setTimeout(() => rowElement.classList.remove('updated-row'), 3000);
+                }
+            });
         }
 
         function updateSelectedRows(updatedRows) {
@@ -986,6 +1016,12 @@
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
+    <%
+        var permissions = Session["formPermissions"] as Dictionary<string, string>;
+        string expiryPerm = permissions != null && permissions.ContainsKey("ReorderQuantity") ? permissions["ReorderQuantity"] : null;
+        bool canViewOnly = !string.IsNullOrEmpty(expiryPerm) && expiryPerm != "admin";
+    %>
+
  <div class="container-fluid col-lg-12 col-md-12 mt-0">
      <div class="card shadow-md border-dark-subtle" style="background-color: #F1B4D1;">
          <div class="card-header" style="background-color:#BD467F;">
@@ -1060,6 +1096,22 @@
                                  Text="Update Action"
                                  OnClick="btnStatusSelected_Click" />
                          </div>
+
+                     <%
+                        var panelPermissions = Session["formPermissions"] as Dictionary<string, string>;
+                        string panelExpiryPerm = panelPermissions != null && panelPermissions.ContainsKey("ReorderQuantity") ? panelPermissions["ReorderQuantity"] : null;
+                        bool panelCanViewOnly = !string.IsNullOrEmpty(panelExpiryPerm) && panelExpiryPerm == "admin";
+                    %>
+
+                     <% if (panelCanViewOnly) { %>
+
+                            <div class="col-12 col-md-auto">
+                                  <asp:Button Text="Delete" runat="server"
+                                    CssClass="btn btn-secondary text-white w-100"
+                                    ID="btnDelete" OnClick="btnDelete_Click" />
+                            </div>  
+
+                     <% } %>
 
                       <div id="searchContainer" class="col-12 col-md-auto" style="margin-left: 177px;">
                           <asp:Label ID="searchLabel" style="display:none;" Text="Search :" runat="server" />
@@ -1263,7 +1315,7 @@
                  <asp:HiddenField ID="hfIsSearchEdit" runat="server" />
 
                  <!-- Table -->
-                 <div class="col-md-12 " id="gridCol">
+                 <div class="col-md-12" id="gridCol">
                      <asp:UpdatePanel ID="UpdatePanel2" runat="server" UpdateMode="Conditional">
                      <ContentTemplate>
 
@@ -1271,9 +1323,9 @@
                               <div class="alert alert-info">No items to Filter</div>
                         </asp:Panel>
 
-                          <div class="table-responsive gridview-container ps-3 pe-1 responsive-grid-container" style="height: 535px;">
+                          <div class="table-responsive gridview-container ps-3 pe-1" style="height: 535px;">
                             <asp:GridView ID="GridView2" runat="server"
-                                 CssClass="table table-striped table-bordered mt-1 table-hover shadow-lg overflow-x-auto overflow-y-auto"
+                                 CssClass="table table-striped table-bordered table-hover shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto"
                                  AutoGenerateColumns="False"
                                  DataKeyNames="id"
                                  UseAccessibleHeader="true"
@@ -1292,7 +1344,6 @@
 
                                  <EditRowStyle BackColor="white" />
                                  <FooterStyle BackColor="#5D7B9D" Font-Bold="True" ForeColor="White" />
-
                                  <HeaderStyle Wrap="false" BackColor="#BD467F" Font-Bold="True" ForeColor="White"></HeaderStyle>
                                  <PagerStyle CssClass="pagination-wrapper" HorizontalAlign="Center" VerticalAlign="Middle" />
                                  <RowStyle CssClass="table-row data-row" BackColor="#F7F6F3" ForeColor="#333333"></RowStyle>

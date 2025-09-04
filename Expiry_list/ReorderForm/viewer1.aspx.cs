@@ -1364,5 +1364,40 @@ namespace Expiry_list.ReorderForm
             }
         }
 
+        protected void btnDelete_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(hfSelectedIDs.Value))
+            {
+                string[] selectedIds = hfSelectedIDs.Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                using (SqlConnection conn = new SqlConnection(strcon))
+                {
+                    conn.Open();
+                    foreach (string idStr in selectedIds)
+                    {
+                        if (int.TryParse(idStr, out int id))
+                        {
+                            string deleteQuery = "DELETE FROM itemListR WHERE id = @id";
+                            using (SqlCommand cmd = new SqlCommand(deleteQuery, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@id", id);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+                    }
+                }
+
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alertSuccess",
+                     "swal('Success!', 'Item is successfully deleted!', 'success').then(function(){ window.location='viewer1.aspx'; });",
+                  true);
+                return; 
+            }
+            else
+            {
+                ScriptManager.RegisterStartupScript(this, this.GetType(),
+                       "alertWarning", "swal('Warning!', 'Please select only one row to edit.', 'warning').then(function(){ window.location='viewer1.aspx'; });", true);
+                return;
+            }
+        }
     }
 }

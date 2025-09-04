@@ -33,11 +33,11 @@ namespace Expiry_list.Training
                 string description = desc.Text.Trim();
                 string room = locationDp.SelectedValue;
                 string date1 = date.Text.Trim();
-                string time1 = time.Text.Trim();
+                string time1 = timeDp.SelectedValue; // <- use DropDownList value
 
-                if (string.IsNullOrEmpty(topicId) || string.IsNullOrEmpty(room))
+                if (string.IsNullOrEmpty(topicId) || string.IsNullOrEmpty(room) || string.IsNullOrEmpty(time1))
                 {
-                    ShowAlert("Error!", "Topic and Training Room are required!", "error");
+                    ShowAlert("Error!", "Topic, Training Room and Time are required!", "error");
                     return;
                 }
 
@@ -48,6 +48,7 @@ namespace Expiry_list.Training
                     string trainerName = "";
                     string level = "";
 
+                    // Get trainerName and level from topic table
                     string query = @"SELECT trainerName, traineeLevel 
                              FROM topicWLT 
                              WHERE topic = @topicId";
@@ -65,10 +66,11 @@ namespace Expiry_list.Training
                         }
                     }
 
+                    // Insert schedule record
                     string insertQuery = @"INSERT INTO scheduleT 
-                (tranNo, topicName, description, room, trainerName, position, date, time)
-                VALUES 
-                (@tranNo, @topicName, @description, @room, @trainerName, @position, @date, @time)";
+                                   (tranNo, topicName, description, room, trainerName, position, date, time)
+                                   VALUES 
+                                   (@tranNo, @topicName, @description, @room, @trainerName, @position, @date, @time)";
 
                     using (SqlCommand insertCmd = new SqlCommand(insertQuery, con))
                     {
@@ -79,7 +81,7 @@ namespace Expiry_list.Training
                         insertCmd.Parameters.AddWithValue("@trainerName", trainerName);
                         insertCmd.Parameters.AddWithValue("@position", level);
                         insertCmd.Parameters.AddWithValue("@date", date1);
-                        insertCmd.Parameters.AddWithValue("@time", time1);
+                        insertCmd.Parameters.AddWithValue("@time", time1); // <- insert selected time
 
                         insertCmd.ExecuteNonQuery();
                     }
@@ -99,10 +101,16 @@ namespace Expiry_list.Training
             using (SqlConnection con = new SqlConnection(strcon))
             {
                 con.Open();
-                string query = @"SELECT t.id, t.topicName, tr.traineeLevel AS [level], tr.trainerName 
-                        FROM topicT t 
-                        INNER JOIN topicWLT tr ON t.id = tr.topic 
-                        ORDER BY t.topicName";
+
+                string query = @"
+            SELECT t.id, 
+                   t.topicName, 
+                   tr.name AS trainerName,
+                   wl.traineeLevel AS level
+            FROM topicT t
+            INNER JOIN trainerT tr ON t.trainerId = tr.id
+            LEFT JOIN topicWLT wl ON wl.topic = t.id
+            ORDER BY t.topicName";
 
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
@@ -111,18 +119,14 @@ namespace Expiry_list.Training
                         topicDP.Items.Clear();
                         while (reader.Read())
                         {
-                            ListItem item = new ListItem(
-                                reader["topicName"].ToString(),
-                                reader["id"].ToString()
-                            );
-
-                            // Set both attributes
+                            ListItem item = new ListItem(reader["topicName"].ToString(), reader["id"].ToString());
                             item.Attributes["data-trainer"] = reader["trainerName"].ToString();
-                            item.Attributes["data-level"] = reader["level"].ToString();
+                            item.Attributes["data-level"] = reader["level"] != DBNull.Value ? reader["level"].ToString() : "";
                             topicDP.Items.Add(item);
                         }
                     }
                 }
+
                 topicDP.Items.Insert(0, new ListItem("Select Topic", ""));
             }
         }
@@ -162,7 +166,7 @@ namespace Expiry_list.Training
             trainerDp.Text = string.Empty;
             position.Text = string.Empty;
             date.Text = string.Empty;
-            time.Text = string.Empty;   
+            timeDp.SelectedIndex = 0; 
         }
 
     }

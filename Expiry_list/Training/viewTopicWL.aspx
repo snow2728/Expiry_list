@@ -23,6 +23,7 @@
                     DataKeyNames="id" OnRowEditing="GridView2_RowEditing"
                     OnRowUpdating="GridView2_RowUpdating" OnRowDeleting="GridView2_RowDeleting" 
                     OnRowCancelingEdit="GridView2_RowCancelingEdit" OnRowDataBound="GridView2_RowDataBound" >
+
                     <Columns>
                         <asp:TemplateField ItemStyle-HorizontalAlign="Justify" HeaderText="No" 
                             HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" 

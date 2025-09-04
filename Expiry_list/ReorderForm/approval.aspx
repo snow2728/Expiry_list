@@ -54,7 +54,7 @@
                   paging: true,
                   filter: true,
                   scrollX: true,
-                  scrollY: 497,
+                  scrollY: 407,
                   scrollCollapse: true,
                   autoWidth: false,
                   stateSave: true,
@@ -676,12 +676,12 @@
     </style>  
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-        <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #A10D54;"><i class="fa-solid fa-left-long"></i> Home</a>
-
-<div class="container-fluid col-lg-12 col-md-12">
+        
+<div class="container-fluid col-lg-12 col-md-12 mt-0">
     <div class="card shadow-md border-0" style="background-color: #F1B4D1;">
         <div class="card-header" style="background-color: #BD467F;">
-            <h4 class="text-center text-white fw-bolder">Approval List</h4>
+            <a href="../AdminDashboard.aspx" class="btn d-inline text-white ms-2 me-5" style="background-color: #A10D54;"><i class="fa-solid fa-left-long"></i> Home</a>
+            <h4 class="text-align-center text-white d-inline" style="margin-left:433px;">Approval List</h4>
         </div>
 
         <div class="card-body">
@@ -690,7 +690,7 @@
                     <!-- Filter Button -->
                     <div class="col-6 col-md-auto">
                         <asp:Button ID="btnFilter" runat="server"
-                            CssClass="btn text-white w-100 py-2"
+                            CssClass="btn text-white w-100"
                             Style="background: #A10D54;"
                             Text="Show Filter"
                             OnClientClick="toggleFilter(); return false;" />
@@ -707,7 +707,7 @@
                            
                          <div class="col-12 col-md-auto">
                              <asp:Button ID="btnApproveSelected" runat="server"
-                                 CssClass="btn w-100 py-2"
+                                 CssClass="btn w-100"
                                  Style="background: #ffffff; color:#A10D54;"
                                  Text="Approve"
                                  OnClick="btnApproveSelected_Click" />
@@ -715,7 +715,7 @@
 
                           <div class="col-12 col-md-auto">
                               <asp:Button ID="btnDeclineSelected" runat="server"
-                                  CssClass="btn text-white w-100 py-2"
+                                  CssClass="btn text-white w-100"
                                   Style="background: #A10D54;"
                                   Text="Decline"
                                   OnClick="btnDeclineSelected_Click" />
@@ -724,7 +724,7 @@
                               <!-- Edit Button -->
                             <div class="col-6 col-md-auto">
                                 <asp:Button Text="Edit" runat="server"
-                                    CssClass="btn btn-secondary text-white w-100 py-2"
+                                    CssClass="btn btn-secondary text-white w-100"
                                     ID="btnEdit"
                                     OnClick="btnEdit_Click" />
                             </div>
@@ -879,7 +879,7 @@
                                 <div class="alert alert-info">No items to Filter</div>
                             </asp:Panel>
 
-                            <div class="table-responsive gridview-container p-1 rounded-1" style="height: auto;">
+                            <div class="table-responsive gridview-container ps-3 pe-1 " style="height: 553px;">
                                    <asp:GridView ID="GridView2" runat="server"
                                         CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto"
                                         AutoGenerateColumns="False"
@@ -900,8 +900,7 @@
 
                                         <EditRowStyle BackColor="white" />
                                         <FooterStyle BackColor="#5D7B9D" Font-Bold="True" ForeColor="White" />
-
-                                        <HeaderStyle Wrap="true" BackColor="#bd467f" Font-Bold="True" ForeColor="White"></HeaderStyle>
+                                        <HeaderStyle Wrap="false" BackColor="#bd467f" Font-Bold="True" ForeColor="White"></HeaderStyle>
                                         <PagerStyle CssClass="pagination-wrapper" HorizontalAlign="Center" VerticalAlign="Middle" />
                                         <RowStyle CssClass="table-row data-row" BackColor="#F7F6F3" ForeColor="#333333"></RowStyle>
                                         <AlternatingRowStyle CssClass="table-alternating-row" BackColor="White" ForeColor="#284775"></AlternatingRowStyle>
@@ -1020,7 +1019,7 @@
                                                 <ItemStyle HorizontalAlign="Justify" />
                                             </asp:TemplateField>
 
-                                            <asp:TemplateField HeaderText="Division Code" SortExpression="divisionCode" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-9">
+                                            <asp:TemplateField HeaderText="Division" SortExpression="divisionCode" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-9">
                                                  <ItemTemplate>
                                                      <asp:Label ID="lblDivisionCode" runat="server" Text='<%# Eval("divisionCode") %>' />
                                                  </ItemTemplate>
@@ -1056,7 +1055,7 @@
                                                 <ItemStyle HorizontalAlign="Justify" />
                                             </asp:TemplateField>
 
-                                            <asp:TemplateField HeaderText="Registration Date" SortExpression="regeDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-56">
+                                            <asp:TemplateField HeaderText="Regi Date" SortExpression="regeDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-56">
                                                 <ItemTemplate>
                                                     <asp:Label ID="lblRege" runat="server" Text='<%# Eval("regeDate", "{0:dd-MM-yyyy}") %>' />
                                                 </ItemTemplate>

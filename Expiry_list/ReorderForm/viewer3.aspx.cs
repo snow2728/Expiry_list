@@ -8,6 +8,8 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Web;
+using System.Web.Script.Services;
+using System.Web.Services;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using Newtonsoft.Json;
@@ -851,6 +853,80 @@ namespace Expiry_list.ReorderForm
                 return text;
 
             return string.Join(" ", words.Take(maxWords)) + " ...";
+        }
+
+        // delete
+        protected void GridView2_RowDeleting(object sender, GridViewDeleteEventArgs e)
+        {
+            try
+            {
+                string id = GridView2.DataKeys[e.RowIndex].Value.ToString();
+
+                if (DeleteRecord(id))
+                {
+                    ScriptManager.RegisterStartupScript(this, GetType(), "DeleteSuccess",
+                        "Swal.fire('Success!', 'Record deleted successfully.', 'success');", true);
+
+                    BindGrid();
+                }
+                else
+                {
+                    ScriptManager.RegisterStartupScript(this, GetType(), "DeleteError",
+                        "Swal.fire('Error!', 'Failed to delete record.', 'error');", true);
+                }
+            }
+            catch (Exception ex)
+            {
+                ScriptManager.RegisterStartupScript(this, GetType(), "DeleteException",
+                    $"Swal.fire('Error!', 'An error occurred: {ex.Message}', 'error');", true);
+            }
+        }
+
+        [WebMethod]
+        public static string DeleteRecord1(string id)
+        {
+            try
+            {
+                string strcon = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
+                using (SqlConnection conn = new SqlConnection(strcon))
+                {
+                    string query = "DELETE FROM itemListR WHERE id = @id";
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", id);
+                        conn.Open();
+                        int result = cmd.ExecuteNonQuery();
+
+                        if (result > 0)
+                            return "success";
+                        else
+                            return "notfound";
+                    }
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                return "sqlerror:" + sqlEx.Number;
+            }
+            catch (Exception ex)
+            {
+                return "error:" + ex.Message;
+            }
+        }
+
+        private bool DeleteRecord(string id)
+        {
+            using (SqlConnection conn = new SqlConnection(strcon))
+            {
+                string query = "DELETE FROM itemListR WHERE id = @id";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", id);
+                    conn.Open();
+                    int result = cmd.ExecuteNonQuery();
+                    return result > 0;
+                }
+            }
         }
 
         private void BindStores()
