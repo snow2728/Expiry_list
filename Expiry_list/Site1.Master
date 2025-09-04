@@ -79,16 +79,16 @@
     <form id="form2" class="" runat="server">
         <nav class="navbar navbar-expand-lg fixed-top border-bottom" style="background: #1995ad; font-family: 'Roboto Mono', monospace;">
             <div class="container-fluid px-3 px-lg-4">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
-                    aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <button id="btn_navbar" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                    aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation" runat="server">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <!-- Collapsible Content -->
-                <div class="collapse navbar-collapse" id="mainNav">
+                <div class="collapse navbar-collapse home-menu" id="mainNav">
                     <% if (System.IO.Path.GetFileName(Request.Url.AbsolutePath) != "AdminDashboard.aspx")
                        { %>
-                    <asp:Panel runat="server" ID="tabs" CssClass="d-flex gap-2 align-items-center">
+                    <asp:Panel runat="server" ID="tabs" CssClass="d-flex gap-2 home-menu-item">
                         <a href="AdminDashboard.aspx" class="nav-link">
                             <i class="fa fa-home" aria-hidden="true"></i>Home
                         </a>
@@ -392,6 +392,17 @@
                 if (profile) profile.style.backgroundColor = "#022F56";
                 if (profile2) profile.style.backgroundColor = "#022F56";
             }
+
+            //var currentPage = window.location.href;
+            //if (currentPage.endsWith("AdminDashboard.aspx")) {
+            //    var navbarbtn = document.getElementsByClassName("navbar-toggle");
+            //    console.log('length ', navbarbtn.length);
+            //    if (navbarbtn.length > 0) {
+            //        navbarbtn[0].style.display = "none";
+            //    }
+                //console.log("display ", div_content_container.style.display);                
+            //}
+               
             //var currentPage = window.location.href;
             //if (currentPage.endsWith("loginPage.aspx")) {
             //    var div_content_container = document.getElementById("div_content_container");
