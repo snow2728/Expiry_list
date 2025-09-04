@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Web;
+using System.Web.Services;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using static Expiry_list.regeForm1;
@@ -19,7 +20,8 @@ namespace Expiry_list.Training
             if (!IsPostBack)
             {
                 BindUserGrid();
-                BindTopicDropdown(storeDp);
+                Training.DataBind.BindStore(storeDp);
+                Training.DataBind.BindLevel(levelDb);
             }
         }
 
@@ -30,7 +32,16 @@ namespace Expiry_list.Training
                 using (var conn = new SqlConnection(strcon))
                 using (var cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT * FROM traineeT ORDER BY id ASC";
+                    cmd.CommandText = @"
+                    SELECT t.id,
+                       t.name,
+                       st.storeNo as store,
+                       l.name as position
+                        FROM traineeT t
+                        LEFT JOIN LevelT l ON t.position = l.id
+                        LEFT JOIN stores st ON t.store = st.id
+                        ORDER BY t.id ASC";
+
                     conn.Open();
                     using (var da = new SqlDataAdapter(cmd))
                     using (var dt = new DataTable())
@@ -47,26 +58,6 @@ namespace Expiry_list.Training
             }
         }
 
-        private void BindTopicDropdown(DropDownList dropdown)
-        {
-            using (SqlConnection con = new SqlConnection(strcon))
-            {
-                con.Open();
-                string query = "SELECT id, storeNo FROM stores ORDER BY storeNo";
-                using (SqlCommand cmd = new SqlCommand(query, con))
-                {
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        dropdown.DataSource = reader;
-                        dropdown.DataTextField = "storeNo";
-                        dropdown.DataValueField = "storeNo";
-                        dropdown.DataBind();
-                    }
-                }
-                dropdown.Items.Insert(0, new ListItem("Select Store", ""));
-            }
-        }
-
         [System.Web.Services.WebMethod]
         public static List<object> GetTraineeTopics(int traineeId)
         {
@@ -76,36 +67,75 @@ namespace Expiry_list.Training
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string query = @"
-            SELECT t.id,
-                   tpName.topicName,
-                   ISNULL(tp.status, 'Registered') AS Status,
-                   ISNULL(tp.exam, 'Not Taken') AS Exam
-            FROM topicWLT t
-            INNER JOIN traineeT tr ON tr.id = @traineeId
-            LEFT JOIN traineeTopicT tp
-                ON tp.topicId = t.id AND tp.traineeId = tr.id
-            INNER JOIN TopicT tpName
-                ON tpName.id = t.topic
-            WHERE t.traineeLevel = tr.position
-            ORDER BY tpName.topicName";
+                    SELECT 
+                        t.id AS id,
+                        t.topicName,
+                        ISNULL(tp.status, 'Registered') AS Status,
+                        ISNULL(tp.exam, 'Not Taken') AS Exam
+                    FROM topicWLT w
+                    INNER JOIN traineeT tr ON tr.id = @traineeId
+                    INNER JOIN TopicT t ON t.id = w.topic
+                    LEFT JOIN traineeTopicT tp 
+                        ON tp.topicId = t.id AND tp.traineeId = tr.id  
+                    WHERE w.traineeLevel = tr.position
+                    ORDER BY t.topicName";
 
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@traineeId", traineeId);
-
-                conn.Open();
-                SqlDataReader dr = cmd.ExecuteReader();
-                while (dr.Read())
+                using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    topics.Add(new
+                    cmd.Parameters.AddWithValue("@traineeId", traineeId);
+                    conn.Open();
+
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    while (dr.Read())
                     {
-                        id = dr["id"].ToString(),
-                        name = dr["topicName"].ToString(), 
-                        status = dr["Status"].ToString(),
-                        exam = dr["Exam"].ToString()
-                    });
+                        topics.Add(new
+                        {
+                            id = dr["id"].ToString(),
+                            name = dr["topicName"].ToString(),
+                            status = dr["Status"].ToString(),
+                            exam = dr["Exam"].ToString()
+                        });
+                    }
                 }
             }
             return topics;
+        }
+
+        [WebMethod]
+        public static string UpdateTraineeTopicStatusExam(int traineeId, int topicId, string status, string exam)
+        {
+            try
+            {
+                string connStr = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string query = @"
+                MERGE traineeTopicT AS target
+                USING (SELECT @traineeId AS traineeId, @topicId AS topicId) AS source
+                ON target.traineeId = source.traineeId AND target.topicId = source.topicId
+                WHEN MATCHED THEN 
+                    UPDATE SET status = @status, exam = @exam, updatedAt = GETDATE()
+                WHEN NOT MATCHED THEN
+                    INSERT (traineeId, topicId, status, exam, updatedAt)
+                    VALUES (@traineeId, @topicId, @status, @exam, GETDATE());";
+
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@traineeId", traineeId);
+                        cmd.Parameters.AddWithValue("@topicId", topicId);
+                        cmd.Parameters.AddWithValue("@status", (object)status ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@exam", (object)exam ?? DBNull.Value);
+
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+                return "success";
+            }
+            catch (Exception ex)
+            {
+                return ex.Message;
+            }
         }
 
         //[System.Web.Services.WebMethod]
@@ -235,16 +265,14 @@ namespace Expiry_list.Training
             if (e.Row.RowType == DataControlRowType.DataRow &&
                 (e.Row.RowState & DataControlRowState.Edit) == DataControlRowState.Edit)
             {
-                // Set the value for the store textbox
                 DropDownList storeDp = (DropDownList)e.Row.FindControl("storeDp");
-
                 if (storeDp != null)
                 {
-                    BindTopicDropdown(storeDp);
-                    DataRowView rowVeiew = (DataRowView)e.Row.DataItem;
-                    if (rowVeiew["store"] != DBNull.Value)
+                    Training.DataBind.BindStore(storeDp); 
+                    DataRowView rowView = (DataRowView)e.Row.DataItem;
+                    if (rowView["store"] != DBNull.Value)
                     {
-                        storeDp.SelectedValue = rowVeiew["store"].ToString(); ;
+                        storeDp.SelectedValue = rowView["store"].ToString();
                     }
                 }
 
@@ -301,10 +329,10 @@ namespace Expiry_list.Training
             try
             {
                 string trainee = traineeName.Text.Trim();
-                string level = levelDb.SelectedValue;
+                int level = levelDb.SelectedIndex;
                 string store = storeDp.SelectedValue;
 
-                if (string.IsNullOrEmpty(trainee) || string.IsNullOrEmpty(level) || string.IsNullOrEmpty(store))
+                if (string.IsNullOrEmpty(trainee) || string.IsNullOrEmpty(store))
                 {
                     ShowMessage("All fields are required!", "error");
                     return;

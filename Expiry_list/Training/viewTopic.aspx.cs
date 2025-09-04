@@ -23,7 +23,7 @@ namespace Expiry_list.Training
             if (!IsPostBack)
             {
                 BindUserGrid();
-                BindTrainer();
+                Training.DataBind.BindTrainer(traineDp);
             }
         }
 
@@ -33,15 +33,16 @@ namespace Expiry_list.Training
             using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = @"
-            SELECT t.id,
+                   SELECT t.id,
                    t.topicName,
+                   t.IsActive,
                    t.description,
                    t.trainerId,
                    ISNULL(tr.name, '') AS trainerName
-            FROM topicT t
-            LEFT JOIN trainerT tr ON t.trainerId = tr.id
-            ORDER BY t.id ASC;
-        ";
+                    FROM topicT t
+                    LEFT JOIN trainerT tr ON t.trainerId = tr.id
+                    ORDER BY t.id ASC;
+                ";
 
                 conn.Open();
                 using (var da = new SqlDataAdapter(cmd))
@@ -51,26 +52,6 @@ namespace Expiry_list.Training
                     GridView2.DataSource = dt;
                     GridView2.DataBind();
                 }
-            }
-        }
-
-        private void BindTopicDropdown(DropDownList dropdown)
-        {
-            using (SqlConnection con = new SqlConnection(strcon))
-            {
-                con.Open();
-                string query = "SELECT id, name FROM trainerT ORDER BY name";
-                using (SqlCommand cmd = new SqlCommand(query, con))
-                {
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        dropdown.DataSource = reader;
-                        dropdown.DataTextField = "name";
-                        dropdown.DataValueField = "id";
-                        dropdown.DataBind();
-                    }
-                }
-                dropdown.Items.Insert(0, new ListItem("Select Topic", ""));
             }
         }
 
@@ -86,26 +67,66 @@ namespace Expiry_list.Training
 
             TextBox txtTopicName = (TextBox)GridView2.Rows[e.RowIndex].FindControl("txtTopicName");
             TextBox txtDescription = (TextBox)GridView2.Rows[e.RowIndex].FindControl("txtDescription");
+            CheckBox chkEnable = (CheckBox)GridView2.Rows[e.RowIndex].FindControl("chkTopic_Enable");
             DropDownList traineDp = (DropDownList)GridView2.Rows[e.RowIndex].FindControl("traineDp");
+
+            if (txtTopicName == null || txtDescription == null || chkEnable == null || traineDp == null)
+            {
+                ShowAlert("Error!", "Some controls are missing in the GridView row.", "error");
+                return;
+            }
 
             using (SqlConnection con = new SqlConnection(strcon))
             {
-                string query = @"UPDATE topicT 
-                        SET topicName = @topicName, 
-                            description = @description,
-                            trainerId = @trainerId
-                        WHERE id = @id";
+                con.Open();
+                SqlTransaction tran = con.BeginTransaction();
 
-                using (SqlCommand cmd = new SqlCommand(query, con))
+                try
                 {
-                    cmd.Parameters.AddWithValue("@topicName", txtTopicName.Text);
-                    cmd.Parameters.AddWithValue("@description", txtDescription.Text);
-                    cmd.Parameters.AddWithValue("@trainerId",
-                        string.IsNullOrEmpty(traineDp.SelectedValue) ? DBNull.Value : (object)traineDp.SelectedValue);
-                    cmd.Parameters.AddWithValue("@id", id);
+                    // Update topicT
+                    string query = @"UPDATE topicT 
+                             SET topicName = @topicName, 
+                                 description = @description,
+                                 IsActive = @isActive,
+                                 trainerId = @trainerId
+                             WHERE id = @id";
 
-                    con.Open();
-                    cmd.ExecuteNonQuery();
+                    using (SqlCommand cmd = new SqlCommand(query, con, tran))
+                    {
+                        cmd.Parameters.Add("@topicName", SqlDbType.NVarChar, 100).Value = txtTopicName.Text;
+                        cmd.Parameters.Add("@description", SqlDbType.NVarChar, 500).Value = txtDescription.Text;
+                        cmd.Parameters.Add("@isActive", SqlDbType.Bit).Value = chkEnable.Checked;
+                        cmd.Parameters.Add("@trainerId", SqlDbType.Int).Value =
+                            string.IsNullOrEmpty(traineDp.SelectedValue) ? (object)DBNull.Value : Convert.ToInt32(traineDp.SelectedValue);
+                        cmd.Parameters.Add("@id", SqlDbType.Int).Value = id;
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // Update topicWLT
+                    string updateWLT = @"
+                        UPDATE w
+                        SET w.trainerId = @trainerId
+                        FROM topicWLT w
+                        INNER JOIN trainerT tr ON tr.id = @trainerId
+                        WHERE w.topic = @id;
+                    ";
+
+                    using (SqlCommand cmd2 = new SqlCommand(updateWLT, con, tran))
+                    {
+                        cmd2.Parameters.Add("@trainerId", SqlDbType.Int).Value =
+                            string.IsNullOrEmpty(traineDp.SelectedValue) ? (object)DBNull.Value : Convert.ToInt32(traineDp.SelectedValue);
+                        cmd2.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                        cmd2.ExecuteNonQuery();
+                    }
+
+                    tran.Commit();
+                }
+                catch (Exception ex)
+                {
+                    tran.Rollback();
+                    ShowAlert("Error!", "Update failed: " + ex.Message, "error");
+                    return;
                 }
             }
 
@@ -166,7 +187,7 @@ namespace Expiry_list.Training
 
                     if (traineDp != null)
                     {
-                        BindTopicDropdown(traineDp);
+                        Training.DataBind.BindTopicDropdown(traineDp);
 
                         DataRowView rowView = (DataRowView)e.Row.DataItem;
                         if (rowView["trainerId"] != DBNull.Value)
@@ -175,26 +196,6 @@ namespace Expiry_list.Training
                         }
                     }
                 }
-            }
-        }
-
-        private void BindTrainer()
-        {
-            using (SqlConnection con = new SqlConnection(strcon))
-            {
-                con.Open();
-                string query = "SELECT id, name FROM trainerT ORDER BY name";
-                using (SqlCommand cmd = new SqlCommand(query, con))
-                {
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        traineDp.DataSource = reader;
-                        traineDp.DataTextField = "name";
-                        traineDp.DataValueField = "id";
-                        traineDp.DataBind();
-                    }
-                }
-                traineDp.Items.Insert(0, new ListItem("Select Trainer", ""));
             }
         }
 
@@ -244,7 +245,9 @@ namespace Expiry_list.Training
 
                         tran.Commit();
                         ShowAlert("Success!", "Topic added successfully!", "success");
+                        BindUserGrid();
                         ClearForm();
+
                     }
                     catch (Exception ex)
                     {

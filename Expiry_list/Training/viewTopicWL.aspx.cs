@@ -20,6 +20,9 @@ namespace Expiry_list.Training
             if (!IsPostBack)
             {
                 BindUserGrid();
+                Training.DataBind.BindTopic(topicName);
+                Training.DataBind.BindLevel(levelDb);
+                ClearForm();
             }
         }
 
@@ -31,13 +34,13 @@ namespace Expiry_list.Training
                 cmd.CommandText = @"
                     SELECT w.id,
                            w.topic, 
-                           t.topicName, 
-                           w.traineeLevel,
-                           ISNULL(w.trainerId, t.trainerId) AS trainerId,
-                           ISNULL(w.trainerName, tr.name) AS trainerName
+                           t.topicName,
+                           tr.name as trainerName,
+                           l.name as traineeLevel
                             FROM topicWLT w
                             LEFT JOIN topicT t ON w.topic = t.id
-                            LEFT JOIN trainerT tr ON ISNULL(w.trainerId, t.trainerId) = tr.id
+                            LEFT JOIN levelT l ON l.id = w.traineeLevel
+                            LEFT JOIN trainerT tr ON w.trainerId = tr.id
                             ORDER BY w.id ASC;";
 
                 conn.Open();
@@ -50,45 +53,135 @@ namespace Expiry_list.Training
                 }
             }
         }
-        private void BindTopicDropdown(DropDownList dropdown)
+        protected void GridView2_RowDataBound(object sender, GridViewRowEventArgs e)
         {
-            using (SqlConnection con = new SqlConnection(strcon))
+            if (e.Row.RowType == DataControlRowType.DataRow &&
+                (e.Row.RowState & DataControlRowState.Edit) == DataControlRowState.Edit)
             {
-                con.Open();
-                string query = "SELECT id, topicName FROM topicT ORDER BY topicName";
-                using (SqlCommand cmd = new SqlCommand(query, con))
+                DataRowView rowView = (DataRowView)e.Row.DataItem;
+
+                DropDownList ddlTopic = (DropDownList)e.Row.FindControl("ddlTopic");
+                if (ddlTopic != null)
                 {
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    Training.DataBind.BindTopic(ddlTopic);
+                    if (rowView["topic"] != DBNull.Value)
                     {
-                        dropdown.DataSource = reader;
-                        dropdown.DataTextField = "topicName";
-                        dropdown.DataValueField = "id";
-                        dropdown.DataBind();
+                        ddlTopic.SelectedValue = rowView["topic"].ToString(); 
                     }
                 }
-                dropdown.Items.Insert(0, new ListItem("Select Topic", ""));
+
+                DropDownList ddlLevel = (DropDownList)e.Row.FindControl("ddlTraineeLevel");
+                if (ddlLevel != null)
+                {
+                    Training.DataBind.BindLevel(ddlLevel);
+                    if (rowView["traineeLevel"] != DBNull.Value)
+                    {
+                        ddlLevel.SelectedValue = rowView["traineeLevel"].ToString(); 
+                    }
+                }
+
+                TextBox txtTrainerName = (TextBox)e.Row.FindControl("txtTrainerName");
+                HiddenField hfTrainerId = (HiddenField)e.Row.FindControl("hfTrainerId");
+                if (txtTrainerName != null && rowView["trainerName"] != DBNull.Value)
+                {
+                    txtTrainerName.Text = rowView["trainerName"].ToString();
+                }
+                if (hfTrainerId != null && rowView["trainerId"] != DBNull.Value)
+                {
+                    hfTrainerId.Value = rowView["trainerId"].ToString();
+                }
             }
         }
 
-        protected void GridView2_RowDataBound(object sender, GridViewRowEventArgs e)
+        protected void btnaddTopic_Click(object sender, EventArgs e)
         {
-            if (e.Row.RowType == DataControlRowType.DataRow)
+            try
             {
-                if ((e.Row.RowState & DataControlRowState.Edit) == DataControlRowState.Edit)
+                string topicId = topicName.SelectedValue;
+                string level = levelDb.SelectedValue;
+
+                if (string.IsNullOrEmpty(topicId) || string.IsNullOrEmpty(level))
                 {
-                    DropDownList ddlTopic = (DropDownList)e.Row.FindControl("ddlTopic");
+                    ShowAlert("Error!", "Topic and Level are required!", "error");
+                    return;
+                }
 
-                    if (ddlTopic != null)
+                string trainerId = string.Empty;
+                string trainerName = trainerDp.Text;
+
+                using (SqlConnection con = new SqlConnection(strcon))
+                {
+                    con.Open();
+                    string trainerQuery = @"SELECT tr.id, tr.name 
+                                    FROM topicT t 
+                                    INNER JOIN trainerT tr ON t.trainerId = tr.id
+                                    WHERE t.id = @topicId or tr.name=@trname";
+
+                    using (SqlCommand cmd = new SqlCommand(trainerQuery, con))
                     {
-                        BindTopicDropdown(ddlTopic);
-
-                        DataRowView rowView = (DataRowView)e.Row.DataItem;
-                        if (rowView["topicName"] != DBNull.Value)
+                        cmd.Parameters.AddWithValue("@topicId", topicId);
+                        cmd.Parameters.AddWithValue("@trname", trainerName);
+                        using (SqlDataReader reader = cmd.ExecuteReader())
                         {
-                            ddlTopic.SelectedValue = rowView["topicName"].ToString();
+                            if (reader.Read())
+                            {
+                                trainerId = reader["id"].ToString();
+                                trainerName = reader["name"].ToString();
+                            }
+                            else
+                            {
+                                ShowAlert("Error!", "Trainer not found for selected topic!", "error");
+                                return;
+                            }
                         }
                     }
+
+                    string checkQuery = "SELECT COUNT(*) FROM topicWLT WHERE topic = @topicId AND traineeLevel = @level AND trainerId = @trainerId";
+                    using (SqlCommand checkCmd = new SqlCommand(checkQuery, con))
+                    {
+                        checkCmd.Parameters.AddWithValue("@topicId", topicId);
+                        checkCmd.Parameters.AddWithValue("@level", level);
+                        checkCmd.Parameters.AddWithValue("@trainerId", trainerId);
+
+                        int existingCount = (int)checkCmd.ExecuteScalar();
+                        if (existingCount > 0)
+                        {
+                            ShowAlert("Error!", "A topic is already assigned to this level!", "error");
+                            return;
+                        }
+                    }
+
+                    SqlTransaction tran = con.BeginTransaction();
+
+                    try
+                    {
+                        string insertQuery = @"INSERT INTO topicWLT (topic, traineeLevel, trainerId)
+                                       VALUES (@topic, @level, @trainerId )";
+
+                        using (SqlCommand insertCmd = new SqlCommand(insertQuery, con, tran))
+                        {
+                            insertCmd.Parameters.AddWithValue("@topic", topicId);
+                            insertCmd.Parameters.AddWithValue("@level", level);
+                            insertCmd.Parameters.AddWithValue("@trainerId", trainerId);
+
+                            insertCmd.ExecuteNonQuery();
+                        }
+
+                        tran.Commit();
+                        ShowAlert("Success!", "Topic with Level added successfully!", "success");
+                        ClearForm();
+                        BindUserGrid();
+                    }
+                    catch (Exception ex)
+                    {
+                        tran.Rollback();
+                        ShowAlert("Error!", $"Insert failed: {ex.Message}", "error");
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                ShowAlert("Error!", $"Unexpected error: {ex.Message}", "error");
             }
         }
 
@@ -111,10 +204,10 @@ namespace Expiry_list.Training
 
                     using (SqlConnection con = new SqlConnection(strcon))
                     {
-                        string query = @"SELECT t.traineeLevel, tr.id AS trainerId, tr.name AS trainerName
-                           FROM topicT t
-                           LEFT JOIN trainers tr ON t.trainerId = tr.id
-                           WHERE t.id = @topicId";
+                        string query = @"SELECT tr.id AS trainerId, tr.name AS trainerName
+                                 FROM topicT t
+                                 INNER JOIN trainerT tr ON t.trainerId = tr.id
+                                 WHERE t.id = @topicId";
 
                         using (SqlCommand cmd = new SqlCommand(query, con))
                         {
@@ -125,20 +218,14 @@ namespace Expiry_list.Training
                             {
                                 if (reader.Read())
                                 {
-                                    // Update trainee level
-                                    DropDownList ddlTraineeLevel = (DropDownList)row.FindControl("ddlTraineeLevel");
-                                    if (ddlTraineeLevel != null)
-                                    {
-                                        ddlTraineeLevel.SelectedValue = reader["traineeLevel"].ToString();
-                                    }
-
-                                    // Update trainer info
                                     TextBox txtTrainerName = (TextBox)row.FindControl("txtTrainerName");
-                                    txtTrainerName.Text = reader["trainerName"].ToString();
-
                                     HiddenField hfTrainerId = (HiddenField)row.FindControl("hfTrainerId");
-                                    hfTrainerId.Value = reader["trainerId"] != DBNull.Value ?
-                                                      reader["trainerId"].ToString() : string.Empty;
+
+                                    if (txtTrainerName != null)
+                                        txtTrainerName.Text = reader["trainerName"].ToString();
+
+                                    if (hfTrainerId != null)
+                                        hfTrainerId.Value = reader["trainerId"].ToString();
                                 }
                             }
                         }
@@ -147,9 +234,8 @@ namespace Expiry_list.Training
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("Error in ddlTopic_SelectedIndexChanged: " + ex.Message);
                 ScriptManager.RegisterStartupScript(this, GetType(), "Error",
-                    $"alert('Error loading topic details: {ex.Message}');", true);
+                    $"alert('Error loading trainer: {ex.Message}');", true);
             }
         }
 
@@ -160,53 +246,78 @@ namespace Expiry_list.Training
 
             DropDownList ddlTopic = (DropDownList)row.FindControl("ddlTopic");
             DropDownList ddlTraineeLevel = (DropDownList)row.FindControl("ddlTraineeLevel");
-            HiddenField hfTrainerId = (HiddenField)row.FindControl("hfTrainerId");
+
+            // Old values from GridView
+            string oldTopicId = GridView2.DataKeys[e.RowIndex].Values["topic"].ToString();
+            string oldTraineeLevel = GridView2.DataKeys[e.RowIndex].Values["traineeLevel"].ToString();
+
+            string updateQuery = "UPDATE topicWLT SET ";
+            List<string> setClauses = new List<string>();
+            List<SqlParameter> parameters = new List<SqlParameter>();
 
             using (SqlConnection con = new SqlConnection(strcon))
             {
-                int? trainerId = null;
-                string trainerName = string.Empty;
+                con.Open();
 
-                string getTrainerQuery = "SELECT trainerId FROM topicT WHERE id = @topicId";
-                using (SqlCommand getTrainerCmd = new SqlCommand(getTrainerQuery, con))
+                // If Topic changed
+                if (!string.IsNullOrEmpty(ddlTopic.SelectedValue) && ddlTopic.SelectedValue != oldTopicId)
                 {
-                    getTrainerCmd.Parameters.AddWithValue("@topicId", ddlTopic.SelectedValue);
-                    con.Open();
+                    setClauses.Add("topic = @topicId");
+                    parameters.Add(new SqlParameter("@topicId", ddlTopic.SelectedValue));
 
-                    object result = getTrainerCmd.ExecuteScalar();
-                    if (result != null && result != DBNull.Value)
+                    // Get trainerId & trainerName from topicT
+                    string getTrainerQuery = "SELECT trainerId FROM topicT WHERE id = @topicId";
+                    int? trainerId = null;
+                    string trainerName = null;
+
+                    using (SqlCommand getTrainerCmd = new SqlCommand(getTrainerQuery, con))
                     {
-                        trainerId = Convert.ToInt32(result);
-
-                        // Get trainer name if needed
-                        string getNameQuery = "SELECT name FROM trainerT WHERE id = @trainerId";
-                        using (SqlCommand getNameCmd = new SqlCommand(getNameQuery, con))
+                        getTrainerCmd.Parameters.AddWithValue("@topicId", ddlTopic.SelectedValue);
+                        object result = getTrainerCmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
                         {
-                            getNameCmd.Parameters.AddWithValue("@trainerId", trainerId);
-                            trainerName = getNameCmd.ExecuteScalar()?.ToString();
+                            trainerId = Convert.ToInt32(result);
+
+                            string getNameQuery = "SELECT name FROM trainerT WHERE id = @trainerId";
+                            using (SqlCommand getNameCmd = new SqlCommand(getNameQuery, con))
+                            {
+                                getNameCmd.Parameters.AddWithValue("@trainerId", trainerId.Value);
+                                trainerName = getNameCmd.ExecuteScalar()?.ToString();
+                            }
                         }
+                    }
+
+                    if (trainerId.HasValue)
+                    {
+                        setClauses.Add("trainerId = @trainerId");
+                        parameters.Add(new SqlParameter("@trainerId", trainerId.Value));
+                    }
+                    if (!string.IsNullOrEmpty(trainerName))
+                    {
+                        setClauses.Add("trainerName = @trainerName");
+                        parameters.Add(new SqlParameter("@trainerName", trainerName));
                     }
                 }
 
-                // Now perform the update
-                string updateQuery = @"UPDATE topicWLT 
-                          SET topic = @topicId, 
-                              traineeLevel = @traineeLevel,
-                              trainerId = @trainerId,
-                              trainerName = @trainerName
-                          WHERE id = @id";
-
-                using (SqlCommand cmd = new SqlCommand(updateQuery, con))
+                // If trainee level changed
+                if (!string.IsNullOrEmpty(ddlTraineeLevel.SelectedValue) &&
+                    ddlTraineeLevel.SelectedValue != oldTraineeLevel)
                 {
-                    cmd.Parameters.AddWithValue("@topicId", ddlTopic.SelectedValue);
-                    cmd.Parameters.AddWithValue("@traineeLevel", ddlTraineeLevel.SelectedValue);
-                    cmd.Parameters.AddWithValue("@trainerId",
-                        trainerId.HasValue ? (object)trainerId.Value : DBNull.Value);
-                    cmd.Parameters.AddWithValue("@trainerName",
-                        string.IsNullOrEmpty(trainerName) ? DBNull.Value : (object)trainerName);
-                    cmd.Parameters.AddWithValue("@id", id);
+                    setClauses.Add("traineeLevel = @traineeLevel");
+                    parameters.Add(new SqlParameter("@traineeLevel", ddlTraineeLevel.SelectedValue));
+                }
 
-                    cmd.ExecuteNonQuery();
+                // Only update if something changed
+                if (setClauses.Count > 0)
+                {
+                    updateQuery += string.Join(", ", setClauses) + " WHERE id = @id";
+                    parameters.Add(new SqlParameter("@id", id));
+
+                    using (SqlCommand cmd = new SqlCommand(updateQuery, con))
+                    {
+                        cmd.Parameters.AddRange(parameters.ToArray());
+                        cmd.ExecuteNonQuery();
+                    }
                 }
             }
 
@@ -255,6 +366,19 @@ namespace Expiry_list.Training
             GridView2.EditIndex = -1;
             BindUserGrid();
             Response.Redirect("viewTopicWL.aspx");
+        }
+
+        private void ShowAlert(string title, string message, string type)
+        {
+            ScriptManager.RegisterStartupScript(this, GetType(), "alert",
+                $"swal('{title}', '{HttpUtility.JavaScriptStringEncode(message)}', '{type}');", true);
+        }
+
+        private void ClearForm()
+        {
+            topicName.SelectedIndex = 0;
+            levelDb.SelectedIndex = 0;
+            trainerDp.Text = "";
         }
 
     }

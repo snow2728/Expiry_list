@@ -49,9 +49,6 @@
                             <label for="<%= levelDb.ClientID %>" class="col-sm-4 col-form-label fa-1x fw-bolder" style="color:#076585;">Level</label>
                             <div class="col-sm-8">
                                <asp:DropDownList ID="levelDb" runat="server" CssClass="form-control form-control-sm dropdown-icon">
-                                    <asp:ListItem Text="Select Level" Value="" />
-                                    <asp:ListItem Value="trainee" Text="Trainee"></asp:ListItem>
-                                    <asp:ListItem Value="juniorsale" Text="Junior Sale"></asp:ListItem>
                                </asp:DropDownList>
                                <asp:RequiredFieldValidator ID="RequiredFieldValidator8" runat="server"
                                    ErrorMessage="Level is required!"

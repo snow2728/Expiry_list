@@ -17,31 +17,9 @@ namespace Expiry_list.Training
         {
             if (!IsPostBack)
             {
-                BindTopic();
+                Training.DataBind.BindTopic(topicName);
+                Training.DataBind.BindLevel(levelDb);
                 ClearForm();
-            }
-        }
-
-        private void BindTopic()
-        {
-            using (SqlConnection con = new SqlConnection(strcon))
-            {
-                con.Open();
-                string query = "SELECT t.id, t.topicName, tr.name AS trainerName FROM topicT t INNER JOIN trainerT tr ON t.trainerId = tr.id ORDER BY t.topicName";
-                using (SqlCommand cmd = new SqlCommand(query, con))
-                {
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        topicName.Items.Clear();
-                        while (reader.Read())
-                        {
-                            ListItem item = new ListItem(reader["topicName"].ToString(), reader["id"].ToString());
-                            item.Attributes["data-trainer"] = reader["trainerName"].ToString();
-                            topicName.Items.Add(item);
-                        }
-                    }
-                }
-                topicName.Items.Insert(0, new ListItem("Select Topic", ""));
             }
         }
 

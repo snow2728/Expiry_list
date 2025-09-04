@@ -12,7 +12,7 @@
                    document.getElementById('<%= trainerDp.ClientID %>').value = "";
                     document.getElementById('<%= position.ClientID %>').value = "";
                     return;
-                }
+               }
       
                 var trainer = selectedOption.getAttribute("data-trainer") || '';
                 var level = selectedOption.getAttribute("data-level") || '';
@@ -30,9 +30,28 @@
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
-    <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #022F56;"><i class="fa-solid fa-left-long"></i>Home</a>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+    <!-- Home Button -->
+    <div class="mb-2">
+        <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color:#488DB4;">
+            <i class="fa-solid fa-left-long"></i> Home
+        </a>
+    </div>
 
-    <div class="container-fluid" style="background-color: #f1f1f2;">
+    <!-- Excel Import Section -->
+    <div class="me-3" style="max-width: 400px;">
+        <!-- File Upload + Button -->
+        <div class="input-group input-group-sm">
+            <asp:FileUpload ID="fuExcel" runat="server" CssClass="form-control me-2 rounded-3 border shadow-md" BorderColor="Gray" />
+            <asp:Button ID="btnUploadExcel" runat="server" Text="Upload File"
+                CssClass="btn fw-semibold rounded-3 text-white" BackColor="#488DB4"
+                OnClick="btnUploadExcel_Click" CausesValidation="false" />
+        </div>
+    </div>
+
+</div>
+
+    <div class="container-fluid" style="background-color: #e6efff;">
         <div class="row justify-content-center">
             <div class="col-lg-8">
                <%-- <div class=" text-end mb-4">
@@ -90,9 +109,6 @@
                                     <label for="<%= locationDp.ClientID %>" class="col-sm-4 col-form-label fw-bolder fa-1x" style="color: #076585;">Training Room</label>
                                     <div class="col-sm-8">
                                         <asp:DropDownList ID="locationDp" runat="server" CssClass="form-control form-control-sm dropdown-icon">
-                                            <asp:ListItem Text="Select Loction" Value="" />
-                                            <asp:ListItem Value="Aung Tha Pyay" Text="Aung Tha Pyay"></asp:ListItem>
-                                            <asp:ListItem Value="Yan Kin" Text="Yan Kin"></asp:ListItem>
                                         </asp:DropDownList>
                                         <asp:RequiredFieldValidator ID="storeNoRequired" runat="server"
                                             ControlToValidate="locationDp"
@@ -137,7 +153,7 @@
                                     <div class="col-sm-8">
                                         <asp:DropDownList ID="timeDp" runat="server" CssClass="form-control form-control-sm dropdown-icon">
                                             <asp:ListItem Text="Select Time Range" Value="" />
-                                            <asp:ListItem Text="8:30 AM - 11:30 AM" Value="8:30 AM - 11:30 AM" />
+                                            <asp:ListItem Text="08:30 AM - 11:30 AM" Value="08:30 AM - 11:30 AM" />
                                             <asp:ListItem Text="12:30 PM - 03:30 PM" Value="12:30 PM - 03:30 PM" />
                                             <asp:ListItem Text="09:00 AM - 12:00 PM" Value="09:00 AM - 12:00 PM" />
                                             <asp:ListItem Text="09:00 AM - 03:00 PM" Value="09:00 AM - 03:00 PM" />
@@ -165,5 +181,38 @@
             </div>
         </div>
     </div>
+
+  <!-- Excel Preview Modal -->
+<%--<div class="modal fade" id="excelPreviewModal" tabindex="-1" aria-labelledby="excelPreviewLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            
+            <!-- Header -->
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="excelPreviewLabel">Excel Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+                <asp:GridView ID="gvExcelPreview" runat="server" AutoGenerateColumns="true" 
+                    CssClass="table table-bordered table-sm nowrap"
+                    OnRowDataBound="gvExcelPreview_RowDataBound" />
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+                <asp:UpdatePanel runat="server" ID="UpdatePanelExcelPreview" UpdateMode="Conditional">
+                    <ContentTemplate>
+                        <asp:Button ID="btnConfirmInsert" runat="server" Text="Confirm & Insert" 
+                            CssClass="btn btn-primary px-4" 
+                            OnClick="btnConfirmInsert_Click" CausesValidation="false" />
+                    </ContentTemplate>
+                </asp:UpdatePanel>
+            </div>
+            
+        </div>
+    </div>
+</div>--%>
 
 </asp:Content>

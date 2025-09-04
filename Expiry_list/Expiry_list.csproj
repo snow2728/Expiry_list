@@ -2493,6 +2493,7 @@
     <Compile Include="Training\addTrainer.aspx.designer.cs">
       <DependentUpon>addTrainer.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Training\DataBind.cs" />
     <Compile Include="Training\rege1.aspx.cs">
       <DependentUpon>rege1.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

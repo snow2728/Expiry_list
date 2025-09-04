@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using AjaxControlToolkit.HtmlEditor.ToolbarButtons;
+using Newtonsoft.Json;
 
 namespace Expiry_list.Training
 {
@@ -18,8 +20,11 @@ namespace Expiry_list.Training
             if (!IsPostBack)
             {
                 ClearForm();
+                Training.DataBind.BindPosition(trainerPosition);
             }
         }
+
+    
 
         protected void btnaddTrainer_Click(object sender, EventArgs e)
         {

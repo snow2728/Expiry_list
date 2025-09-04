@@ -16,10 +16,13 @@ namespace Expiry_list.Training
 
         protected void Page_Load(object sender, EventArgs e)
         {
-
             if (!IsPostBack)
             {
+                GridView2.DataSource = new List<string>(); 
+                GridView2.DataBind();
+
                 BindUserGrid();
+                Training.DataBind.BindPosition(trainerPosition);
             }
         }
 
@@ -29,8 +32,14 @@ namespace Expiry_list.Training
             using (var cmd = conn.CreateCommand())
             {
                 cmd.CommandText = @"
-                    SELECT t.id, t.name, t.position
-                        FROM trainerT t ORDER BY t.id ASC;";
+                    SELECT 
+                        t.id, 
+                        t.name, 
+                        t.position,  
+                        p.position AS positionName
+                    FROM trainerT t
+                    INNER JOIN positionT p ON t.position = p.id
+                    ORDER BY t.id ASC;";
 
                 conn.Open();
                 using (var da = new SqlDataAdapter(cmd))
@@ -39,6 +48,61 @@ namespace Expiry_list.Training
                     da.Fill(dt);
                     GridView2.DataSource = dt;
                     GridView2.DataBind();
+                }
+            }
+        }
+
+        protected void GridView2_Sorting(object sender, GridViewSortEventArgs e)
+        {
+            string sortExpression = e.SortExpression;
+            string direction = ViewState["SortDirection"] as string == "ASC" ? "DESC" : "ASC";
+            ViewState["SortDirection"] = direction;
+
+            using (SqlConnection con = new SqlConnection(strcon))
+            {
+                string query = $@"SELECT 
+                        t.id, 
+                        t.name, 
+                        t.position,              -- Add this FK column!
+                        p.position AS positionName
+                    FROM trainerT t
+                    INNER JOIN positionT p ON t.position = p.id
+                    ORDER BY {sortExpression} {direction}";
+
+                SqlDataAdapter da = new SqlDataAdapter(query, con);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+
+                GridView2.DataSource = dt;
+                GridView2.DataBind();
+            }
+        }
+
+        protected void GridView2_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType == DataControlRowType.DataRow &&
+                (e.Row.RowState & DataControlRowState.Edit) > 0)
+            {
+                DropDownList ddlPosition = (DropDownList)e.Row.FindControl("txtPosition");
+
+                using (SqlConnection con = new SqlConnection(strcon))
+                {
+                    string query = "SELECT id, position FROM PositionT";
+                    using (SqlCommand cmd = new SqlCommand(query, con))
+                    {
+                        con.Open();
+                        SqlDataReader rdr = cmd.ExecuteReader();
+                        ddlPosition.DataSource = rdr;
+                        ddlPosition.DataTextField = "position"; 
+                        ddlPosition.DataValueField = "id";     
+                        ddlPosition.DataBind();
+                    }
+                }
+
+                string currentValue = DataBinder.Eval(e.Row.DataItem, "position").ToString();
+                if (ddlPosition.Items.FindByValue(currentValue) != null)
+                {
+                    ddlPosition.SelectedValue = currentValue;
                 }
             }
         }
@@ -53,32 +117,29 @@ namespace Expiry_list.Training
         {
             int id = Convert.ToInt32(GridView2.DataKeys[e.RowIndex].Value);
 
-            TextBox txtName = (TextBox)GridView2.Rows[e.RowIndex].FindControl("txtName");
-            //TextBox txtPosition = (TextBox)GridView2.Rows[e.RowIndex].FindControl("txtPosition");
-            DropDownList traineDp = (DropDownList)GridView2.Rows[e.RowIndex].FindControl("txtPosition");
+            GridViewRow row = GridView2.Rows[e.RowIndex];
+
+            string name = ((TextBox)row.FindControl("txtName")).Text;
+            DropDownList ddlPosition = (DropDownList)row.FindControl("txtPosition");
+            string positionId = ddlPosition.SelectedValue;
 
             using (SqlConnection con = new SqlConnection(strcon))
             {
-                string query = @"UPDATE trainerT 
-                        SET name = @Name, 
-                            position = @Position
-                        WHERE id = @id";
+                string query = "UPDATE trainerT SET name = @name, position = @position WHERE id = @id";
 
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
-                    cmd.Parameters.AddWithValue("@Name", txtName.Text);
-                    //cmd.Parameters.AddWithValue("@Position", txtPosition.Text);
-                    cmd.Parameters.AddWithValue("@Position",
-                        string.IsNullOrEmpty(traineDp.SelectedValue) ? DBNull.Value : (object)traineDp.SelectedValue);
                     cmd.Parameters.AddWithValue("@id", id);
+                    cmd.Parameters.AddWithValue("@name", name);
+                    cmd.Parameters.AddWithValue("@position", positionId);
 
                     con.Open();
                     cmd.ExecuteNonQuery();
                 }
             }
 
-            GridView2.EditIndex = -1;
-            BindUserGrid();
+            GridView2.EditIndex = -1; 
+            BindUserGrid(); 
         }
 
         protected void GridView2_RowDeleting(object sender, GridViewDeleteEventArgs e)
@@ -90,30 +151,41 @@ namespace Expiry_list.Training
                 using (SqlConnection con = new SqlConnection(strcon))
                 {
                     con.Open();
-
                     string query = "DELETE FROM trainerT WHERE id = @id";
 
                     using (SqlCommand cmd = new SqlCommand(query, con))
                     {
                         cmd.Parameters.AddWithValue("@id", id);
-                        cmd.ExecuteNonQuery();
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        if (rowsAffected > 0)
+                        {
+                            ScriptManager.RegisterStartupScript(
+                                this, GetType(), "DeleteSuccess",
+                                "Swal.fire({icon: 'success', title: 'Deleted!', text: 'The trainer has been successfully removed from the system.'});", true);
+                        }
+                        else
+                        {
+                            ScriptManager.RegisterStartupScript(
+                                this, GetType(), "DeleteNotFound",
+                                "Swal.fire({icon: 'warning', title: 'Not Found', text: 'The trainer you are trying to delete does not exist or has already been removed.'});", true);
+                        }
                     }
                 }
 
-                ScriptManager.RegisterStartupScript(
-                    this, GetType(), "DeleteSuccess",
-                    "Swal.fire('Deleted!', 'Topic deleted successfully.', 'success');", true);
-
                 BindUserGrid();
+            }
+            catch (SqlException)
+            {
+                ScriptManager.RegisterStartupScript(
+                    this, GetType(), "DeleteError",
+                    "Swal.fire({icon: 'error', title: 'Cannot Delete', text: 'This trainer is linked to other records and cannot be deleted. Please remove related records first.'});", true);
             }
             catch (Exception ex)
             {
-                string safeMsg = HttpUtility.JavaScriptStringEncode(
-                    "An error occurred while deleting the topic: " + ex.Message);
-
                 ScriptManager.RegisterStartupScript(
                     this, GetType(), "DeleteError",
-                    $"Swal.fire('Error!', '{safeMsg}', 'error');", true);
+                    $"Swal.fire({{icon: 'error', title: 'Error', text: '{HttpUtility.JavaScriptStringEncode(ex.Message)}'}});", true);
             }
         }
 
@@ -121,8 +193,80 @@ namespace Expiry_list.Training
         {
             GridView2.EditIndex = -1;
             BindUserGrid();
-            Response.Redirect("viewTrainer.aspx");
         }
 
+        protected void btnaddTrainer_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string name = trainerName.Text.Trim();
+                string position = trainerPosition.SelectedValue;
+                if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(position))
+                {
+                    ShowAlert("Error!", "Trainer name and position are required!", "error");
+                    return;
+                }
+
+                using (SqlConnection con = new SqlConnection(strcon))
+                {
+                    con.Open();
+
+                    string checkQuery = "SELECT COUNT(*) FROM trainerT WHERE name = @name";
+                    using (SqlCommand checkCmd = new SqlCommand(checkQuery, con))
+                    {
+                        checkCmd.Parameters.AddWithValue("@name", name);
+                        int existingCount = (int)checkCmd.ExecuteScalar();
+                        if (existingCount > 0)
+                        {
+                            ShowAlert("Error!", "A trainer with this name already exists!", "error");
+                            return;
+                        }
+                    }
+
+                    using (SqlTransaction tran = con.BeginTransaction())
+                    {
+                        try
+                        {
+                            string query = @"INSERT INTO trainerT (name, position) VALUES (@name, @position)";
+                            using (SqlCommand cmd = new SqlCommand(query, con, tran))
+                            {
+                                cmd.Parameters.AddWithValue("@name", name);
+                                cmd.Parameters.AddWithValue("@position", position);
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            tran.Commit();
+                            ShowAlert("Success!", "Trainer registered successfully!", "success");
+                            ClearForm();
+
+                            GridView2.EditIndex = -1;
+                            BindUserGrid();
+                        }
+                        catch (Exception ex)
+                        {
+                            tran.Rollback();
+                            ShowAlert("Error!", $"Registration failed: {ex.Message}", "error");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowAlert("Error!", $"Unexpected error: {ex.Message}", "error");
+            }
+        }
+
+        private void ClearForm()
+        {
+            trainerName.Text = "";
+            trainerPosition.SelectedIndex = 0;
+            trainerName.Focus();
+        }
+
+        private void ShowAlert(string title, string message, string type)
+        {
+            ScriptManager.RegisterStartupScript(this, GetType(), "alert",
+                $"swal('{title}', '{HttpUtility.JavaScriptStringEncode(message)}', '{type}');", true);
+        }
     }
 }

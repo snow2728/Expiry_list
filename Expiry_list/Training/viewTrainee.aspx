@@ -2,6 +2,45 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
     <script type="text/javascript">
+        $(document).on('change', '.status-select, .exam-select', function () {
+            const traineeId = $("#hiddenTraineeId").val();
+            const topicId = $(this).data('id');
+            const status = $(this).hasClass('status-select') ? $(this).val() : null;
+            const exam = $(this).hasClass('exam-select') ? $(this).val() : null;
+
+            $.ajax({
+                url: 'viewTrainee.aspx/UpdateTraineeTopicStatusExam',
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify({
+                    traineeId: traineeId,
+                    topicId: topicId,
+                    status: status,
+                    exam: exam
+                }),
+                success: function (res) {
+                    if (res.d !== "success") {
+                        alert("Failed to update: " + res.d);
+                    } else {
+                        loadTraineeTopics(traineeId);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error(error);
+                }
+            });
+        });
+
+        $(document).ready(function () {
+            initializeDataTable();
+
+            if (typeof (Sys) !== 'undefined') {
+                Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
+                    initializeDataTable();
+                });
+            }
+        });
+
         function openTraineeModal() {
             $('#traineeModal').modal('show');
         }
@@ -17,96 +56,114 @@
             return true;
         }
 
-        function openTopicsModal(traineeId) {
-            $("#<%= hiddenTraineeId.ClientID %>").val(traineeId);
+        function loadTraineeTopics(traineeId) {
+            const table = $("#topicsTable");
 
-            var body = $("#topicsTableBody");
-            body.html("<tr><td colspan='3' class='text-center text-muted py-4'>Loading topics...</td></tr>");
+            // Destroy existing DataTable (if already initialized)
+            if ($.fn.DataTable.isDataTable(table)) {
+                table.DataTable().destroy();
+                $("#topicsTableBody").empty();
+            }
+
+            $("#topicsTableBody").html(
+                '<tr><td colspan="3" class="text-center text-muted py-4">Loading topics...</td></tr>'
+            );
 
             $.ajax({
-                type: "POST",
-                url: "viewTrainee.aspx/GetTraineeTopics",
+                url: 'viewTrainee.aspx/GetTraineeTopics',
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                dataType: 'json',
                 data: JSON.stringify({ traineeId: traineeId }),
-                contentType: "application/json; charset=utf-8",
-                dataType: "json",
                 success: function (response) {
-                    var topics = response.d;
-                    body.empty();
-
-                    if (!topics || topics.length === 0) {
-                        body.html("<tr><td colspan='3' class='text-center text-muted py-4'>No topics available</td></tr>");
-                        $('#topicsModal').modal('show');
+                    const list = response.d || [];
+                    if (list.length === 0) {
+                        $("#topicsTableBody").html(
+                            '<tr><td colspan="3" class="text-center text-muted py-4">No topics found</td></tr>'
+                        );
                         return;
                     }
 
-                    $.each(topics, function (i, topic) {
-                        body.append(`
-                    <tr class="topic-row" data-topicid="${topic.id}">
-                        <td class="text-truncate" style="max-width: 400px;" title="${topic.name}">${topic.name}</td>
-                        <td class="text-center">
-                            <input type="text" class="form-control form-control-sm text-center" 
-                                   value="${topic.status}" readonly 
-                                   style="background-color: transparent; border: none; padding: 0.25rem;"/>
-                        </td>
-                        <td class="text-center">
-                            <input type="text" class="form-control form-control-sm text-center" 
-                                   value="${topic.exam}" readonly 
-                                   style="background-color: transparent; border: none; padding: 0.25rem;"/>
-                        </td>
-                    </tr>
-                `);
+                    let html = '';
+                    list.forEach(t => {
+                        html += `
+                    <tr>
+                        <td>${t.name}</td>
+                        <td class="text-center">${t.status}</td>
+                        <td class="text-center">${t.exam}</td>
+                    </tr>`;
                     });
 
-                    $('#topicsModal').modal('show');
+                    $("#topicsTableBody").html(html);
+
+                    table.DataTable({
+                        responsive: true,
+                        paging: true,
+                        searching: true,
+                        ordering: true,
+                        info: true,
+                        pageLength: 5,
+                        lengthMenu: [[5, 10, 25, 50], [5, 10, 25, 50]]
+                    });
                 },
-                error: function () {
-                    body.html("<tr><td colspan='3' class='text-center text-danger py-4'>Error loading topics</td></tr>");
-                    $('#topicsModal').modal('show');
+                error: function (xhr, status, error) {
+                    console.error(error);
                 }
             });
         }
 
-         <%--   $(document).on('click', '#btnSaveTopics', function () {
-                var changes = [];
-                var traineeId = $("#<%= hiddenTraineeId.ClientID %>").val();
+        function openTopicsModal(traineeId) {
+            $("#hiddenTraineeId").val(traineeId);
+            loadTraineeTopics(traineeId);
+            new bootstrap.Modal(document.getElementById("topicsModal")).show();
+        }
 
-                $('.topic-row').each(function () {
-                    var topicId = $(this).data('topicid');
-                    var status = $(this).find('.status-dropdown').val();
-                    var exam = $(this).find('.exam-dropdown').val();
+      function initializeDataTable() {
+            const grid = $("#<%= GridView2.ClientID %>");
+     
+          if (grid.length === 0 || grid.find('tr').length === 0) {
+              return;
+          }
+     
+          if ($.fn.DataTable.isDataTable(grid)) {
+              grid.DataTable().destroy();
+              grid.removeAttr('style');
+          }
+     
+          if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %> === false) {
+              // Ensure table has proper structure
+              if (grid.find('thead').length === 0) {
+                  const headerRow = grid.find('tr:first').detach();
+                  grid.prepend($('<thead/>').append(headerRow));
+              }
 
-                    changes.push({
-                        TopicId: topicId,
-                        Status: status,
-                        Exam: exam
-                    });
-                });
+              const headerCols = grid.find('thead tr:first th').length;
+              const bodyCols = grid.find('tbody tr:first td').length;
 
-                if (!traineeId || changes.length === 0) {
-                    alert("No changes detected or trainee not selected.");
-                    return;
-                }
+              if (headerCols !== bodyCols) {
+                  console.error('Header and body column count mismatch:', headerCols, 'vs', bodyCols);
+                  return;
+              }
 
-                $.ajax({
-                    type: "POST",
-                    url: "viewTrainee.aspx/SaveTraineeTopics",
-                    data: JSON.stringify({ traineeId: parseInt(traineeId), topicStatuses: changes }),
-                    contentType: "application/json; charset=utf-8",
-                    dataType: "json",
-                    success: function (response) {
-                        if (response.d) {
-                            alert("Changes saved successfully!");
-                            $('#topicsModal').modal('hide');
-                        } else {
-                            alert("Error saving changes!");
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        console.error("Error saving topics:", error);
-                        alert("Error saving changes!");
-                    }
-                });
-            });--%>
+              try {
+                  grid.DataTable({
+                      responsive: true,
+                      paging: true,
+                      searching: true,
+                      sorting: true,
+                      info: true,
+                      order: [[0, 'asc']],
+                      stateSave: false,
+                      lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                      columnDefs: [
+                          { orderable: false, targets: [4] }
+                      ]
+                  });
+              } catch (e) {
+                  console.error('DataTable initialization error:', e);
+              }
+          }
+      }
 
     </script>
 </asp:Content>
@@ -116,121 +173,118 @@
     <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #022f56;">
         <i class="fa-solid fa-left-long"></i>Home
     </a>
-    <div class="container py-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Trainee List</h2>
-            <asp:Button ID="btnOpenModal" runat="server" Text="Add New Trainee"
-                CssClass="btn text-white" Style="background-color:#022f56;"
-                OnClientClick="openTraineeModal(); return false;" />
-        </div>
-        
-        <!-- Status message area -->
-        <asp:Panel ID="pnlMessage" runat="server" CssClass="alert alert-info" Visible="false">
-            <asp:Label ID="lblMessage" runat="server" Text=""></asp:Label>
-        </asp:Panel>
-        
+    <div class="container py-4"> 
         <asp:UpdatePanel ID="upGrid" runat="server" UpdateMode="Conditional">
             <ContentTemplate>
-               <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-scroll"
-                    DataKeyNames="id"
-                    OnRowEditing="GridView2_RowEditing"
-                    OnRowUpdating="GridView2_RowUpdating"
-                    OnRowCancelingEdit="GridView2_RowCancelingEdit"
-                    OnRowDeleting="GridView2_RowDeleting"
-                    OnRowDataBound="GridView2_RowDataBound" >
-                  <Columns>
-
-                       <asp:TemplateField ItemStyle-HorizontalAlign="Justify" HeaderText="No" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header2" ItemStyle-CssClass="fixed-column-2">
-                            <ItemTemplate>
-                                <asp:Label ID="lblLinesNo" runat="server" Text='<%# Container.DataItemIndex + 1 %>' />
-                            </ItemTemplate>
-                            <ControlStyle Width="50px" />
-                            <HeaderStyle ForeColor="White" BackColor="#488db4" />
-                            <ItemStyle HorizontalAlign="Justify" />
-                        </asp:TemplateField>
-
-                        <asp:TemplateField HeaderText="Name" ItemStyle-HorizontalAlign="Justify" SortExpression="name" 
-                            HeaderStyle-VerticalAlign="Middle" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header2" ItemStyle-CssClass="fixed-column-2">
-                            <ItemTemplate>
-                                <asp:Label ID="lblName" runat="server" Text='<%# Eval("name") %>'></asp:Label>
-                            </ItemTemplate>
-                            <EditItemTemplate>
-                                <asp:TextBox ID="txtName" runat="server" Text='<%# Bind("name") %>'
-                                    CssClass="form-control" />
-                            </EditItemTemplate>
-                            <HeaderStyle ForeColor="White" BackColor="#488db4" />
-                            <ItemStyle HorizontalAlign="Justify" />
-                        </asp:TemplateField>
-
-                        <asp:TemplateField HeaderText="Store" SortExpression="store" HeaderStyle-VerticalAlign="Middle" 
-                            HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header2" ItemStyle-CssClass="fixed-column-2">
-                            <ItemTemplate>
-                                <asp:Label ID="lblStore" runat="server" Text='<%# Eval("store") %>' />
-                            </ItemTemplate>
-                            <EditItemTemplate>
-                               <asp:DropDownList ID="storeDp" runat="server" 
-                                    CssClass="form-control form-control-sm dropdown-icon"
-                                    DataTextField="name"
-                                    DataValueField="id">
-                                </asp:DropDownList>
-                            </EditItemTemplate>
-                            <ItemStyle HorizontalAlign="Justify" />
-                            <HeaderStyle ForeColor="White" BackColor="#488db4" />
-                        </asp:TemplateField>
-
-                        <asp:TemplateField HeaderText="Level" SortExpression="level" HeaderStyle-VerticalAlign="Middle" 
-                            HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header2" ItemStyle-CssClass="fixed-column-2">
-                            <ItemTemplate>
-                                <asp:Label ID="lblPosition" runat="server" Text='<%# Eval("position") %>'></asp:Label>
-                            </ItemTemplate>
-                            <EditItemTemplate>
-                                <asp:DropDownList ID="PositionDb" runat="server" CssClass="form-control form-control-sm dropdown-icon">
-                                    <asp:ListItem Text="Select Level" Value="" />
-                                    <asp:ListItem Value="trainee" Text="Trainee"></asp:ListItem>
-                                    <asp:ListItem Value="juniorsale" Text="Junior Sale"></asp:ListItem>
-                                </asp:DropDownList>
-                            </EditItemTemplate>
-                            <HeaderStyle ForeColor="White" BackColor="#488db4" />
-                            <ItemStyle HorizontalAlign="Justify" />
-                        </asp:TemplateField>
-
-                      <asp:TemplateField HeaderText="Topics" SortExpression="topics" HeaderStyle-VerticalAlign="Middle" 
-                            HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header2" ItemStyle-CssClass="fixed-column-2">
-                          <ItemTemplate>
-                            <button type="button" class="btn btn-sm btn-outline-info fw-bold"
-                                onclick="openTopicsModal(<%# Eval("id") %>)">
-                              Details
+                <div class="card shadow-lg p-3 rounded-4">
+                    <div class="card-body pb-1">
+                        <div class="d-flex justify-content-between align-items-center mb-0">
+                            <h2>Trainee List</h2>
+                            <button type="button" class="btn text-white" style="background-color:#022f56;" onclick="openTraineeModal();">
+                                <i class="fa-solid fa-user-plus"></i> Add New Trainee
                             </button>
-                          </ItemTemplate>
-                            <HeaderStyle ForeColor="White" BackColor="#488db4" />
-                            <ItemStyle HorizontalAlign="Justify" />
-                     </asp:TemplateField>
+                        </div>
+                    </div>
+               
+                    <div class="table-responsive">
+                        <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-scroll"
+                             DataKeyNames="id"
+                             OnRowEditing="GridView2_RowEditing"
+                             OnRowUpdating="GridView2_RowUpdating"
+                             OnRowCancelingEdit="GridView2_RowCancelingEdit"
+                             OnRowDeleting="GridView2_RowDeleting"
+                             OnRowDataBound="GridView2_RowDataBound" >
+                           <Columns>
 
-                        <asp:TemplateField HeaderText="Actions" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header2" ItemStyle-CssClass="fixed-column-2" HeaderStyle-VerticalAlign="Middle" >
-                            <ItemTemplate>
-                                <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit"
-                                     Text="Edit" CssClass="btn btn-sm btn-primary text-white "
-                                    CausesValidation="false" />
-                                <asp:LinkButton ID="btnDelete" runat="server" CommandName="Delete"
-                                    CssClass="btn btn-sm btn-danger " Text="Delete"
-                                    CausesValidation="false"
-                                    OnClientClick="return confirm('Are you sure you want to delete this record?');" />
-                            </ItemTemplate>
+                                <asp:TemplateField ItemStyle-HorizontalAlign="Justify" HeaderText="No">
+                                     <ItemTemplate>
+                                         <asp:Label ID="lblLinesNo" runat="server" Text='<%# Container.DataItemIndex + 1 %>' />
+                                     </ItemTemplate>
+                                     <ControlStyle Width="50px" />
+                                     <HeaderStyle ForeColor="White" BackColor="#488db4" />
+                                     <ItemStyle HorizontalAlign="Justify" />
+                                 </asp:TemplateField>
 
-                            <EditItemTemplate>
-                                <asp:LinkButton ID="btnUpdate" runat="server" CommandName="Update"
-                                    CssClass="btn btn-sm btn-info" Text="Update"
-                                    CausesValidation="false" />
-                                <asp:LinkButton ID="btnCancel" runat="server" CommandName="Cancel"
-                                    CssClass="btn btn-sm btn-secondary" Text="Cancel"
-                                    CausesValidation="false" />
-                            </EditItemTemplate>
-                                <HeaderStyle ForeColor="White" BackColor="#488db4" />
-                                <ItemStyle HorizontalAlign="Justify" />
-                        </asp:TemplateField>
+                                 <asp:TemplateField HeaderText="Name" ItemStyle-HorizontalAlign="Justify" SortExpression="name" >
+                                     <ItemTemplate>
+                                         <asp:Label ID="lblName" runat="server" Text='<%# Eval("name") %>'></asp:Label>
+                                     </ItemTemplate>
+                                     <EditItemTemplate>
+                                         <asp:TextBox ID="txtName" runat="server" Text='<%# Bind("name") %>'
+                                             CssClass="form-control" />
+                                     </EditItemTemplate>
+                                     <HeaderStyle ForeColor="White" BackColor="#488db4" />
+                                     <ItemStyle HorizontalAlign="Justify" />
+                                 </asp:TemplateField>
 
-                    </Columns>
-                </asp:GridView>
+                                 <asp:TemplateField HeaderText="Store" SortExpression="store" HeaderStyle-VerticalAlign="Middle" >
+                                     <ItemTemplate>
+                                         <asp:Label ID="lblStore" runat="server" Text='<%# Eval("store") %>' />
+                                     </ItemTemplate>
+                                     <EditItemTemplate>
+                                        <asp:DropDownList ID="storeDp" runat="server" 
+                                             CssClass="form-control form-control-sm dropdown-icon"
+                                             DataTextField="store"
+                                             DataValueField="id">
+                                         </asp:DropDownList>
+                                     </EditItemTemplate>
+                                     <ItemStyle HorizontalAlign="Justify" />
+                                     <HeaderStyle ForeColor="White" BackColor="#488db4" />
+                                 </asp:TemplateField>
+
+                                 <asp:TemplateField HeaderText="Level" SortExpression="level" HeaderStyle-VerticalAlign="Middle" >
+                                     <ItemTemplate>
+                                         <asp:Label ID="lblPosition" runat="server" Text='<%# Eval("position") %>'></asp:Label>
+                                     </ItemTemplate>
+                                     <EditItemTemplate>
+                                         <asp:DropDownList ID="PositionDb" runat="server" CssClass="form-control form-control-sm dropdown-icon">
+                                         </asp:DropDownList>
+                                     </EditItemTemplate>
+                                     <HeaderStyle ForeColor="White" BackColor="#488db4" />
+                                     <ItemStyle HorizontalAlign="Justify" />
+                                 </asp:TemplateField>
+
+                               <asp:TemplateField HeaderText="Topics" SortExpression="topics" HeaderStyle-VerticalAlign="Middle" >
+                                   <ItemTemplate>
+                                     <button type="button" class="btn btn-sm btn-outline-info fw-bold"
+                                         onclick="openTopicsModal(<%# Eval("id") %>)">
+                                       Details
+                                     </button>
+                                   </ItemTemplate>
+                                     <HeaderStyle ForeColor="White" BackColor="#488db4" />
+                                     <ItemStyle HorizontalAlign="Justify" />
+                              </asp:TemplateField>
+
+                              <asp:TemplateField HeaderText="Actions" >
+                                    <ItemTemplate>
+                                        <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit" CausesValidation="False"
+                                            CssClass="btn btn-sm text-white mt-1 ms-1 me-2" BackColor="#0a61ae" ToolTip="Edit">
+                                            <i class="fas fa-pencil-alt"></i>
+                                        </asp:LinkButton>
+                                        <asp:LinkButton ID="btnDelete" runat="server" CommandName="Delete" CausesValidation="False"
+                                            CssClass="btn btn-sm mt-1 ms-1 me-2 text-white" BackColor="#453b3b" ToolTip="Delete" >
+                                            <i class="fas fa-trash-alt"></i>
+                                        </asp:LinkButton>
+                                    </ItemTemplate>
+                                    <EditItemTemplate>
+                                        <asp:LinkButton ID="btnUpdate" runat="server" CommandName="Update" CausesValidation="False"
+                                            CssClass="btn btn-sm ms-1 text-white" BackColor="#9ad9fe" ToolTip="Update">
+                                            <i class="fas fa-save"></i>
+                                        </asp:LinkButton>
+                                        <asp:LinkButton ID="btnCancel" runat="server" CommandName="Cancel" CausesValidation="False"
+                                            CssClass="btn btn-sm ms-2 text-white btn-secondary" ToolTip="Cancel">
+                                            <i class="fas fa-times"></i>
+                                        </asp:LinkButton>
+                                    </EditItemTemplate>
+                                    <HeaderStyle ForeColor="White" BackColor="#488db4" />
+                                    <ItemStyle HorizontalAlign="Justify" />
+                                </asp:TemplateField>
+
+                             </Columns>
+                         </asp:GridView>
+                    </div>
+               
+             </div>
             </ContentTemplate>
              <Triggers>
                 <asp:AsyncPostBackTrigger ControlID="GridView2" EventName="RowEditing" />
@@ -247,9 +301,9 @@
         <div class="modal-content rounded-3 shadow-lg border-0">
             
             <!-- Modal Header -->
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header text-white" style="background-color:#022f56;">
                 <h5 class="modal-title fw-bold" id="traineeModalLabel">
-                    <i class="bi bi-person-plus me-2"></i> Register Trainee
+                    <i class="bi bi-person-plus me-2"></i> New Trainee
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -282,9 +336,6 @@
                                 <div class="col-12 col-md-6">
                                     <label for="levelDb" class="form-label fw-semibold">Level</label>
                                     <asp:DropDownList ID="levelDb" runat="server" CssClass="form-select form-select-sm" onchange="loadTopics(this.value)">
-                                        <asp:ListItem Text="Select Level" Value="" />
-                                        <asp:ListItem Value="trainee" Text="Trainee" />
-                                        <asp:ListItem Value="juniorsale" Text="Junior Sale" />
                                     </asp:DropDownList>
                                 </div>
 
@@ -295,11 +346,11 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="modal-footer d-flex justify-content-between">
-                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle me-1"></i> Cancel
-                </button>
-                <asp:Button ID="btnaddTrainee" runat="server" Text="Save Trainee" CssClass="btn btn-success px-4" OnClick="btnaddTrainee_Click" />
+            <div class="modal-footer d-flex justify-content-end">
+                <asp:Button Text="Add Trainee" runat="server" CssClass="btn fw-bold px-4"
+                    Style="background-color: #022F56; color:#c9b99f; border-radius: 30px;"
+                    ID="addTopicBtn1" OnClick="btnaddTrainee_Click" />
+                <button type="button" class="btn btn-secondary rounded-4" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -315,7 +366,7 @@
             <asp:HiddenField ID="hiddenTraineeId" runat="server" />
 
             <!-- Modal Header -->
-            <div class="modal-header text-white" style="background-color:#488db4;">
+            <div class="modal-header text-white" style="background-color: #022f56; ">
                 <h5 class="modal-title fw-bold">
                     <i class="bi bi-journal-text me-2"></i> Trainee Topics
                 </h5>
@@ -325,17 +376,17 @@
             <!-- Modal Body -->
             <div class="modal-body p-2" style="max-height: 70vh; overflow-y: auto;">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover table-bordered align-middle mb-0">
-                        <thead class="table-primary sticky-top">
-                            <tr class="text-center">
+                    <table id="topicsTable" class="table table-striped table-hover table-bordered mb-0">
+                        <thead class="">
+                            <tr class="text-start" style="background-color:#488db4;" > 
                                 <th style="width: 55%;">Topic Name</th>
                                 <th style="width: 20%;">Status</th>
                                 <th style="width: 25%;">Exam Result</th>
                             </tr>
                         </thead>
-                        <tbody id="topicsTableBody">
+                        <tbody id="topicsTableBody" class="text-start" > 
                             <tr>
-                                <td colspan="3" class="text-center text-muted py-4">Loading topics...</td>
+                                <td colspan="3" class="text-muted py-4">Loading topics...</td>
                             </tr>
                         </tbody>
                     </table>

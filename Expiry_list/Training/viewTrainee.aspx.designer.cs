@@ -24,33 +24,6 @@ namespace Expiry_list.Training
         protected global::System.Web.UI.ScriptManager ScriptManager1;
 
         /// <summary>
-        /// btnOpenModal control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnOpenModal;
-
-        /// <summary>
-        /// pnlMessage control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel pnlMessage;
-
-        /// <summary>
-        /// lblMessage control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblMessage;
-
-        /// <summary>
         /// upGrid control.
         /// </summary>
         /// <remarks>
@@ -114,13 +87,13 @@ namespace Expiry_list.Training
         protected global::System.Web.UI.WebControls.DropDownList levelDb;
 
         /// <summary>
-        /// btnaddTrainee control.
+        /// addTopicBtn1 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnaddTrainee;
+        protected global::System.Web.UI.WebControls.Button addTopicBtn1;
 
         /// <summary>
         /// hiddenTraineeId control.

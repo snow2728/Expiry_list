@@ -36,10 +36,7 @@
                              <div class="row g-2 mb-3">
                                <label for="<%= trainerPosition.ClientID %>" class="col-sm-4 col-form-label fa-1x fw-bolder" style="color:#076585;">Position</label>
                                <div class="col-sm-8">
-                                   <asp:DropDownList ID="trainerPosition" runat="server" CssClass="form-control form-control-sm dropdown-icon">
-                                      <asp:ListItem Text="Select Position" Value="" />
-                                      <asp:ListItem Value="pharmacist" Text="Pharmacist"></asp:ListItem>
-                                      <asp:ListItem Value="supervisor" Text="Store Supervisor"></asp:ListItem>
+                                   <asp:DropDownList ID="trainerPosition" runat="server" CssClass="form-control form-control-sm dropdown-icon" AppendDataBoundItems="true">
                                   </asp:DropDownList>
                                     <asp:RequiredFieldValidator ID="RequiredFieldValidator6" runat="server"
                                       ErrorMessage="Position is required!"

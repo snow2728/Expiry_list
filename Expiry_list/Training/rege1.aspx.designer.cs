@@ -15,6 +15,24 @@ namespace Expiry_list.Training
     {
 
         /// <summary>
+        /// fuExcel control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.FileUpload fuExcel;
+
+        /// <summary>
+        /// btnUploadExcel control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnUploadExcel;
+
+        /// <summary>
         /// tdyDate control.
         /// </summary>
         /// <remarks>

@@ -362,14 +362,10 @@
 
             const trainingPages = [
                 "/training/rege1.aspx",
-                "/training/addtrainer.aspx",
-                "/training/addtopic.aspx",
                 "/training/viewtopic.aspx",
-                "/training/viewtopicWL.aspx",
+                "/training/viewtopicwl.aspx",
                 "/training/viewtrainer.aspx",
                 "/training/viewtrainee.aspx",
-                "/training/addtopicwl.aspx",
-                "/training/addtrainee.aspx",
                 "/training/schedulelist.aspx"
             ];
 

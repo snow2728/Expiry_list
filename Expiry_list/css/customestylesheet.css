@@ -1076,3 +1076,93 @@ a[commandname="Edit"] {
     border-radius: 4px;
 }
 
+.dataTables_filter {
+    margin-bottom: 7px !important;
+}
+
+/* Align "Show entries" and "Search" in one row */
+.dataTables_wrapper .row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+    margin: 0;
+}
+
+.dataTables_wrapper .dataTables_length label,
+.dataTables_wrapper .dataTables_filter label {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem; 
+}
+
+.table thead th,
+.dataTables_wrapper .dataTables_scrollHeadInner th {
+    white-space: nowrap !important;
+}
+
+.table tbody td {
+    white-space: normal;
+    word-break: break-word; 
+}
+
+/* Align Add New Topic button with DataTables search box */
+.add-topic-btn a {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Make sure the container matches the search input alignment */
+.add-topic-btn {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+}
+
+.card-body.pb-1 {
+    padding-right: 0.1rem !important;
+    padding-left: 0.1rem !important;
+}
+
+.chk-status label {
+    margin-left: 8px;
+}
+
+.selected-row {
+    background-color: #A9B1B8 !important;
+}
+
+    .table-fixed th,
+    .table-fixed td {
+        overflow: hidden !important;
+        text-overflow: ellipsis ;
+        white-space: nowrap !important;
+    }
+
+        .table-fixed td.description {
+            white-space: normal !important;
+            word-break: break-word ;
+        }
+
+        .table-fixed th.text-center,
+        .table-fixed td.text-center {
+            text-align: center !important;
+        }
+
+        .table-fixed td.hidden-field {
+            display: none !important;
+        }
+
+#topicsTable th,
+#topicsTable td {
+    text-align: left !important;
+}
+
+
