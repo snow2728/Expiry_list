@@ -26,12 +26,6 @@
 
     <!-- Custom CSS -->
     <link href="css/customestylesheet.css" rel="stylesheet" />
-    <!-- Required Bootstrap CSS -->
-<%--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-
-<!-- Required JavaScript libraries -->
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>--%>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -86,12 +80,13 @@
 
                 <!-- Collapsible Content -->
                 <div class="collapse navbar-collapse home-menu" id="mainNav">
-                    <% if (System.IO.Path.GetFileName(Request.Url.AbsolutePath) != "AdminDashboard.aspx")
-                       { %>
+                    <% if (System.IO.Path.GetFileName(Request.Url.AbsolutePath) != "AdminDashboard.aspx") { %>
                     <asp:Panel runat="server" ID="tabs" CssClass="d-flex gap-2 home-menu-item">
-                        <a id="link_home" href="AdminDashboard.aspx" class="nav-link">
-                            <i class="fa fa-home" aria-hidden="true"></i>Home
-                        </a>
+                            <!-- Home Link -->
+                            <a id="link_home" href="AdminDashboard.aspx" class="nav-link">
+                                <i class="fa fa-home" aria-hidden="true"></i>Home
+                            </a>
+
                         <%
                             var permissions = Session["formPermissions"] as Dictionary<string, string>;
                             string activeModule = Session["activeModule"] as string;
@@ -99,207 +94,231 @@
 
                             if (permissions != null)
                             {
+                                // ExpiryList
                                 if (activeModule == "ExpiryList" && permissions.ContainsKey("ExpiryList"))
                                 {
                                     string perm = permissions["ExpiryList"];
-                                %>
-                                    <%
-                                        if (perm == "admin" || perm == "edit")
-                                    { %>
-                                            <a href="registrationForm.aspx" class="nav-link <%= (currentPage == "registrationForm.aspx" ? "active" : "") %>">
-                                                <i class="fas fa-file-import fa-sm"></i>Registration Form
-                                            </a>
-                                    <% } %>
-                                    <%
-                                        if (perm == "view" || perm == "admin" || perm == "super1")
-                                    { %>
-                                        <a href="itemList.aspx" class="nav-link <%= (currentPage == "itemList.aspx" ? "active" : "") %>">
-                                            <i class="fas fa-database fa-sm"></i>Expiry List
-                                        </a>
-                                    <% } %>
-                                    <%
-                                        if ( perm == "edit" || perm == "super" )
-                                    { %>
-                                         <a href="final2.aspx" class="nav-link <%= (currentPage =="final2.aspx" ? "active" : "") %>">
-                                             <i class="fas fa-database fa-sm"></i>Expiry List
-                                         </a>
-                                    <% } %>
-                                    <%
-                                        if (perm == "admin" || perm == "view" || perm == "edit" || perm == "super" || perm == "super1")
-                                    { %>
-                                            <a href="final.aspx" class="nav-link <%= (currentPage == "final.aspx" ? "active" : "") %>">
-                                                <i class="fas fa-check-circle fa-sm"></i>Completed List
-                                            </a>
-                                    <% } %>
-                             <%
-                                }
-                            else if (activeModule == "NegativeInventory" && permissions.ContainsKey("NegativeInventory"))
-                            {
-                                string perm = permissions["NegativeInventory"];
-                                   if (perm == "admin" || perm == "super" || perm == "edit")
-                                   { %>
-                                        <a href="balanceQty.aspx" class="nav-link <%= (currentPage == "balanceQty.aspx" ? "active" : "") %>">
-                                            <i class="fas fa-minus-circle fa-sm"></i>Negative Inventory
-                                        </a>
-                                   <% }
-                            }
-                            else if (activeModule == "CarWay" && permissions.ContainsKey("CarWay"))
-                            {
-                                 string perm = permissions["CarWay"];
-                                   if (perm == "admin")
-                                   { %>
-                                        <a href="main1.aspx" class="nav-link <%= (currentPage == "main1.aspx" ? "active" : "") %>">
-                                            <i class="fas fa-minus-circle fa-sm"></i>CarMain Page
-                                        </a>
-                                        <a href="whView.aspx" class="nav-link <%= (currentPage == "whView.aspx" ? "active" : "") %>">
-                                            <i class="fas fa-minus-circle fa-sm"></i>CarWay View Page 1
-                                        </a>
-                                        <a href="whView2.aspx" class="nav-link <%= (currentPage == "whView2.aspx" ? "active" : "") %>">
-                                            <i class="fas fa-minus-circle fa-sm"></i>CarWay View Page 2
-                                        </a>
-                                        <a href="dash2.aspx" class="nav-link <%= (currentPage == "dash2.aspx" ? "active" : "") %>">
-                                            <i class="fas fa-minus-circle fa-sm"></i>CarWay View Page 3
-                                        </a>
-                                   <% }
-                            }
-                            else if (activeModule == "SystemSettings" && permissions.ContainsKey("SystemSettings"))
-                            {
-                                string perm = permissions["SystemSettings"];
-                                   if (perm == "admin")
-                                   { %>
-                                       <a href="regeForm1.aspx" class="nav-link <%= (currentPage == "regeForm1.aspx" ? "active" : "") %>">
-                                          <i class="fa-solid fa-users-line"></i>User Creation
-                                       </a>
-                                   <% }
-                            }
-                            else if (activeModule == "ReorderQuantity" && permissions.ContainsKey("ReorderQuantity"))
-                            {
-                                string perm = permissions["ReorderQuantity"];
                         %>
                                 <% if (perm == "admin" || perm == "edit")
                                    { %>
-                                    <a href="rege1.aspx" class="nav-link <%= (currentPage == "rege1.aspx" ? "active1" : "") %>">
-                                        <i class="fa-solid fa-right-to-bracket"></i>Reorder Registration
-                                    </a>
+                                        <a href="registrationForm.aspx" class="nav-link <%= (currentPage == "registrationForm.aspx" ? "active" : "") %>">
+                                            <i class="fas fa-file-import fa-sm"></i>Registration Form
+                                        </a>
+                                <% } %>
+
+                                <% if (perm == "view" || perm == "admin" || perm == "super1")
+                                   { %>
+                                        <a href="itemList.aspx" class="nav-link <%= (currentPage == "itemList.aspx" ? "active" : "") %>">
+                                            <i class="fas fa-database fa-sm"></i>Expiry List
+                                        </a>
+                                <% } %>
+
+                                <% if (perm == "edit" || perm == "super")
+                                   { %>
+                                        <a href="final2.aspx" class="nav-link <%= (currentPage == "final2.aspx" ? "active" : "") %>">
+                                            <i class="fas fa-database fa-sm"></i>Expiry List
+                                        </a>
+                                <% } %>
+
+                                <% if (perm == "admin" || perm == "view" || perm == "edit" || perm == "super" || perm == "super1")
+                                   { %>
+                                        <a href="final.aspx" class="nav-link <%= (currentPage == "final.aspx" ? "active" : "") %>">
+                                            <i class="fas fa-check-circle fa-sm"></i>Completed List
+                                        </a>
+                                <% } %>
+                            <%
+                                } // end ExpiryList
+
+                                //NegativeInventory
+                                else if (activeModule == "NegativeInventory" && permissions.ContainsKey("NegativeInventory"))
+                                {
+                                    string perm = permissions["NegativeInventory"];
+                                    if (perm == "admin" || perm == "super" || perm == "edit")
+                                    {
+                                %>
+                                        <a href="balanceQty.aspx" class="nav-link <%= (currentPage == "balanceQty.aspx" ? "active" : "") %>">
+                                            <i class="fas fa-minus-circle fa-sm"></i>Negative Inventory
+                                        </a>
+                                <%
+                                    }
+                                }// end NegativeInventory
+
+                                //CarWay 
+                                else if (activeModule == "CarWay" && permissions.ContainsKey("CarWay"))
+                                {
+                                    string perm = permissions["CarWay"];
+                                    if (perm == "admin")
+                                    {
+                                %>
+                                        <a href="main1.aspx" class="nav-link <%= (currentPage == "main1.aspx" ? "active" : "") %>">
+                                            <i class="fas fa-car fa-sm"></i>CarMain Page
+                                        </a>
+                                        <a href="whView.aspx" class="nav-link <%= (currentPage == "whView.aspx" ? "active" : "") %>">
+                                            <i class="fas fa-eye fa-sm"></i>CarWay View Page 1
+                                        </a>
+                                        <a href="whView2.aspx" class="nav-link <%= (currentPage == "whView2.aspx" ? "active" : "") %>">
+                                            <i class="fas fa-eye fa-sm"></i>CarWay View Page 2
+                                        </a>
+                                        <a href="dash2.aspx" class="nav-link <%= (currentPage == "dash2.aspx" ? "active" : "") %>">
+                                            <i class="fas fa-eye fa-sm"></i>CarWay View Page 3
+                                        </a>
+                                <%
+                                    }
+                                }// end CarWay
+
+                                // SystemSettings
+                                else if (activeModule == "SystemSettings" && permissions.ContainsKey("SystemSettings"))
+                                {
+                                    string perm = permissions["SystemSettings"];
+                                    if (perm == "admin")
+                                    {
+                                %>
+                                        <a href="regeForm1.aspx" class="nav-link <%= (currentPage == "regeForm1.aspx" ? "active" : "") %>">
+                                            <i class="fa-solid fa-users-line"></i>User Creation
+                                        </a>
+                                <%
+                                    }
+                                }// end SystemSettings
+
+                                // ReorderQuantity
+                                else if (activeModule == "ReorderQuantity" && permissions.ContainsKey("ReorderQuantity"))
+                                {
+                                    string perm = permissions["ReorderQuantity"];
+                                %>
+                                <% if (perm == "admin" || perm == "edit")
+                                   {  %>
+                                        <a href="rege1.aspx" class="nav-link <%= (currentPage == "rege1.aspx" ? "active1" : "") %>">
+                                            <i class="fa-solid fa-right-to-bracket"></i>Reorder Registration
+                                        </a>
                                 <% } %>
 
                                 <% if (perm == "super" || perm == "admin" || perm == "edit")
                                    { %>
-                                    <a href="approval.aspx" class="nav-link <%= (currentPage == "approval.aspx" ? "active1" : "") %>">
-                                        <i class="fa-solid fa-square-check"></i>Approval List
-                                    </a>
+                                        <a href="approval.aspx" class="nav-link <%= (currentPage == "approval.aspx" ? "active1" : "") %>">
+                                            <i class="fa-solid fa-square-check"></i>Approval List
+                                        </a>
                                 <% } %>
 
                                 <% if (perm == "admin" || perm == "view")
                                    { %>
-                                    <a href="viewer1.aspx" class="nav-link <%= (currentPage == "viewer1.aspx" ? "active1" : "") %>">
-                                        <i class="fa-solid fa-list"></i>Reorder Qty List
-                                    </a>
+                                        <a href="viewer1.aspx" class="nav-link <%= (currentPage == "viewer1.aspx" ? "active1" : "") %>">
+                                            <i class="fa-solid fa-list"></i>Reorder Qty List
+                                        </a>
                                 <% } %>
 
                                 <% if (perm == "edit" || perm == "super")
                                    { %>
-                                    <a href="viewer2.aspx" class="nav-link <%= (currentPage == "viewer2.aspx" ? "active1" : "") %>">
-                                        <i class="fa-solid fa-list"></i>Reorder Qty List
-                                    </a>
+                                        <a href="viewer2.aspx" class="nav-link <%= (currentPage == "viewer2.aspx" ? "active1" : "") %>">
+                                            <i class="fa-solid fa-list"></i>Reorder Qty List
+                                        </a>
                                 <% } %>
 
                                 <% if (perm == "admin" || perm == "edit" || perm == "view" || perm == "super")
                                    { %>
-                                    <a href="viewer3.aspx" class="nav-link <%= (currentPage == "viewer3.aspx" ? "active1" : "") %>">
-                                        <i class="fa-solid fa-list-check"></i>Completed Qty List
-                                    </a>
+                                        <a href="viewer3.aspx" class="nav-link <%= (currentPage == "viewer3.aspx" ? "active1" : "") %>">
+                                            <i class="fa-solid fa-list-check"></i>Completed Qty List
+                                        </a>
                                 <% } %>
-                        <% }
-                            else if (activeModule == "ConsignmentList" && permissions.ContainsKey("ConsignmentList"))
-                            {
-                                string perm = permissions["ConsignmentList"];
-                            %>
-                                <% if (perm == "admin" || perm == "edit")
-                                   { %>
-                                    <a href="rege1.aspx" class="nav-link <%= (currentPage == "rege1.aspx" ? "active2" : "") %>">
-                                        <i class="fas fa-file-import fa-sm"></i>Registration Form
-                                    </a>
-                                <% } %>
+                            <%
+                                }  // end ReorderQuantity
 
-                                <% if (perm == "view" || perm == "admin")
-                                   { %>
-                                    <a href="viewer1.aspx" class="nav-link <%= (currentPage == "viewer1.aspx" ? "active2" : "") %>">
-                                        <i class="fas fa-database fa-sm"></i>Consignment Inventory List
-                                    </a>
-                                <% } %>
+                                // ConsignmentList
+                               else if (activeModule == "ConsignmentList" && permissions.ContainsKey("ConsignmentList"))
+                               {
+                                   string perm = permissions["ConsignmentList"];
+                               %>
+                               <% if (perm == "admin" || perm == "edit")
+                                  { %>
+                                        <a href="rege1.aspx" class="nav-link <%= (currentPage == "rege1.aspx" ? "active2" : "") %>">
+                                            <i class="fas fa-file-import fa-sm"></i>Registration Form
+                                        </a>
+                               <% } %>
 
-                                <% if (perm == "edit" || perm == "super")
-                                    { %>
-                                    <a href="viewer2.aspx" class="nav-link <%= (currentPage == "viewer2.aspx" ? "active2" : "") %>">
-                                        <i class="fas fa-database fa-sm"></i>Consignment Inventory List
-                                    </a>
-                                <% } %>
+                               <% if (perm == "view" || perm == "admin")
+                                  { %>
+                                        <a href="viewer1.aspx" class="nav-link <%= (currentPage == "viewer1.aspx" ? "active2" : "") %>">
+                                            <i class="fas fa-database fa-sm"></i>Consignment Inventory List
+                                        </a>
+                               <% } %>
 
-                                <% if (perm == "admin" || perm == "view" || perm == "edit" || perm == "super")
-                                { %>
-                                    <a href="viewer3.aspx" class="nav-link <%= (currentPage == "viewer3.aspx" ? "active2" : "") %>">
-                                        <i class="fas fa-check-circle fa-sm"></i>Confirmed Item
-                                    </a>
-                                <% } %>
-                        <% }
-                            else if (activeModule == "TrainingList" && permissions.ContainsKey("TrainingList"))
-                            {
-                                string perm = permissions["TrainingList"];
-                                bool isActive = currentPage == "rege1.aspx" || currentPage == "addTrainer.aspx" || currentPage == "addTopic.aspx" || currentPage == "addTopicWL.aspx" || currentPage == "addTrainee.aspx" || currentPage == "viewTopic.aspx" || currentPage == "viewTrainer.aspx" || currentPage == "viewTopicWL.aspx";
-                                if (perm == "admin" || perm == "edit")
-                                { %>
-                                    <div class="dropdown">
+                               <% if (perm == "edit" || perm == "super")
+                                  { %>
+                                        <a href="viewer2.aspx" class="nav-link <%= (currentPage == "viewer2.aspx" ? "active2" : "") %>">
+                                            <i class="fas fa-database fa-sm"></i>Consignment Inventory List
+                                        </a>
+                               <% } %>
+
+                               <% if (perm == "admin" || perm == "view" || perm == "edit" || perm == "super")
+                                  { %>
+                                        <a href="viewer3.aspx" class="nav-link <%= (currentPage == "viewer3.aspx" ? "active2" : "") %>">
+                                            <i class="fas fa-check-circle fa-sm"></i>Confirmed Item
+                                        </a>
+                               <% } %>
+                        <%
+                            } // end ConsignmentList
+
+                            // TrainingList
+                               else if (activeModule == "TrainingList" && permissions.ContainsKey("TrainingList"))
+                               {
+                                    string perm = permissions["TrainingList"];
+                                    bool isActive = currentPage == "rege1.aspx" || currentPage == "scheduleList.aspx" || currentPage == "viewTrainee.aspx" || currentPage == "viewTopic.aspx" ||
+                                                currentPage == "viewTrainer.aspx" || currentPage == "viewTopicWL.aspx";
+                               %>
+                                   <div class="dropdown">
                                         <button class="btn btn-link text-decoration-none dropdown-toggle d-flex align-items-center gap-2 <%= isActive ? "active3" : "" %>"
                                             type="button" id="scheduleRege" data-bs-toggle="dropdown" aria-expanded="false" style="color: white;">
-                                            <i class="fa fa-user"></i>
+                                            <i class="fa-solid fa-clock-rotate-left"></i>
                                             <span class="user-name">Schedule Setup</span>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu1 schedule1 mt-2 border border-black-2" aria-labelledby="scheduleRege">
-                                            <li>
-                                                <a href="rege1.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "rege1.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
-                                                    <i class="fas fa-clipboard-list"></i><span>Schedule Registration</span>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="viewTrainer.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "addTrainer.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
-                                                    <i class="fas fa-user-plus"></i><span>Trainer List</span>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="viewTopic.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "addTopic.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
-                                                    <i class="fas fa-lightbulb"></i><span>Topic List</span>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="viewTopicWL.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "addTopicWL.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
-                                                    <i class="fas fa-add"></i><span>Topic Via Level List</span>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a href="viewTrainee.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "addTrainee.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
-                                                    <i class="fas fa-add"></i><span>Trainee List</span>
-                                                </a>
-                                            </li>
+                                            <% if (perm == "admin" || perm == "super")
+                                               { %>
+                                                    <li>
+                                                        <a href="rege1.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "rege1.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
+                                                            <i class="fas fa-clipboard-list"></i><span>Schedule Registration</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="viewTrainer.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "viewTrainer.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
+                                                           <i class="fa-solid fa-chalkboard-user"></i><span>Trainer List</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="viewTopic.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "viewTopic.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
+                                                            <i class="fa-solid fa-book-open"></i><span>Topic List</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="viewTopicWL.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "viewTopicWL.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
+                                                           <i class="fa-solid fa-layer-group"></i><span>Topic Via Level List</span>
+                                                        </a>
+                                                    </li>
+                                            <% }
+                                               if (perm == "admin" || perm == "edit" )
+                                               { %>
+                                                    <li>
+                                                        <a href="viewTrainee.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "viewTrainee.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
+                                                            <i class="fa-solid fa-users"></i><span>Trainee List</span>
+                                                        </a>
+                                                    </li>
+                                            <% } %>
                                         </ul>
-                                    </div>
-                             <% }
+                                   </div>
 
-                           
+                                        <% if (perm == "admin" || perm == "super" || perm == "edit" || perm == "view")
+                                           { %>
+                                                <a href="scheduleList.aspx" class="nav-link <%= (currentPage == "scheduleList.aspx" ? "active3" : "") %>">
+                                                    <i class="fa-solid fa-calendar-check"></i>Training Schedule Dashboard
+                                                </a>
+                                        <% } %>
+                                        <%
+                                    } // end TrainingList
+                               }
+                            %>
+                       </asp:Panel>
+                       <% } %>
+                   </div>
 
-                                if (perm == "admin" || perm == "super")
-                                { %>
-                                    <a href="scheduleList.aspx" class="nav-link <%= (currentPage == "scheduleList.aspx" ? "active3" : "") %>">
-                                       <i class="fas fa-check-circle fa-sm"></i>Training Schedule Dashboard
-                                    </a>
-                                <% }
-
-                                }
-                            }
-                        %>
-                    </asp:Panel>
-                    <% } %>
-                </div>
 
                 <!-- User Section -->
                 <div class="d-flex flex-column flex-lg-row align-items-center ms-lg-auto gap-3 mt-3 mt-lg-0">
@@ -315,10 +334,10 @@
                                 <asp:Label Text="" runat="server" ID="usernameSpan" CssClass="user-name" />
                             </button>
 
-                            <ul class="dropdown-menu userDropdown1 dropdown-menu-end mt-2 border border-black-2" aria-labelledby="userDropdown"
+                            <ul class="dropdown-menu userDropdown1 dropdown-menu-end border border-black-2" aria-labelledby="userDropdown"
                                 style="background-color: #1995AD; border: none;">
                                 <li>
-                                    <asp:HyperLink runat="server" CssClass="dropdown-item d-flex align-items-center gap-2 fa-1x"
+                                    <asp:HyperLink runat="server" CssClass="dropdown-item d-flex align-items-center gap-2"
                                         NavigateUrl="~/loginPage.aspx"
                                         Style="transition: all 0.3s ease; color: white;">
                                     <i class="fas fa-sign-out-alt"></i>
@@ -391,9 +410,9 @@
             //    if (navbarbtn.length > 0) {
             //        navbarbtn[0].style.display = "none";
             //    }
-                //console.log("display ", div_content_container.style.display);                
+            //console.log("display ", div_content_container.style.display);                
             //}
-               
+
             //var currentPage = window.location.href;
             //if (currentPage.endsWith("loginPage.aspx")) {
             //    var div_content_container = document.getElementById("div_content_container");

@@ -310,8 +310,6 @@
      </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-
-       <a href="AdminDashboard.aspx" class="btn text-white ms-2" style="background-color : #158396;"><i class="fa-solid fa-left-long"></i> Home</a>
        <div class="d-flex justify-content-lg-around align-items-center">
            <h2>User Management</h2>
            <a href="regeForm.aspx" class="btn text-white" style="background-color:#188fa6;"><i class="fa-solid fa-user-plus"></i> Add New User</a>

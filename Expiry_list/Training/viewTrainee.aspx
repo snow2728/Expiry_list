@@ -1,6 +1,15 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Site1.Master" AutoEventWireup="true" CodeBehind="viewTrainee.aspx.cs" Inherits="Expiry_list.Training.viewTrainee" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
+
+    <%
+        var permissions = Session["formPermissions"] as Dictionary<string, string>;
+        string expiryPerm = permissions != null && permissions.ContainsKey("TrainingList") ? permissions["TrainingList"] : "";
+    %>
+     <script type="text/javascript">
+         var expiryPermission = '<%= expiryPerm %>';
+     </script>
+
     <script type="text/javascript">
         $(document).on('change', '.status-select, .exam-select', function () {
             const traineeId = $("#hiddenTraineeId").val();
@@ -255,30 +264,46 @@
                                      <ItemStyle HorizontalAlign="Justify" />
                               </asp:TemplateField>
 
-                              <asp:TemplateField HeaderText="Actions" >
-                                    <ItemTemplate>
-                                        <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit" CausesValidation="False"
-                                            CssClass="btn btn-sm text-white mt-1 ms-1 me-2" BackColor="#0a61ae" ToolTip="Edit">
-                                            <i class="fas fa-pencil-alt"></i>
-                                        </asp:LinkButton>
-                                        <asp:LinkButton ID="btnDelete" runat="server" CommandName="Delete" CausesValidation="False"
-                                            CssClass="btn btn-sm mt-1 ms-1 me-2 text-white" BackColor="#453b3b" ToolTip="Delete" >
-                                            <i class="fas fa-trash-alt"></i>
-                                        </asp:LinkButton>
-                                    </ItemTemplate>
-                                    <EditItemTemplate>
-                                        <asp:LinkButton ID="btnUpdate" runat="server" CommandName="Update" CausesValidation="False"
-                                            CssClass="btn btn-sm ms-1 text-white" BackColor="#9ad9fe" ToolTip="Update">
-                                            <i class="fas fa-save"></i>
-                                        </asp:LinkButton>
-                                        <asp:LinkButton ID="btnCancel" runat="server" CommandName="Cancel" CausesValidation="False"
-                                            CssClass="btn btn-sm ms-2 text-white btn-secondary" ToolTip="Cancel">
-                                            <i class="fas fa-times"></i>
-                                        </asp:LinkButton>
-                                    </EditItemTemplate>
-                                    <HeaderStyle ForeColor="White" BackColor="#488db4" />
-                                    <ItemStyle HorizontalAlign="Justify" />
-                                </asp:TemplateField>
+                              <asp:TemplateField HeaderText="Actions">
+                                <ItemTemplate>
+
+                                    <div class="text-center">
+                                        <%
+                                            var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
+                                            string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList") ? formPermissions["TrainingList"] : null;
+                                        %>
+
+                                        <% if (perm == "admin" || perm == "edit") { %>
+                                            <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit" CausesValidation="False"
+                                                CssClass="btn btn-sm text-white mt-1 ms-1 me-2" BackColor="#0a61ae" ToolTip="Edit">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </asp:LinkButton>
+                                        <% } %>
+
+                                        <% if (perm == "admin") { %>
+                                            <asp:LinkButton ID="btnDelete" runat="server" CommandName="Delete" CausesValidation="False"
+                                                CssClass="btn btn-sm mt-1 ms-1 me-2 text-white" BackColor="#453b3b" ToolTip="Delete">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </asp:LinkButton>
+                                        <% } %>
+                                    </div>
+                                    
+                                </ItemTemplate>
+
+                                <EditItemTemplate>
+                                    <asp:LinkButton ID="btnUpdate" runat="server" CommandName="Update" CausesValidation="False"
+                                        CssClass="btn btn-sm ms-1 text-white" BackColor="#9ad9fe" ToolTip="Update">
+                                        <i class="fas fa-save"></i>
+                                    </asp:LinkButton>
+                                    <asp:LinkButton ID="btnCancel" runat="server" CommandName="Cancel" CausesValidation="False"
+                                        CssClass="btn btn-sm ms-2 text-white btn-secondary" ToolTip="Cancel">
+                                        <i class="fas fa-times"></i>
+                                    </asp:LinkButton>
+                                </EditItemTemplate>
+
+                                <HeaderStyle ForeColor="White" BackColor="#488db4" CssClass="text-center" />
+                                <ItemStyle HorizontalAlign="Justify" />
+                            </asp:TemplateField>
 
                              </Columns>
                          </asp:GridView>

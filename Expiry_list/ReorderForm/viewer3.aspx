@@ -43,10 +43,6 @@
 
           });
 
-          document.addEventListener('DOMContentLoaded', function () {
-              document.getElementById("link_home").href = "../AdminDashboard.aspx";
-          });
-
           $(document).on('click', '.truncated-note', function (e) {
               e.preventDefault();
 
@@ -58,179 +54,125 @@
 
               modal.show();
           });
-
+          
           let isDataTableInitialized = false;
           function initializeComponents() {
               const grid = $("#<%= GridView2.ClientID %>");
 
-          if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %>) {
-              if ($.fn.DataTable.isDataTable(grid)) {
-                  grid.DataTable().destroy();
-                  grid.removeAttr('style');
+                if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %>) {
+                    if ($.fn.DataTable.isDataTable(grid)) {
+                        grid.DataTable().destroy();
+                        grid.removeAttr('style');
+                    }
+                    return;
+                }
+
+                if (!$.fn.DataTable.isDataTable(grid)) {
+                    if (grid.find('thead').length === 0) {
+                        grid.prepend($('<thead/>').append(grid.find('tr:first').detach()));
+                    }
+
+                    var columns = [
+                        { data: null, width: "100px", orderable: false, render: function (data, type, row, meta) { return meta.settings._iDisplayStart + meta.row + 1; } },
+                        { data: 'no', width: "100px" },
+                        { data: 'itemNo', width: "120px" },
+                        { data: 'description', width: "297px" },
+                        { data: 'qty', width: "97px" },
+                        { data: 'uom', width: "97px" },
+                        { data: 'packingInfo', width: "120px" },
+                        { data: 'divisionCode', width: "120px" },
+                        { data: 'storeNo', width: "120px" },
+                        { data: 'vendorNo', width: "120px" },
+                        { data: 'vendorName', width: "170px" },
+                        { data: 'regeDate', width: "120px", render: function (data) { return data ? new Date(data).toLocaleDateString('en-GB') : ''; } },
+                        { data: 'approveDate', width: "120px", render: function (data) { return data ? new Date(data).toLocaleDateString('en-GB') : ''; } },
+                        { data: 'approver', width: "125px" },
+                        { data: 'note', width: "125px", render: truncateText },
+                        { data: 'action', width: "120px" },
+                        { data: 'status', width: "120px" },
+                        { data: 'remark', width: "125px", render: truncateText },
+                        { data: 'completedDate', width: "125px", render: formatDate },
+                        { data: 'owner', width: "125px" }
+                    ];
+
+                    if (expiryPermission === "admin") {
+                        columns.push({
+                            data: null,
+                            width: "107px",
+                            orderable: false,
+                            render: function (data, type, row) {
+                                return '<button type="button" class="btn btn-danger btn-sm" onclick="deleteRecord(' + row.id + ')" title="Delete">' +
+                                    '<i class="fa-solid fa-trash"></i></button>';
+                            }
+                        });
+                    }
+
+                    grid.DataTable({
+                        responsive: true,
+                        ordering: true,
+                        serverSide: true,
+                        paging: true,
+                        filter: true,
+                        scrollX: true,
+                        scrollY: 397,
+                        scrollCollapse: true,
+                        autoWidth: false,
+                        stateSave: true,
+                        processing: true,
+                        searching: true,
+                        ajax: {
+                            url: 'viewer3.aspx',
+                            type: 'POST',
+                            data: function (d) {
+                                return {
+                                    draw: d.draw,
+                                    start: d.start,
+                                    length: d.length,
+                                    order: d.order,
+                                    search: d.search.value,
+                                    month: $('#monthFilter').val(),
+
+                                    action: $('#<%= ddlActionFilter.ClientID %>').val(),
+                                    status: $('#<%= ddlStatusFilter.ClientID %>').val(),
+                                    item: $('#<%= item.ClientID %>').val(),
+                                    staff: $('#<%= txtstaffFilter.ClientID %>').val(),
+                                    vendor: $('#<%= vendor.ClientID %>').val(),
+                                    regDate: $('#<%= txtRegDateFilter.ClientID %>').val(),
+                                    owner: $('#<%= txtOwner.ClientID %>').val()
+                                };
+                            }
+                        },
+                        fixedColumns: { leftColumns: 4, rightColumns: 0, heightMatch: 'none' },
+                        columns: columns,
+                        order: [[1, 'asc'], [2, 'asc']],
+                        select: { style: 'multi', selector: 'td:first-child' },
+                        lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
+                        initComplete: function () {
+                            var api = this.api();
+                            setTimeout(function () {
+                                api.columns.adjust();
+                                $(window).trigger('resize');
+                            }, 100);
+                        }
+                    });
+
+                  $('.select2-init').select2({ placeholder: "Search or Select", allowClear: true, minimumResultsForSearch: 5 });
+
+                  function truncateText(data) {
+                      if (!data) return '';
+                      var words = data.split(/\s+/);
+                      var truncated = words.slice(0, 3).join(' ');
+                      if (words.length > 5) truncated += ' ...';
+                      return '<span class="truncated-note text-black-50" data-fullnote="' + $('<div/>').text(data).html() + '">' + truncated + '</span>';
+                  }
+
+                  function formatDate(data) {
+                      if (!data) return '';
+                      var date = new Date(data);
+                      return ('0' + date.getDate()).slice(-2) + '/' + ('0' + (date.getMonth() + 1)).slice(-2) + '/' + date.getFullYear();
+                  }
               }
-              return;
           }
-
-          if (!$.fn.DataTable.isDataTable(grid)) {
-              if (grid.find('thead').length === 0) {
-                  grid.prepend($('<thead/>').append(grid.find('tr:first').detach()));
-              }
-
-              grid.DataTable({
-                  responsive: true,
-                  ordering: true,
-                  serverSide: true,
-                  paging: true,
-                  filter: true,
-                  scrollX: true,
-                  scrollY: 397,
-                  scrollCollapse: true,
-                  autoWidth: false,
-                  stateSave: true,
-                  processing: true,
-                  searching: true,
-                  ajax: {
-                      url: 'viewer3.aspx',
-                      type: 'POST',
-                      data: function (d) {
-                          return {
-                              draw: d.draw,
-                              start: d.start,
-                              length: d.length,
-                              order: d.order,
-                              search: d.search.value,
-                              month: $('#monthFilter').val(),
-
-                              action: $('#<%= ddlActionFilter.ClientID %>').val(),
-                              status: $('#<%= ddlStatusFilter.ClientID %>').val(),
-                              item: $('#<%= item.ClientID %>').val(),
-                              staff: $('#<%= txtstaffFilter.ClientID %>').val(),
-                              vendor: $('#<%= vendor.ClientID %>').val(),
-                              regDate: $('#<%= txtRegDateFilter.ClientID %>').val(),
-                              owner: $('#<%= txtOwner.ClientID %>').val(),
-
-                          };
-                      }
-                  },
-                  fixedColumns: {
-                      leftColumns: 4, 
-                      rightColumns: 0,
-                      heightMatch: 'none'
-                  },
-                  columns: [
-                      {
-                          data: null,
-                          width: "100px",
-                          orderable: false,
-                          render: function (data, type, row, meta) {
-                              return meta.settings._iDisplayStart + meta.row + 1;
-                          }
-                      },
-                      { data: 'no', width: "100px" },
-                      { data: 'itemNo', width: "120px" },
-                      { data: 'description', width: "297px" },
-                      { data: 'qty', width: "97px" },
-                      { data: 'uom', width: "97px" },
-                      { data: 'packingInfo', width: "120px" },
-                      { data: 'divisionCode', width: "120px" },
-                      { data: 'storeNo', width: "120px" },
-                      { data: 'vendorNo', width: "120px" },
-                      { data: 'vendorName', width: "170px" },
-                      {
-                          data: 'regeDate',
-                          width: "120px",
-                          render: function (data, type) {
-                              if (!data) return '';
-                              const date = new Date(data);
-                              return date.toLocaleDateString('en-GB');
-                          }
-                      },
-                      {
-                          data: 'approveDate',
-                          width: "120px",
-                          render: function (data, type) {
-                              if (!data) return '';
-                              const date = new Date(data);
-                              return date.toLocaleDateString('en-GB');
-                          }
-                      },
-                      { data: 'approver', width: "125px" },
-                      {
-                          data: 'note',
-                          width: "125px",
-                          render: function (data, type, row) {
-                              if (type === 'display') {
-                                  if (!data) return '';
-                                  var words = data.split(/\s+/);
-                                  var truncated = words.slice(0, 3).join(' ');
-                                  if (words.length > 5) truncated += ' ...';
-                                  return '<span class="truncated-note text-black-50" data-fullnote="' +
-                                      $('<div/>').text(data).html() + '">' + truncated + '</span>';
-                              }
-                              return data;
-                          }
-                      },
-                      { data: 'action', width: "120px" },
-                      { data: 'status', width: "120px" },
-                      {
-                          data: 'remark',
-                          width: "125px",
-                          render: function (data, type, row) {
-                              if (type === 'display') {
-                                  if (!data) return '';
-                                  var words = data.split(/\s+/);
-                                  var truncated = words.slice(0, 3).join(' ');
-                                  if (words.length > 5) truncated += ' ...';
-                                  return '<span class="truncated-note text-black-50" data-fullnote="' +
-                                      $('<div/>').text(data).html() + '">' + truncated + '</span>';
-                              }
-                              return data;
-                          }
-                      },
-                      {
-                          data: 'completedDate',
-                          width: "125px",
-                          render: function (data, type, row) {
-                              if (type === 'display' && data) {
-                                  var date = new Date(data);
-                                  var day = ('0' + date.getDate()).slice(-2);
-                                  var month = ('0' + (date.getMonth() + 1)).slice(-2);
-                                  var year = date.getFullYear();
-                                  return day + '/' + month + '/' + year;
-                              }
-                              return data;
-                          }
-                      },
-                      { data: 'owner', width: "125px" },
-                      {
-                          data: null,
-                          width: "107px",
-                          orderable: false,
-                          render: function (data, type, row) {
-                              return '<button type="button" class="btn btn-danger btn-sm" onclick="deleteRecord(' + row.id + ')" title="Delete">' +
-                                  '<i class="fa-solid fa-trash"></i> Delete</button>';
-                          }
-                      }
-                  ],
-                  order: [[1, 'asc'], [2, 'asc']],
-                  select: { style: 'multi', selector: 'td:first-child' },
-                  lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
-                  initComplete: function (settings) {
-                      var api = this.api();
-                      setTimeout(function () {
-                          api.columns.adjust();
-                          $(window).trigger('resize');
-                      }, 100);
-                  },
-              });
-
-                  $('.select2-init').select2({
-                      placeholder: "Search or Select",
-                      allowClear: true,
-                      minimumResultsForSearch: 5
-                  });
-              };
-          };
 
           $(window).on('resize', function () {
               const grid = $("#<%= GridView2.ClientID %>");
@@ -246,40 +188,40 @@
               const grid = $("#<%= GridView2.ClientID %>");
 
               if ($.fn.DataTable.isDataTable(grid)) {
-                  const dt = grid.DataTable();
+                      const dt = grid.DataTable();
 
-                  dt.order([]).search('').draw();
+                      dt.order([]).search('').draw();
 
-                  const rowIndex = dt.rows().indexes().find(index =>
-                      dt.row(index).data().id === rowId
-                  );
+                      const rowIndex = dt.rows().indexes().find(index =>
+                          dt.row(index).data().id === rowId
+                      );
 
-                  if (typeof rowIndex !== 'undefined') {
-                      dt.row(rowIndex).move(0).draw(false);
+                      if (typeof rowIndex !== 'undefined') {
+                          dt.row(rowIndex).move(0).draw(false);
 
-                      grid.parent().animate({ scrollTop: 0 }, 500);
-                      dt.row(0).nodes().to$()
-                          .addClass('highlight-row')
-                          .trigger('focus');
+                          grid.parent().animate({ scrollTop: 0 }, 500);
+                          dt.row(0).nodes().to$()
+                              .addClass('highlight-row')
+                              .trigger('focus');
+                      }
+              } else {
+                  const $row = grid.find(`tr[data-id='${rowId}']`);
+                  if ($row.length) {
+                      const $tbody = grid.find('tbody');
+                      $row.prependTo($tbody);
+
+                      $('html, body').animate({
+                          scrollTop: grid.offset().top - 100
+                      }, 500);
+                      $row.addClass('highlight-row');
+
                   }
-          } else {
-              const $row = grid.find(`tr[data-id='${rowId}']`);
-              if ($row.length) {
-                  const $tbody = grid.find('tbody');
-                  $row.prependTo($tbody);
-
-                  $('html, body').animate({
-                      scrollTop: grid.offset().top - 100
-                  }, 500);
-                  $row.addClass('highlight-row');
-
               }
-          }
 
              $('#<%= hfSelectedIDs.ClientID %>').val('');
           }
 
-          document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function () {
 
               const monthInput = document.getElementById("monthFilter");
               const now = new Date();
@@ -299,6 +241,7 @@
             if (listBox) {
                 listBox.addEventListener('change', updateLocationPillsDisplay);
             }
+            document.getElementById("link_home").href = "../AdminDashboard.aspx";
         });
 
           function setupFilterToggle() {
@@ -344,7 +287,7 @@
               }
           }
 
-          const filterMap = {
+      const filterMap = {
               action: {
                   checkboxId: '<%= filterAction.ClientID %>',
                   controlId: '<%= ddlActionFilter.ClientID %>',
@@ -1043,8 +986,6 @@
                                                     UseSubmitBehavior="true" />
                                             </div>
 
-                                            
-                                            
                                         </ContentTemplate>
                                         <Triggers>
                                             <asp:AsyncPostBackTrigger ControlID="btnApplyFilter" EventName="Click" />
@@ -1058,8 +999,8 @@
 
                  <asp:HiddenField ID="hfSelectedRows" runat="server" />
                  <asp:HiddenField ID="hfSelectedIDs" runat="server" />
-                 <asp:HiddenField ID="hflength" runat="server" />   
-
+                 <asp:HiddenField ID="hflength" runat="server" />
+                 
                 <!-- Table -->
                 <div class="col-md-12 ms-3" id="gridCol">
                    <asp:UpdatePanel ID="UpdatePanel2" runat="server" UpdateMode="Conditional">
@@ -1094,10 +1035,6 @@
                                     <PagerStyle CssClass="pagination-wrapper" HorizontalAlign="Center" VerticalAlign="Middle" />
                                     <RowStyle CssClass="table-row data-row" BackColor="#F7F6F3" ForeColor="#333333"></RowStyle>
                                     <AlternatingRowStyle CssClass="table-alternating-row" BackColor="White" ForeColor="#284775"></AlternatingRowStyle>
-
-                                     <EmptyDataTemplate>
-                                         <div class="alert alert-info">No items to Filter</div>
-                                     </EmptyDataTemplate>
 
                                      <Columns>
 
@@ -1306,14 +1243,15 @@
                                              <ItemStyle HorizontalAlign="Justify" />
                                         </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="Delete Function " ItemStyle-HorizontalAlign="Center">
+                                    <asp:TemplateField HeaderText="Delete" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0">
                                         <ItemTemplate>
-                                            <asp:LinkButton ID="lnkDelete" runat="server" CommandName="Delete" 
-                                                CssClass="btn btn-danger btn-sm" 
-                                                OnClientClick="return confirm('Are you sure you want to delete this record?');">
-                                                <i class="fa-solid fa-trash"></i> Delete
+                                            <asp:LinkButton ID="lnkDelete" runat="server" CommandName="Delete"
+                                                CssClass="btn btn-danger btn-sm">
+                                                <i class="fa-solid fa-trash"></i>
                                             </asp:LinkButton>
                                         </ItemTemplate>
+                                        <HeaderStyle ForeColor="White" BackColor="#BD467F" />
+                                        <ItemStyle HorizontalAlign="Justify" />
                                     </asp:TemplateField>
                                     
                                     </Columns>

@@ -1,6 +1,15 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Site1.Master" AutoEventWireup="true" CodeBehind="viewTopic.aspx.cs" Inherits="Expiry_list.Training.viewTopic" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
-      <script>
+
+       <%
+           var permissions = Session["formPermissions"] as Dictionary<string, string>;
+           string expiryPerm = permissions != null && permissions.ContainsKey("TrainingList") ? permissions["TrainingList"] : "";
+       %>
+        <script type="text/javascript">
+            var expiryPermission = '<%= expiryPerm %>';
+        </script>
+
+<script>
       $(document).ready(function () {
           initializeDataTable();
 
@@ -11,6 +20,10 @@
               });
           }
       });
+
+       document.addEventListener('DOMContentLoaded', function () {
+           document.getElementById("link_home").href = "../AdminDashboard.aspx";
+       });
 
       function initializeDataTable() {
           const grid = $("#<%= GridView2.ClientID %>");
@@ -58,10 +71,10 @@
               }
           }
       }
-      </script>
+
+</script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-     <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color : #022f56;"><i class="fa-solid fa-left-long"></i> Home</a>
        <div class="container py-4">
             <asp:HiddenField ID="hfSelectedRows" runat="server" />
             <asp:HiddenField ID="hfSelectedIDs" runat="server" />
@@ -164,14 +177,25 @@
                                 <asp:TemplateField HeaderText="Actions">
                                     <ItemTemplate>
                                         <div class="text-center">
-                                            <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit" CausesValidation="False"
-                                                CssClass="btn btn-sm text-white ms-1 mb-1 me-1" BackColor="#0a61ae" ToolTip="Edit">
-                                                <i class="fas fa-pencil-alt"></i>
-                                            </asp:LinkButton>
-                                          <%--  <asp:LinkButton ID="btnDelete" runat="server" CommandName="Delete" CausesValidation="False"
-                                                CssClass="btn btn-sm text-white" BackColor="#453b3b" ToolTip="Delete">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </asp:LinkButton>--%>
+
+                                             <%
+                                                 var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
+                                                 string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList") ? formPermissions["TrainingList"] : null;
+                                             %>
+
+                                             <% if (perm == "admin" || perm == "super") { %>
+                                                 <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit" CausesValidation="False"
+                                                    CssClass="btn btn-sm text-white ms-1 mb-1 me-1" BackColor="#0a61ae" ToolTip="Edit">
+                                                    <i class="fas fa-pencil-alt"></i>
+                                                </asp:LinkButton>
+                                             <% } %>
+
+                                             <% if (perm == "admin") { %>
+                                                  <asp:LinkButton ID="btnDelete" runat="server" CommandName="Delete" CausesValidation="False"
+                                                      CssClass="btn btn-sm text-white" BackColor="#453b3b" ToolTip="Delete">
+                                                      <i class="fas fa-trash-alt"></i>
+                                                  </asp:LinkButton>
+                                             <% } %>
                                         </div>
                                     </ItemTemplate>
                                     <EditItemTemplate>

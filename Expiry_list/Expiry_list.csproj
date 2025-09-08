@@ -2286,10 +2286,6 @@
     <Content Include="sweetAlert\sweet-alert.min.js" />
     <Content Include="sweetAlert\sweetalert.min.js" />
     <Content Include="sweetAlert\sweetalert2%4011.js" />
-    <Content Include="Training\addTopic.aspx" />
-    <Content Include="Training\addTopicWL.aspx" />
-    <Content Include="Training\addTrainee.aspx" />
-    <Content Include="Training\addTrainer.aspx" />
     <Content Include="Training\rege1.aspx" />
     <Content Include="Training\scheduleList.aspx" />
     <Content Include="Training\viewTopic.aspx" />
@@ -2464,34 +2460,6 @@
     </Compile>
     <Compile Include="AdminDashboard.aspx.designer.cs">
       <DependentUpon>AdminDashboard.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Training\addTopic.aspx.cs">
-      <DependentUpon>addTopic.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Training\addTopic.aspx.designer.cs">
-      <DependentUpon>addTopic.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Training\addTopicWL.aspx.cs">
-      <DependentUpon>addTopicWL.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Training\addTopicWL.aspx.designer.cs">
-      <DependentUpon>addTopicWL.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Training\addTrainee.aspx.cs">
-      <DependentUpon>addTrainee.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Training\addTrainee.aspx.designer.cs">
-      <DependentUpon>addTrainee.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Training\addTrainer.aspx.cs">
-      <DependentUpon>addTrainer.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Training\addTrainer.aspx.designer.cs">
-      <DependentUpon>addTrainer.aspx</DependentUpon>
     </Compile>
     <Compile Include="Training\DataBind.cs" />
     <Compile Include="Training\rege1.aspx.cs">

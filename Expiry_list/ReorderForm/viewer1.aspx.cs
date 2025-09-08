@@ -77,6 +77,28 @@ namespace Expiry_list.ReorderForm
             }
         }
 
+        [System.Web.Services.WebMethod]
+        public static string UpdateCell(int id, string column, string value)
+        {
+            using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["con"].ConnectionString))
+            {
+                conn.Open();
+
+                var allowedColumns = new HashSet<string> { "action", "status", "remark" };
+                if (!allowedColumns.Contains(column))
+                    throw new Exception("Invalid column name");
+
+                string sql = $"UPDATE itemListR SET {column} = @value WHERE ID = @id";
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@value", string.IsNullOrEmpty(value) ? (object)DBNull.Value : value);
+                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            return "OK";
+        }
+
         protected void GridView2_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             GridView2.PageIndex = e.NewPageIndex;

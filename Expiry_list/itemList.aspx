@@ -89,10 +89,6 @@
                     heightMatch: 'none'
                 },
                 columns: [
-                    //{
-                    //    data: 'id',
-                    //    visible: false
-                    //},
                     {
                         data: 'checkbox', orderable: false, width: "30px", render: function (data, type, row, meta) {
                             return '<input type="checkbox" class="rowCheckbox" data-id="' + row.id + '" onclick="handleSingleSelection(this)"/>';
@@ -289,7 +285,7 @@
         }
     }
 
-     function exportToExcel() {
+    function exportToExcel() {
          window.location.href = "itemList.aspx?action=export";
     }
 
@@ -362,7 +358,7 @@
             }
         });
         $('#<%= hfSelectedIDs.ClientID %>').val(selectedIDs.join(','));
-        console.log('Selected IDs:', selectedIDs);
+         //console.log('Selected IDs:', selectedIDs);
     }
 
     function InitializeStoreFilter() {
@@ -712,54 +708,55 @@
                             var panelPermissions = Session["formPermissions"] as Dictionary<string, string>;
                             string panelExpiryPerm = panelPermissions != null && panelPermissions.ContainsKey("ExpiryList") ? panelPermissions["ExpiryList"] : null;
                             bool panelCanViewOnly = !string.IsNullOrEmpty(panelExpiryPerm) && panelExpiryPerm != "super1";
-                        %>
+                          %>
 
                          <% if (panelCanViewOnly) { %>
         
                         <!-- Action Dropdown -->
-                        <div class="col-12 col-md-auto">
-                            <asp:DropDownList ID="ddlAction" runat="server" 
-                                CssClass="form-select w-100 py-2">
-                               <asp:ListItem Text="-- Select Action --" Value="0" />
-                               <asp:ListItem Text="Informed To Supplier" Value="1" />
-                               <asp:ListItem Text="Informed To Owner" Value="2" />
-                               <asp:ListItem Text="Supplier Sales" Value="3" />
-                               <asp:ListItem Text="Owner Sales" Value="4" />
-                               <asp:ListItem Text="Store's Responsibility" Value="5" />
-                               <asp:ListItem Text="Store Exchange" Value="6" />
-                               <asp:ListItem Text="Store Return" Value="7" />
-                               <asp:ListItem Text="No Date To Check" Value="8" />
-                           </asp:DropDownList>
-                     </div>
+                                <div class="col-12 col-md-auto">
+                                    <asp:DropDownList ID="ddlAction" runat="server" 
+                                        CssClass="form-select w-100 py-2">
+                                       <asp:ListItem Text="-- Select Action --" Value="0" />
+                                       <asp:ListItem Text="Informed To Supplier" Value="1" />
+                                       <asp:ListItem Text="Informed To Owner" Value="2" />
+                                       <asp:ListItem Text="Supplier Sales" Value="3" />
+                                       <asp:ListItem Text="Owner Sales" Value="4" />
+                                       <asp:ListItem Text="Store's Responsibility" Value="5" />
+                                       <asp:ListItem Text="Store Exchange" Value="6" />
+                                       <asp:ListItem Text="Store Return" Value="7" />
+                                       <asp:ListItem Text="No Date To Check" Value="8" />
+                                   </asp:DropDownList>
+                             </div>
 
-                        <div class="col-12 col-md-auto">
-                            <asp:Button ID="btnUpdateSelected" runat="server"
-                                CssClass="btn text-white w-100 py-2"
-                                style="background:#1995ad;"
-                                Text="Update Action"
-                                OnClick="btnUpdateSelected_Click" />
-                        </div>
+                                <div class="col-12 col-md-auto">
+                                    <asp:Button ID="btnUpdateSelected" runat="server"
+                                        CssClass="btn text-white w-100 py-2"
+                                        style="background:#1995ad;"
+                                        Text="Update Action"
+                                        OnClick="btnUpdateSelected_Click" />
+                                </div>
 
-                          <div class="col-12 col-md-auto">
-                            <asp:DropDownList ID="ddlStatus" runat="server"
-                                CssClass="form-select w-100 py-2">
-                               <asp:ListItem Text="-- Select Status --" Value="0" />
-                               <asp:ListItem Value="1" Text="Progess" />
-                               <asp:ListItem Value="2" Text="Exchange" />
-                               <asp:ListItem Value="3" Text="No Exchange" />
-                               <asp:ListItem Value="4" Text="No Action" />
-                           </asp:DropDownList>
-                          </div>
+                                  <div class="col-12 col-md-auto">
+                                    <asp:DropDownList ID="ddlStatus" runat="server"
+                                        CssClass="form-select w-100 py-2">
+                                       <asp:ListItem Text="-- Select Status --" Value="0" />
+                                       <asp:ListItem Value="1" Text="Progess" />
+                                       <asp:ListItem Value="2" Text="Exchange" />
+                                       <asp:ListItem Value="3" Text="No Exchange" />
+                                       <asp:ListItem Value="4" Text="No Action" />
+                                   </asp:DropDownList>
+                                  </div>
 
-                           <div class="col-12 col-md-auto">
-                                <asp:Button ID="btnStatusSelected" runat="server"
-                                    CssClass="btn text-white w-100 py-2"
-                                    style="background:#1995ad;"
-                                    Text="Update Status"
-                                    OnClick="btnStatusSelected_Click" />
-                            </div>
+                                   <div class="col-12 col-md-auto">
+                                        <asp:Button ID="btnStatusSelected" runat="server"
+                                            CssClass="btn text-white w-100 py-2"
+                                            style="background:#1995ad;"
+                                            Text="Update Status"
+                                            OnClick="btnStatusSelected_Click" />
+                                    </div>
 
                          <% } %>
+
 
                         <div class="col-12 col-md-auto">
                             <asp:LinkButton ID="excel" runat="server"
@@ -770,6 +767,17 @@
                             </asp:LinkButton>
                             <asp:Button ID="btnExport" runat="server" CssClass="btn text-white me-2" Text="Export to Excel" ForeColor="White" Font-Bold="True" Font-Size="Medium" style="background:#1995ad; display:none;" OnClick="btnExport_Click" />
                         </div>
+
+                         <% if (panelExpiryPerm == "super1" || panelExpiryPerm == "admin") { %>
+
+                                <div class="col-12 col-md-auto">
+                                      <asp:Button Text="Delete" runat="server"
+                                        CssClass="btn btn-danger text-white w-100"
+                                        ID="btnDelete" OnClick="btnDelete_Click" />
+                                </div>  
+
+                         <% } %>
+
                   </div>
                 </div>
 

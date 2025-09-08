@@ -328,7 +328,7 @@ namespace Expiry_list
             }
             else if (allowedForms.ContainsKey("TrainingList") && perm == "view")
             {
-                redirectUrl = "~/Training/viewer1.aspx";
+                redirectUrl = "~/Training/viewTrainee.aspx";
             }
             else
             {
@@ -415,6 +415,7 @@ namespace Expiry_list
 
             return storeNames;
         }
+
 
     }
 }

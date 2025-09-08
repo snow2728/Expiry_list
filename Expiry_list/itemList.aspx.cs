@@ -88,7 +88,6 @@ namespace Expiry_list
             BindGrid();
         }
 
-        // FIXED: Proper WHERE clause handling and OFFSET/FETCH syntax
         private void RespondWithData()
         {
             using (SqlConnection conn = new SqlConnection(strcon))
@@ -490,7 +489,7 @@ namespace Expiry_list
             {
                 DataRowView rowView = (DataRowView)e.Row.DataItem;
 
-                // Handle Action dropdown
+                // Action dropdown
                 DropDownList ddlAction = (DropDownList)e.Row.FindControl("ddlActionEdit");
                 if (ddlAction != null)
                 {
@@ -498,7 +497,7 @@ namespace Expiry_list
                     ddlAction.SelectedValue = GetActionText(currentAction);
                 }
 
-                // Handle Status dropdown
+                // Status dropdown
                 DropDownList ddlStatus = (DropDownList)e.Row.FindControl("ddlStatusEdit");
                 if (ddlStatus != null)
                 {
@@ -659,6 +658,42 @@ namespace Expiry_list
                     updateFilterVisibility(); 
                     toggleFilter(false); 
                 }", true);
+        }
+
+        protected void btnDelete_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(hfSelectedIDs.Value))
+            {
+                string[] selectedIds = hfSelectedIDs.Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                using (SqlConnection conn = new SqlConnection(strcon))
+                {
+                    conn.Open();
+                    foreach (string idStr in selectedIds)
+                    {
+                        if (int.TryParse(idStr, out int id))
+                        {
+                            string deleteQuery = "DELETE FROM itemList WHERE id = @id";
+                            using (SqlCommand cmd = new SqlCommand(deleteQuery, conn))
+                            {
+                                cmd.Parameters.AddWithValue("@id", id);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+                    }
+                }
+
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alertSuccess",
+                     "swal('Success!', 'Item is successfully deleted!', 'success').then(function(){ window.location='itemList.aspx'; });",
+                  true);
+                return;
+            }
+            else
+            {
+                ScriptManager.RegisterStartupScript(this, this.GetType(),
+                       "alertWarning", "swal('Warning!', 'Please select only one row to edit.', 'warning').then(function(){ window.location='itemList.aspx'; });", true);
+                return;
+            }
         }
 
         private void BindGrid(int pageNumber = 1, int pageSize = 100)

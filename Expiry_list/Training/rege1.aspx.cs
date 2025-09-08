@@ -25,9 +25,10 @@ namespace Expiry_list.Training
             {
                 no.Text = GetNextTranNo();
                 tdyDate.Text = DateTime.Now.ToString("dd/MM/yyyy");
-                BindTopic();
+                BindTopics();
                 Training.DataBind.BindRoom(locationDp);
             }
+
         }
 
         protected void btnUploadExcel_Click(object sender, EventArgs e)
@@ -252,7 +253,7 @@ namespace Expiry_list.Training
             try
             {
                 string tranNo = no.Text.Trim();
-                string topicId = topicDP.SelectedValue;   // topicT.id
+                string topicId = topicDP.SelectedValue; 
                 string description = desc.Text.Trim();
                 string locationName = locationDp.SelectedItem.Text.Trim();
                 string date1 = date.Text.Trim();
@@ -336,6 +337,8 @@ namespace Expiry_list.Training
 
                     ShowAlert("Success!", "Schedule created successfully!", "success");
                     ClearForm();
+                    no.Text = GetNextTranNo(); 
+                    tdyDate.Text = DateTime.Now.ToString("dd/MM/yyyy");
                 }
             }
             catch (Exception ex)
@@ -344,38 +347,45 @@ namespace Expiry_list.Training
             }
         }
 
-        private void BindTopic()
+        protected void BindTopics()
         {
             using (SqlConnection con = new SqlConnection(strcon))
             {
                 con.Open();
+                string query = @"SELECT t.id, t.topicName, w.trainerId, w.traineeLevel, 
+                        tr.name as trainerName, l.name as levelName
+                 FROM topicT t
+                 INNER JOIN topicWLT w ON t.id = w.topic
+                 INNER JOIN trainerT tr ON w.trainerId = tr.id
+                 INNER JOIN levelT l ON w.traineeLevel = l.id";
 
-                string query = @"
-                    SELECT t.id, 
-                       tp.topicName,
-                       tr.name AS trainerName,
-                       lv.name as level
-                        FROM topicWLT t
-                        LEFT JOIN trainerT tr ON t.trainerId = tr.id
-                        LEFT JOIN topicT tp ON t.topic = tp.id
-                        LEFT JOIN levelT lv ON t.traineeLevel = lv.id where tp.IsActive='true'; ";
+                SqlDataAdapter da = new SqlDataAdapter(query, con);
+                System.Data.DataTable dt = new System.Data.DataTable();
+                da.Fill(dt);
 
-                using (SqlCommand cmd = new SqlCommand(query, con))
+                topicDP.Items.Clear();
+                topicDP.Items.Add(new ListItem("-- Select Topic --", "")); // Prompt
+
+                foreach (DataRow row in dt.Rows)
                 {
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        topicDP.Items.Clear();
-                        while (reader.Read())
-                        {
-                            ListItem item = new ListItem(reader["topicName"].ToString(), reader["id"].ToString());
-                            item.Attributes["data-trainer"] = reader["trainerName"].ToString();
-                            item.Attributes["data-level"] = reader["level"] != DBNull.Value ? reader["level"].ToString() : "";
-                            topicDP.Items.Add(item);
-                        }
-                    }
+                    topicDP.Items.Add(new ListItem(row["topicName"].ToString(), row["id"].ToString()));
                 }
 
-                topicDP.Items.Insert(0, new ListItem("Select Topic", ""));
+                // Store the mapping in ViewState for JS later
+                ViewState["TopicMapping"] = dt;
+            }
+        }
+
+        protected void topicDP_PreRender(object sender, EventArgs e)
+        {
+            DropDownList ddl = sender as DropDownList;
+            foreach (ListItem li in ddl.Items)
+            {
+                // Only inject if attributes exist
+                if (!string.IsNullOrEmpty(li.Attributes["trainerName"]))
+                    li.Attributes["data-trainer-name"] = li.Attributes["trainerName"];
+                if (!string.IsNullOrEmpty(li.Attributes["levelName"]))
+                    li.Attributes["data-level-name"] = li.Attributes["levelName"];
             }
         }
 
@@ -406,15 +416,15 @@ namespace Expiry_list.Training
                 $"swal('{title}', '{HttpUtility.JavaScriptStringEncode(message)}', '{type}');", true);
         }
 
-        private void ClearForm()
+        protected void ClearForm()
         {
             topicDP.SelectedIndex = 0;
+            trainerDp.Text = "";
+            position.Text = "";
             desc.Text = "";
-            locationDp.SelectedIndex = 0;
-            trainerDp.Text = string.Empty;
-            position.Text = string.Empty;
             date.Text = string.Empty;
-            timeDp.SelectedIndex = 0; 
+            timeDp.SelectedIndex = 0;
+            locationDp.Text = "";
         }
 
     }

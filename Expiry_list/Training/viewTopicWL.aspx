@@ -1,5 +1,14 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Site1.Master" AutoEventWireup="true" CodeBehind="viewTopicWL.aspx.cs" Inherits="Expiry_list.Training.viewTopicWL" %>
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
+
+        <%
+            var permissions = Session["formPermissions"] as Dictionary<string, string>;
+            string expiryPerm = permissions != null && permissions.ContainsKey("TrainingList") ? permissions["TrainingList"] : "";
+        %>
+         <script type="text/javascript">
+             var expiryPermission = '<%= expiryPerm %>';
+         </script>
+
     <script>
          $(document).ready(function () {
              initializeDataTable();
@@ -12,7 +21,11 @@
              }
          });
 
-         function initializeDataTable() {
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById("link_home").href = "../AdminDashboard.aspx";
+        });
+
+        function initializeDataTable() {
              const grid = $("#<%= GridView2.ClientID %>");
      
              if (grid.length === 0 || grid.find('tr').length === 0) {
@@ -72,7 +85,6 @@
     </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-        <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color : #022f56;"><i class="fa-solid fa-left-long"></i> Home</a>
            <div class="container py-4">
            <asp:HiddenField ID="hfSelectedRows" runat="server" />
            <asp:HiddenField ID="hfSelectedIDs" runat="server" />
@@ -157,14 +169,22 @@
                                <asp:TemplateField HeaderText="Actions" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center">
                                     <ItemTemplate>
                                         <div style="text-align:center;">
-                                            <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit" CausesValidation="False"
-                                                CssClass="btn btn-sm text-white mt-1 ms-1 me-2" style="background-color:#0a61ae;" ToolTip="Edit">
-                                                <i class="fas fa-pencil-alt"></i>
-                                            </asp:LinkButton>
-                                            <asp:LinkButton ID="btnDelete" runat="server" CommandName="Delete" CausesValidation="False"
-                                                CssClass="btn btn-sm mt-1 ms-1 me-2 text-white" style="background-color:#453b3b;" ToolTip="Delete" >
-                                                <i class="fas fa-trash-alt"></i>
-                                            </asp:LinkButton>
+                                            <%
+                                                var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
+                                                string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList") ? formPermissions["TrainingList"] : null;
+                                            %>
+
+                                            <% if (perm == "admin") { %>
+                                                 <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit" CausesValidation="False"
+                                                     CssClass="btn btn-sm text-white mt-1 ms-1 me-2" style="background-color:#0a61ae;" ToolTip="Edit">
+                                                     <i class="fas fa-pencil-alt"></i>
+                                                 </asp:LinkButton>
+                                                 <asp:LinkButton ID="btnDelete" runat="server" CommandName="Delete" CausesValidation="False"
+                                                     CssClass="btn btn-sm mt-1 ms-1 me-2 text-white" style="background-color:#453b3b;" ToolTip="Delete" >
+                                                     <i class="fas fa-trash-alt"></i>
+                                                 </asp:LinkButton>
+                                            <% } %>
+                                           
                                         </div>
                                     </ItemTemplate>
                                     <EditItemTemplate>
@@ -179,7 +199,7 @@
                                             </asp:LinkButton>
                                         </div>
                                     </EditItemTemplate>
-                                    <HeaderStyle ForeColor="White" BackColor="#488db4" HorizontalAlign="Center"  Width="15%" />
+                                    <HeaderStyle ForeColor="White" BackColor="#488db4" CssClass="text-center" Width="15%" />
                                     <ItemStyle HorizontalAlign="Center" />
                                 </asp:TemplateField>
                             </Columns>

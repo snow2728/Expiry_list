@@ -1,42 +1,48 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Site1.Master" AutoEventWireup="true" CodeBehind="rege1.aspx.cs" Inherits="Expiry_list.Training.rege1" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
-    
-       <script type="text/javascript">
 
-           function updateTrainerAndLevel() {
-               var ddl = document.getElementById('<%= topicDP.ClientID %>');
-               var selectedOption = ddl.options[ddl.selectedIndex];
+ <script type="text/javascript">
+    function updateTrainerAndLevel() {
+         var ddl = document.getElementById('<%= topicDP.ClientID %>');
+        if (!ddl) return;
 
-               if (selectedOption.value === "") {
-                   document.getElementById('<%= trainerDp.ClientID %>').value = "";
-                    document.getElementById('<%= position.ClientID %>').value = "";
-                    return;
-               }
-      
-                var trainer = selectedOption.getAttribute("data-trainer") || '';
-                var level = selectedOption.getAttribute("data-level") || '';
-      
-                document.getElementById('<%= trainerDp.ClientID %>').value = trainer;
-                document.getElementById('<%= position.ClientID %>').value = level;
-           }
+        var selectedOption = ddl.options[ddl.selectedIndex];
+        if (!selectedOption || selectedOption.value === "") {
+            document.getElementById('<%= trainerDp.ClientID %>').value = "";
+            document.getElementById('<%= position.ClientID %>').value = "";
+            return;
+        }
 
-            window.onload = function () {
-               document.getElementById('<%= topicDP.ClientID %>').addEventListener("change", updateTrainerAndLevel);
-           };
+        document.getElementById('<%= trainerDp.ClientID %>').value = selectedOption.getAttribute("data-trainer-name") || '';
+        document.getElementById('<%= position.ClientID %>').value = selectedOption.getAttribute("data-level-name") || '';
+    }
 
-       </script>
+     document.addEventListener("DOMContentLoaded", function () {
+         updateTrainerAndLevel();
+         document.getElementById("link_home").href = "../AdminDashboard.aspx";
+     });
+
+     function attachTopicHandler() {
+        var ddl = document.getElementById('<%= topicDP.ClientID %>');
+         if (ddl) {
+             ddl.onchange = updateTrainerAndLevel;
+         }
+     }
+
+     if (typeof (Sys) !== "undefined" && Sys.WebForms && Sys.WebForms.PageRequestManager) {
+         Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
+             attachTopicHandler();
+             updateTrainerAndLevel();
+         });
+    }
+
+ </script>
 
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
 
-<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-    <!-- Home Button -->
-    <div class="mb-2">
-        <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color:#488DB4;">
-            <i class="fa-solid fa-left-long"></i> Home
-        </a>
-    </div>
+<div class="d-flex justify-content-end align-items-center m-2 flex-wrap">
 
     <!-- Excel Import Section -->
     <div class="me-3" style="max-width: 400px;">
@@ -71,7 +77,7 @@
                     <!-- Card Body -->
                     <div class="card-body">
 
-                        <asp:ScriptManager ID="ScriptManager1" runat="server"></asp:ScriptManager>
+                        <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true" ></asp:ScriptManager>
                         <asp:UpdatePanel runat="server" ID="UpdatePanel1" UpdateMode="Conditional">
                             <ContentTemplate>
                                 <!-- No Field -->
@@ -88,6 +94,54 @@
                                     <div class="col-sm-8">
                                         <asp:DropDownList ID="topicDP" runat="server" CssClass="form-control form-control-sm dropdown-icon" AppendDataBoundItems="true" >
                                         </asp:DropDownList>
+
+                                        <script type="text/javascript">
+                                            var topicMap = {};
+                                            <% 
+                                               var dt = ViewState["TopicMapping"] as System.Data.DataTable;
+                                               if (dt != null) {
+                                                   foreach(System.Data.DataRow row in dt.Rows) {
+                                            %>
+                                                                                    topicMap["<%= row["id"] %>"] = { trainer: "<%= row["trainerName"] %>", level: "<%= row["levelName"] %>" };
+                                            <% 
+                                                   } 
+                                               } 
+                                            %>
+
+                                            function updateTrainerAndLevel() {
+                                                var ddl = document.getElementById('<%= topicDP.ClientID %>');
+                                                if (!ddl) return;
+
+                                                var selectedValue = ddl.value;
+                                                var trainerInput = document.getElementById('<%= trainerDp.ClientID %>');
+                                                var levelInput = document.getElementById('<%= position.ClientID %>');
+
+                                                if (!selectedValue || !topicMap[selectedValue]) {
+                                                    trainerInput.value = "";
+                                                    levelInput.value = "";
+                                                    return;
+                                                }
+
+                                                trainerInput.value = topicMap[selectedValue].trainer;
+                                                levelInput.value = topicMap[selectedValue].level;
+                                            }
+
+                                            document.addEventListener("DOMContentLoaded", function () {
+                                                var ddl = document.getElementById('<%= topicDP.ClientID %>');
+                                                if (ddl) ddl.onchange = updateTrainerAndLevel;
+                                                updateTrainerAndLevel(); // update on first load
+                                            });
+
+                                            if (typeof (Sys) !== "undefined" && Sys.WebForms && Sys.WebForms.PageRequestManager) {
+                                                Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
+                                                    var ddl = document.getElementById('<%= topicDP.ClientID %>');
+                                                    if (ddl) ddl.onchange = updateTrainerAndLevel;
+                                                    updateTrainerAndLevel(); // update after partial postback
+                                                });
+                                                                                    }
+                                                                                </script>
+
+
                                         <asp:RequiredFieldValidator ID="RequiredFieldValidator3" runat="server"
                                             ErrorMessage="Topic must be selected!"
                                             ControlToValidate="topicDP" Display="Dynamic"
@@ -181,38 +235,5 @@
             </div>
         </div>
     </div>
-
-  <!-- Excel Preview Modal -->
-<%--<div class="modal fade" id="excelPreviewModal" tabindex="-1" aria-labelledby="excelPreviewLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-            
-            <!-- Header -->
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="excelPreviewLabel">Excel Preview</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-
-            <!-- Body -->
-            <div class="modal-body">
-                <asp:GridView ID="gvExcelPreview" runat="server" AutoGenerateColumns="true" 
-                    CssClass="table table-bordered table-sm nowrap"
-                    OnRowDataBound="gvExcelPreview_RowDataBound" />
-            </div>
-
-            <!-- Footer -->
-            <div class="modal-footer">
-                <asp:UpdatePanel runat="server" ID="UpdatePanelExcelPreview" UpdateMode="Conditional">
-                    <ContentTemplate>
-                        <asp:Button ID="btnConfirmInsert" runat="server" Text="Confirm & Insert" 
-                            CssClass="btn btn-primary px-4" 
-                            OnClick="btnConfirmInsert_Click" CausesValidation="false" />
-                    </ContentTemplate>
-                </asp:UpdatePanel>
-            </div>
-            
-        </div>
-    </div>
-</div>--%>
 
 </asp:Content>

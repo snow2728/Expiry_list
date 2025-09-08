@@ -32,6 +32,21 @@ namespace Expiry_list.ReorderForm
 
             if (!IsPostBack)
             {
+                var permissions = Session["formPermissions"] as Dictionary<string, string>;
+                string expiryPerm = permissions != null && permissions.ContainsKey("ReorderQuantity") ? permissions["ReorderQuantity"] : "";
+                
+                GridView2.Columns[0].Visible = false;
+                GridView2.Columns[GridView2.Columns.Count - 1].Visible = expiryPerm == "admin";
+
+                foreach (DataControlField col in GridView2.Columns)
+                {
+                    if (col is TemplateField && col.HeaderText == "Delete")
+                    {
+                        col.Visible = expiryPerm == "admin" ; 
+                        break;
+                    }
+                }
+
                 Panel1.Visible = true;
                 BindGrid();
                 BindStores();

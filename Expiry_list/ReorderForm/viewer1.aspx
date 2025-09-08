@@ -126,6 +126,7 @@
         }
 
         let isDataTableInitialized = false;
+        var dataTable;
         function initializeComponents() {
             const grid = $("#<%= GridView2.ClientID %>");
             const isFiltered = $('#<%= hfIsFiltered.ClientID %>').val() === 'true';
@@ -162,7 +163,7 @@
                     grid.prepend($('<thead/>').append(grid.find('tr:first').detach()));
                 }
 
-               grid.DataTable({
+               dataTable = grid.DataTable({
                    responsive: true,
                    ordering: true,
                    serverSide: true,
@@ -206,6 +207,7 @@
                        heightMatch: 'none'
                    },
                    columns: [
+                       /*{ data: 'id', visible: false }, */
                        {
                            data: 'checkbox',
                            orderable: false,
@@ -352,6 +354,86 @@
                    }
                });
 
+                $('#<%= GridView2.ClientID %> tbody').off('dblclick').on('dblclick', 'td', function () {
+                    var cell = dataTable.cell(this);
+                    if (!cell.any()) return;
+
+                    var colIndex = cell.index().column;
+                    var colName = dataTable.column(colIndex).dataSrc();
+
+                    if (!(colName === "status" || colName === "action" || colName === "remark")) {
+                        return;
+                    }
+
+                    var oldValue = cell.data();
+                    if ($(this).find('input, select').length > 0) return;
+
+                    let editor;
+                    if (colName === "action") {
+                        editor = $(`<select class="form-select form-select-sm">
+            <option value="">-- Select Reason --</option>
+            <option value="None">None</option>
+            <option value="Overstock and Redistribute">Overstock and Redistribute</option>
+            <option value="Redistribute">Redistribute</option>
+            <option value="Allocation Item">Allocation Item</option>
+            <option value="Shortage Item">Shortage Item</option>
+            <option value="System Enough">System Enough</option>
+            <option value="Tail Off Item">Tail Off Item</option>
+            <option value="Purchase Blocked">Purchase Blocked</option>
+            <option value="Already Added Reorder">Already Added Reorder</option>
+            <option value="Customer Requested Item">Customer Requested Item</option>
+            <option value="No Hierarchy">No Hierarchy</option>
+            <option value="Near Expiry Item">Near Expiry Item</option>
+            <option value="Reorder Qty is large, Need to adjust Qty">Reorder Qty is large, Need to adjust Qty</option>
+            <option value="Discon Item">Discon Item</option>
+            <option value="Supplier Discon">Supplier Discon</option>
+        </select>`);
+                    }
+                    else if (colName === "status") {
+                        editor = $(`<select class="form-select form-select-sm">
+            <option value="">-- Select Action --</option>
+            <option value="Reorder Done">Reorder Done</option>
+            <option value="No Reordering">No Reordering</option>
+        </select>`);
+                    }
+                    else { // remark
+                        editor = $('<input type="text" class="form-control form-control-sm">').val(oldValue);
+                    }
+
+                    $(this).empty().append(editor);
+                    editor.val(oldValue).focus();
+
+                    // on blur or change → save
+                    editor.on('blur change', function () {
+                        var newValue = $(this).val();
+                        var rowData = dataTable.row(cell.index().row).data();
+                        var rowId = rowData.id;
+
+                        if (newValue === oldValue) {
+                            cell.data(oldValue).draw();
+                            return;
+                        }
+
+                        $.ajax({
+                            type: "POST",
+                            url: "viewer1.aspx/UpdateCell",
+                            contentType: "application/json; charset=utf-8",
+                            data: JSON.stringify({
+                                id: rowId,
+                                column: colName,
+                                value: newValue || ""
+                            }),
+                            success: function () {
+                                cell.data(newValue).draw();
+                            },
+                            error: function (err) {
+                                console.error(err);
+                                cell.data(oldValue).draw();
+                            }
+                        });
+                    });
+                });
+
                 $('.select2-init').select2({
                     placeholder: "Search or Select",
                     allowClear: true,
@@ -360,10 +442,6 @@
 
             };
         };
-
-        document.addEventListener('DOMContentLoaded', function () {
-            document.getElementById("link_home").href = "../AdminDashboard.aspx";
-        });
 
         function applyManualSearchHighlighting(searchTerm) {
             if (!searchTerm) return;
@@ -484,25 +562,24 @@
             updatedRows.forEach(row => {
                 const rowElement = document.querySelector(`tr[data-id='${row.id}']`);
                 if (rowElement) {
-                    // If status is "Reorder Done" or "No Reordering", hide the row
                     if (row.status === "Reorder Done" || row.status === "No Reordering") {
-                        rowElement.style.display = "none";  // Hide row
+                        rowElement.style.display = "none"; 
                         return;
                     }
 
-                    // Update Status cell
+                    // Update Status 
                     const statusCell = rowElement.querySelector('.status-cell');
                     if (statusCell) {
                         statusCell.textContent = row.status;
                     }
 
-                    // Update Label control if present
+                    // Update Label 
                     const lblStatus = rowElement.querySelector('span[id*="lblStatus"]');
                     if (lblStatus) {
                         lblStatus.textContent = row.status;
                     }
 
-                    // Update CompletedDate if provided
+                    // Update CompletedDate 
                     if (row.completedDate) {
                         const completedDateCell = rowElement.querySelector('.completedDate-cell');
                         if (completedDateCell) {
@@ -514,7 +591,7 @@
                         }
                     }
 
-                    // Update Owner if provided
+                    // Update Owner
                     if (row.owner) {
                         const ownerCell = rowElement.querySelector('.owner-cell');
                         if (ownerCell) {
@@ -550,6 +627,8 @@
             if (listBox) {
                 listBox.addEventListener('change', updateLocationPillsDisplay);
             }
+
+            document.getElementById("link_home").href = "../AdminDashboard.aspx";
         });
 
         function setupFilterToggle() {
@@ -663,7 +742,7 @@
                 }
             });
             $('#<%= hfSelectedIDs.ClientID %>').val(selectedIDs.join(','));
-            console.log('Selected IDs:', selectedIDs);
+            //console.log('Selected IDs:', selectedIDs);
         }
 
         function InitializeStoreFilter() {
@@ -992,15 +1071,16 @@
 
             const searchTerm = $('#<%= hfLastSearch.ClientID %>').val();
             if (searchTerm) {
-                $('#<%= searchValue.ClientID %>').val(searchTerm);
-                applyManualSearchHighlighting(searchTerm);
-            }
-        });
+                  $('#<%= searchValue.ClientID %>').val(searchTerm);
+                  applyManualSearchHighlighting(searchTerm);
+              }
+          });
 
         history.pushState(null, null, location.href);
         window.addEventListener("popstate", function (event) {
             location.reload();
         });
+
 
     </script>
 
@@ -1110,7 +1190,7 @@
 
                             <div class="col-12 col-md-auto">
                                   <asp:Button Text="Delete" runat="server"
-                                    CssClass="btn btn-secondary text-white w-100"
+                                    CssClass="btn btn-danger text-white w-100"
                                     ID="btnDelete" OnClick="btnDelete_Click" />
                             </div>  
 
@@ -1475,7 +1555,7 @@
                                      </asp:TemplateField>
 
                                    <asp:TemplateField HeaderText="Reason" SortExpression="action" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-54">
-                                        <EditItemTemplate>
+                                      <%--  <EditItemTemplate>
                                             <asp:DropDownList ID="ddlActionEdit" runat="server">
                                                     <asp:ListItem Text="-- Select Reason --" Value="0" />
                                                     <asp:ListItem Text="None" Value="1" />
@@ -1494,7 +1574,7 @@
                                                     <asp:ListItem Text="Discon Item" Value="14" />
                                                     <asp:ListItem Text="Supplier Discon" Value="15" />
                                             </asp:DropDownList>
-                                        </EditItemTemplate>
+                                        </EditItemTemplate>--%>
                                         <ItemTemplate>
                                             <asp:Label ID="lblAction" runat="server" Text='<%# Eval("action") %>'></asp:Label>
                                         </ItemTemplate>
@@ -1504,13 +1584,13 @@
                                     </asp:TemplateField>
 
                                     <asp:TemplateField HeaderText="Action" SortExpression="status" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-55">
-                                        <EditItemTemplate>
+                                       <%-- <EditItemTemplate>
                                             <asp:DropDownList ID="ddlStatusEdit" runat="server">
                                                 <asp:ListItem Text="-- Select Action --" Value="0" />
                                                 <asp:ListItem Value="1" Text="Reorder Done"></asp:ListItem>
                                                 <asp:ListItem Value="2" Text="No Reordering"></asp:ListItem>
                                             </asp:DropDownList>
-                                        </EditItemTemplate>
+                                        </EditItemTemplate>--%>
                                         <ItemTemplate>
                                             <asp:Label ID="lblStatus" runat="server" Text='<%# Eval("status") %>'></asp:Label>
                                         </ItemTemplate>
@@ -1523,9 +1603,9 @@
                                         <ItemTemplate>
                                             <asp:Label ID="lblRemark" runat="server" Text='<%# Eval("Remark") %>'></asp:Label>
                                         </ItemTemplate>
-                                        <EditItemTemplate>
+                                        <%--<EditItemTemplate>
                                             <asp:TextBox ID="txtRemark" runat="server" Text='<%# Bind("Remark") %>' Width="157px"></asp:TextBox>
-                                        </EditItemTemplate>
+                                        </EditItemTemplate>--%>
                                         <ControlStyle Width="125px" />
                                         <HeaderStyle ForeColor="White" BackColor="#BD467F" />
                                         <ItemStyle HorizontalAlign="Justify" />
@@ -1579,6 +1659,8 @@
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
 
+            
+
                                     <%-- <asp:TemplateField HeaderText="Completed Date" SortExpression="completedDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-61">
                                          <ItemTemplate>
                                              <asp:Label ID="lblCompleted" runat="server" Text=' <%# Eval("completedDate", "{0:dd-MM-yyyy}") %>' />
@@ -1586,17 +1668,15 @@
                                          <ControlStyle Width="125px" />
                                          <HeaderStyle ForeColor="White" BackColor="#BD467F" />
                                          <ItemStyle HorizontalAlign="Justify" />
-                                     </asp:TemplateField>--%>
-
-                                     <asp:CommandField ShowEditButton="true" ShowCancelButton="true" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-BackColor="white" ControlStyle-CssClass="btn m-1 text-white"
+                                     </asp:TemplateField>--%>                       <%--  <asp:Commaeld ShowEditButton="true" ShowCancelButton="true" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-BackColor="white" ControlStyle-CssClass="btn m-1 text-white"
                                          EditText="-" UpdateText="<i class='fa-solid fa-file-arrow-up'></i>"
                                          CancelText="<i class='fa-solid fa-xmark'></i>">
                                          <ControlStyle CssClass="btn m-1 text-white" Width="75px" BackColor="#BD467F" />
                                          <HeaderStyle ForeColor="White" BackColor="#BD467F" />
                                          <ItemStyle HorizontalAlign="Justify" />
-                                     </asp:CommandField>
+                                     </asp:CommandField>--%>
 
-                                 </Columns>
+                             </Columns>
 
                                  <SelectedRowStyle BackColor="#E2DED6" Font-Bold="True" ForeColor="#333333" />
                                  <SortedAscendingCellStyle BackColor="#E9E7E2" />

@@ -1,7 +1,16 @@
 ﻿<%@ Page Title="Schedule List" Language="C#" MasterPageFile="~/Site1.Master" AutoEventWireup="true" CodeBehind="scheduleList.aspx.cs" Inherits="Expiry_list.Training.scheduleList" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
-    <script>
+
+    <%
+        var permissions = Session["formPermissions"] as Dictionary<string, string>;
+        string expiryPerm = permissions != null && permissions.ContainsKey("TrainingList") ? permissions["TrainingList"] : "";
+    %>
+     <script type="text/javascript">
+         var expiryPermission = '<%= expiryPerm %>';
+     </script>
+
+<script>
         var selectedItems = [];
 
         $(document).ready(function () {
@@ -132,6 +141,10 @@
 
         });
 
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById("link_home").href = "../AdminDashboard.aspx";
+        });
+
         function initializeDataTable() {
             const grid = $("#<%= GridView2.ClientID %>");
             if (grid.length === 0 || grid.find('tr').length === 0) return;
@@ -196,19 +209,20 @@
             row.addClass('selected-row');
         }
 
-    </script>
+</script>
+
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePageMethods="true" />
 <div class="container-fluid mt-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="../AdminDashboard.aspx" class="btn text-white" style="background-color:#022f56;"><i class="fa-solid fa-left-long"></i> Home</a>
-        <h4 class="fw-bold mb-0">Schedule List</h4>
-    </div>
+
 
     <div class="card mb-3 shadow-sm">
         <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold mb-0">Schedule List</h4>
+    </div>
             <div class="row g-2">
                 <div class="col-md-2"><asp:TextBox ID="dateTb" runat="server" CssClass="form-control form-control-sm" TextMode="Date" /></div>
                 <div class="col-md-2"><asp:DropDownList ID="timeDp" runat="server" CssClass="form-select form-select-sm">
@@ -258,13 +272,13 @@
                             </ItemTemplate>
                         </asp:TemplateField>
 
-                        <asp:TemplateField HeaderText="Trans No" ItemStyle-Width="10%">
+                        <asp:TemplateField HeaderText="Trans No" ItemStyle-Width="5%">
                             <ItemTemplate>
                                 <asp:Label ID="lblNo" runat="server" Text='<%# Eval("tranNo") %>' />
                             </ItemTemplate>
                         </asp:TemplateField>
 
-                        <asp:TemplateField HeaderText="Topic Name" ItemStyle-Width="10%">
+                        <asp:TemplateField HeaderText="Topic Name" ItemStyle-Width="18%">
                             <ItemTemplate>
                                 <asp:Label ID="lblTopicName" runat="server" Text='<%# Eval("topicName") %>' />
                             </ItemTemplate>
@@ -318,18 +332,31 @@
                             </ItemTemplate>
                         </asp:TemplateField>
 
-                        <asp:TemplateField HeaderText="Actions" ItemStyle-Width="10%">
-                            <ItemTemplate>
-                                <a href="javascript:void(0);" class="btn btn-sm text-white" style="background-color:#022f56;"
-                                   onclick='highlightRow(this); openTraineeDetails(<%# Eval("id") %>)'>
-                                   <i class="fa fa-eye"></i> Details
-                                </a>
-                                <a href="javascript:void(0);" class="btn btn-sm btn-info text-white"
-                                   onclick='highlightRow(this); openRegisterModal(<%# Eval("id") %>, "<%# Eval("topicId") %>", <%# Eval("positionId") %>)'>
-                                   <i class="fa fa-user-plus"></i> Register
-                                </a>
-                            </ItemTemplate>
-                        </asp:TemplateField>
+                    <asp:TemplateField HeaderText="Actions" ItemStyle-Width="7%" HeaderStyle-CssClass="text-center">
+                        <ItemTemplate>
+                            <div class="text-center">
+                                <%
+                                    var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
+                                    string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList") ? formPermissions["TrainingList"] : null;
+                                %>
+
+                                <% if (perm == "admin" || perm == "super") { %>
+                                    <a href="javascript:void(0);" class="btn btn-sm text-white mb-2" style="background-color:#022f56;"
+                                       onclick='highlightRow(this); openTraineeDetails(<%# Eval("id") %>)'>
+                                       <i class="fa fa-eye"></i> Details
+                                    </a>
+                                <% } %>
+
+                                <% if (perm == "admin" || perm=="edit") { %>
+                                    <a href="javascript:void(0);" class="btn btn-sm btn-info text-white" 
+                                       onclick='highlightRow(this); openRegisterModal(<%# Eval("id") %>, "<%# Eval("topicId") %>", <%# Eval("positionId") %>)'>
+                                       <i class="fa fa-user-plus"></i> Register
+                                    </a>
+                                <% } %>
+                            </div>
+                        </ItemTemplate>
+                    </asp:TemplateField>
+
                     </Columns>
                 </asp:GridView>
                 </div>

@@ -14,6 +14,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Globalization;
 using System.Diagnostics;
+using System.Web.Services;
 
 namespace Expiry_list
 {
@@ -43,6 +44,21 @@ namespace Expiry_list
 
             if (!IsPostBack)
             {
+                var permissions = Session["formPermissions"] as Dictionary<string, string>;
+                string expiryPerm = permissions != null && permissions.ContainsKey("ExpiryList") ? permissions["ExpiryList"] : "";
+
+                GridView2.Columns[0].Visible = false;
+                GridView2.Columns[GridView2.Columns.Count - 1].Visible = expiryPerm == "admin";
+
+                foreach (DataControlField col in GridView2.Columns)
+                {
+                    if (col is TemplateField && col.HeaderText == "Delete")
+                    {
+                        col.Visible = expiryPerm == "admin";
+                        break;
+                    }
+                }
+
                 Panel1.Visible = true;
                 BindGridView();
                 BindStores();
@@ -485,6 +501,38 @@ namespace Expiry_list
         {
             GridView2.PageIndex = e.NewPageIndex;
             BindGridView();
+        }
+
+        [WebMethod]
+        public static string DeleteRecord1(string id)
+        {
+            try
+            {
+                string strcon = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
+                using (SqlConnection conn = new SqlConnection(strcon))
+                {
+                    string query = "DELETE FROM itemList WHERE id = @id";
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", id);
+                        conn.Open();
+                        int result = cmd.ExecuteNonQuery();
+
+                        if (result > 0)
+                            return "success";
+                        else
+                            return "notfound";
+                    }
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                return "sqlerror:" + sqlEx.Number;
+            }
+            catch (Exception ex)
+            {
+                return "error:" + ex.Message;
+            }
         }
 
         protected void ResetFilters_Click(object sender, EventArgs e)

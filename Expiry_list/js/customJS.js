@@ -37,6 +37,18 @@ function editRow(id) {
     __doPostBack('', ''); 
 }
 
+function blockInvalidChars(event) {
+    // Allow: Backspace, Delete, Arrow keys, Tab
+    if ([8, 9, 37, 39, 46].includes(event.keyCode)) {
+        return;
+    }
+
+    // Block if not a digit (0-9)
+    if (!/[0-9]/.test(event.key)) {
+        event.preventDefault();
+    }
+}
+
 document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', () => {
         const navbar = document.getElementById('mainNav');
@@ -47,7 +59,6 @@ document.querySelectorAll('.nav-link').forEach(link => {
 });
 
 // js code for reorder/viewer3.aspx
-
 function onDeleteSuccess(result) {
     if (result) {
         Swal.fire('Deleted!', 'Your record has been deleted.', 'success');
@@ -56,6 +67,8 @@ function onDeleteSuccess(result) {
         Swal.fire('Error!', 'Failed to delete record.', 'error');
     }
 }
+
+
 
 function onDeleteError(error) {
     Swal.fire('Error!', 'An error occurred while deleting: ' + error.get_message(), 'error');

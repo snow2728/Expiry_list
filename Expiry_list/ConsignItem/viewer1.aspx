@@ -717,6 +717,22 @@
                             </asp:LinkButton>
                             <asp:Button ID="btnExport" runat="server" CssClass="btn text-white me-2" Text="Export to Excel" ForeColor="White" Font-Bold="True" Font-Size="Medium" Style="background: #0d330e; display: none;" OnClick="btnExport_Click" />
                         </div>
+
+                            <%
+                              var panelPermissions = Session["formPermissions"] as Dictionary<string, string>;
+                              string panelExpiryPerm = panelPermissions != null && panelPermissions.ContainsKey("ConsignmentList") ? panelPermissions["ConsignmentList"] : null;
+                              bool panelCanViewOnly = !string.IsNullOrEmpty(panelExpiryPerm) && panelExpiryPerm != "super1";
+                            %>
+
+                          <% if (panelExpiryPerm == "super1" || panelExpiryPerm == "admin") { %>
+
+                                 <div class="col-12 col-md-auto">
+                                       <asp:Button Text="Delete" runat="server"
+                                         CssClass="btn btn-danger text-white w-100"
+                                         ID="btnDelete" OnClick="btnDelete_Click" />
+                                 </div>  
+
+                          <% } %>
                     </div>
                 </div>
 
