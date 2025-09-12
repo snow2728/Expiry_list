@@ -6,6 +6,11 @@
     color: white !important;
 }
 
+table.dataTable {
+    width: 100% !important;
+    table-layout: fixed;
+}
+
 body {
     margin: 0;
     padding: 0;
@@ -1181,5 +1186,25 @@ a[commandname="Edit"] {
         align-items: start;
     }
 }
+
+/*for reorder/viewer1.aspx -- resize*/
+th {
+    position: relative;
+}
+
+.resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    cursor: col-resize;
+    user-select: none;
+    height: 100%;
+    z-index: 10;
+}
+
+
+
+
 
 

@@ -122,14 +122,12 @@ namespace Expiry_list.ReorderForm
 
                     string[] columns = {
                         "id", "no","storeNo", "divisionCode","approveDate", "itemNo", "description", "packingInfo", "barcodeNo", "qty", "uom",
-                         "action", "status", "remark", "approver", "note", "vendorNo", "vendorName", "regeDate",
-                       "completedDate"
+                         "action", "status", "remark", "approver", "note", "vendorNo", "vendorName", "regeDate"
                     };
 
                     string[] searchableColumns = {
                         "no","storeNo", "divisionCode","approveDate", "itemNo", "description", "packingInfo", "barcodeNo", "qty", "uom",
-                         "action", "status", "remark", "approver", "note", "vendorNo", "vendorName", "regeDate",
-                       "completedDate"
+                         "action", "status", "remark", "approver", "note", "vendorNo", "vendorName", "regeDate"
                     };
 
 
@@ -233,7 +231,6 @@ namespace Expiry_list.ReorderForm
                             action = row["action"],
                             status = row["status"],
                             remark = row["remark"],
-                            completedDate = row["completedDate"] is DBNull ? "" : Convert.ToDateTime(row["completedDate"]).ToString("yyyy-MM-dd"),
                             DT_RowAttr = new
                             {
                                 data_search_text = searchText
@@ -499,72 +496,68 @@ namespace Expiry_list.ReorderForm
         {
             try
             {
-                bool hasAnyFilter = filterStore.Checked || filterItem.Checked || filterVendor.Checked ||
-                           filterStatus.Checked || filterAction.Checked ||
-                           filterRegistrationDate.Checked || filterStaff.Checked ||
-                           filterDivisionCode.Checked || filterApproveDate.Checked;
+                // Check if at least one filter is selected and has a value
+                bool hasAnyFilter =
+                    (filterStore.Checked && lstStoreFilter.SelectedIndex >= 0) ||
+                    (filterItem.Checked && !string.IsNullOrEmpty(item.SelectedValue)) ||
+                    (filterVendor.Checked && !string.IsNullOrEmpty(vendor.SelectedValue)) ||
+                    (filterStatus.Checked && !string.IsNullOrEmpty(ddlStatusFilter.SelectedValue)) ||
+                    (filterAction.Checked && !string.IsNullOrEmpty(ddlActionFilter.SelectedValue)) ||
+                    (filterRegistrationDate.Checked && !string.IsNullOrEmpty(txtRegDateFilter.Text)) ||
+                    (filterStaff.Checked && !string.IsNullOrEmpty(txtstaffFilter.Text)) ||
+                    (filterDivisionCode.Checked && !string.IsNullOrEmpty(txtDivisionCodeFilter.Text)) ||
+                    (filterApproveDate.Checked && !string.IsNullOrEmpty(txtApproveDateFilter.Text));
+
                 if (!hasAnyFilter)
                 {
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "alertNoFilter",
-                        "Swal.fire('Warning!', 'Please select at least one filter to apply and ensure it has a value.', 'warning');", true);
+                        "Swal.fire('Warning!', 'Please select at least one filter with a value.', 'warning');", true);
                     return;
                 }
 
-                // Store filter states in ViewState
-                ViewState["FilterStoreChecked"] = filterStore.Checked;
-                ViewState["SelectedStores"] = string.Join(",",
-                    lstStoreFilter.Items.Cast<ListItem>()
-                        .Where(li => li.Selected)
-                        .Select(li => li.Value));
-
-                ViewState["FilterItemChecked"] = filterItem.Checked;
+                // Save selected filter values in ViewState (optional)
+                ViewState["SelectedStores"] = string.Join(",", lstStoreFilter.Items.Cast<ListItem>()
+                                                    .Where(li => li.Selected).Select(li => li.Value));
                 ViewState["SelectedItem"] = item.SelectedValue;
-
-                ViewState["FilterVendorChecked"] = filterVendor.Checked;
                 ViewState["SelectedVendor"] = vendor.SelectedValue;
-
-                ViewState["FilterStatusChecked"] = filterStatus.Checked;
-                ViewState["SelectedStatus"] = ddlStatusFilter.SelectedItem.Text;
-
-                ViewState["FilterActionChecked"] = filterAction.Checked;
-                ViewState["SelectedAction"] = ddlActionFilter.SelectedItem.Text;
-
-                ViewState["FilterRegDateChecked"] = filterRegistrationDate.Checked;
+                ViewState["SelectedStatus"] = ddlStatusFilter.SelectedValue;
+                ViewState["SelectedAction"] = ddlActionFilter.SelectedValue;
                 ViewState["SelectedRegDate"] = txtRegDateFilter.Text;
-
-                ViewState["FilterStaffChecked"] = filterStaff.Checked;
                 ViewState["SelectedStaff"] = txtstaffFilter.Text;
-
-                ViewState["FilterDivisionCodeChecked"] = filterDivisionCode.Checked;
                 ViewState["SelectedDivisionCode"] = txtDivisionCodeFilter.Text;
-
-                ViewState["FilterApproveDateChecked"] = filterApproveDate.Checked;
                 ViewState["SelectedApproveDate"] = txtApproveDateFilter.Text;
-                
-                System.Data.DataTable dt = GetFilteredData();
-                ViewState["FilteredData"] = dt;
 
-                hfIsFiltered.Value = "true";
-                ViewState["IsFiltered"] = "true";
+                // Get filtered data from your data source
+                System.Data.DataTable dtFiltered = GetFilteredData();
+                ViewState["FilteredData"] = dtFiltered;
 
-                GridView2.DataSource = dt;
+                // Bind GridView (optional for server-side fallback)
+                GridView2.DataSource = dtFiltered;
                 GridView2.DataBind();
 
+                // Ensure header and body are set correctly
                 if (GridView2.HeaderRow != null)
                 {
                     GridView2.HeaderRow.TableSection = TableRowSection.TableHeader;
-                    GridView2.HeaderRow.CssClass = "static-header";
+                }
+                foreach (GridViewRow row in GridView2.Rows)
+                {
+                    row.TableSection = TableRowSection.TableBody;
                 }
 
-                ScriptManager.RegisterStartupScript(this, GetType(), "RestoreHeader_" + GridView2.ClientID,
-                    "$('[id=\\\"" + GridView2.ClientID + "\\\"] thead').addClass('static-header').css('display','table-header-group').show();",
-                    true);
+                // Trigger DataTable AJAX reload OR rebind editing
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "ReloadTable", @"
+                    if (typeof dataTable !== 'undefined' && $.fn.DataTable.isDataTable('#" + GridView2.ClientID + @"')) { 
+                        dataTable.ajax.reload(); 
+                    } else { 
+                        enableGridViewInlineEditing(); 
+                    }", true);
 
             }
             catch (Exception ex)
             {
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "alertMultiple",
-                    "swal('Warning!', 'Please select only one filter type to apply filter.', 'warning');", true);
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alertError",
+                    "Swal.fire('Error!', 'An error occurred while applying filters.', 'error');", true);
             }
         }
 

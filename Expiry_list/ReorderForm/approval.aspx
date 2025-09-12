@@ -683,9 +683,9 @@
         
 <div class="container-fluid col-lg-12 col-md-12 mt-0">
     <div class="card shadow-md border-0" style="background-color: #F1B4D1;">
-        <div class="card-header" style="background-color: #BD467F;">
-            <h4 class="text-align-center text-white d-inline" style="margin-left:433px;">Approval List</h4>
-        </div>
+        <div class="card-header" style="background-color:#A10D54;">
+             <h4 class="text-center fw-bold text-white">Approval List</h4>
+         </div>
 
         <div class="card-body">
             <div class="col-lg-12 col-md-12">

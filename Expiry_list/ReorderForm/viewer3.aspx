@@ -775,7 +775,7 @@
 <div class="container-fluid col-lg-12 col-md-12">
     <div class="card shadow-md border-0" style="background-color: #F1B4D1;">
         <div class="card-header" style="background-color: #BD467F;">
-            <h4 class="text-align-center text-white d-inline" style="margin-left:433px;">Completed Qty List</h4>
+            <h4 class="text-center fw-bold text-white">Completed Qty List</h4>
       </div>
 
         <div class="card-body">
