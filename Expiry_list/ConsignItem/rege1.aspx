@@ -1,12 +1,36 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Site1.Master" AutoEventWireup="true" EnableEventValidation="false" CodeBehind="rege1.aspx.cs" Inherits="Expiry_list.ConsignItem.rege1" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
-
+        <style>
+            @media (min-width: 1400px) {
+                .container {
+                    max-width: 2000px;
+                }
+            }
+            @media (max-width: 1870px) {
+                .div-btn-rp {
+                    width: 30%;
+                }
+                .div-btn-rp .btn-font {
+                    font-size: 14px;
+                }
+            }
+            .swal-text-left {
+                text-align: left;
+            }
+/*            th, td {
+                border: 1px solid #ccc;
+                padding: 8px;
+                overflow: hidden;
+            }
+            th {
+                position: relative;
+                background-color: #f2f2f2;
+            }*/
+        </style>
         <script type="text/javascript">
 
             $(document).ready(function () {
-                var staffName = $('#<%= hiddenStaffName.ClientID %>').val();
-                $('#<%= staffName.ClientID %>').val(staffName);
                 const vendorNoSelector = '#<%= vendorNo.ClientID %>';
                 const hiddenVendorNoSelector = '#<%= hiddenVendorNo.ClientID %>';
                 const hiddenVendorTextSelector = '#<%= hiddenVendorText.ClientID %>';
@@ -15,7 +39,7 @@
                     placeholder: 'Search by Vendor No or Vendor Name',
                     minimumInputLength: 2,
                     ajax: {
-                        url: 'rege1.aspx/GetVendors',
+                        url: '/ConsignItem/rege1.aspx/GetVendors',
                         type: 'POST',
                         contentType: "application/json; charset=utf-8",
                         dataType: 'json',
@@ -85,149 +109,151 @@
                     if (selectedOption.length) {
                         $(hiddenVendorTextSelector).val(selectedOption.text());
                     }
-
-                    $('#<%= itemNo.ClientID %>').val(null).trigger('change');
-                    clearFields();
                 });
-
+                
                 // Initialize Select2 for item search
-                $("#<%= itemNo.ClientID %>").select2({
-                    placeholder: 'Search by Item No, Description, or Barcode',
-                    minimumInputLength: 0,
-                    allowClear: true,
-                    ajax: {
-                        url: 'rege1.aspx/GetItems',
-                        type: 'POST',
-                        contentType: "application/json; charset=utf-8",
-                        dataType: 'json',
-                        delay: 250,
-                        data: function (params) {
-                            var vendorNo = $('#<%= vendorNo.ClientID %>').val();
-                            if (!vendorNo) {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Vendor Required',
-                                    text: 'Please select a vendor first'
-                                });
-                                return JSON.stringify({
-                                    request: {
-                                        vendorNo: '',
-                                        searchTerm: params.term || ''
-                                    }
-                                });
-                            }
-                            return JSON.stringify({
-                                request: {
-                                    vendorNo: vendorNo,
-                                    searchTerm: params.term || ''
-                                }
-                            });
-                        },
-                        processResults: function (data) {
-                            // Handle server errors
-                            if (data && data.d && data.d.length > 0 && data.d[0].ItemNo === "ERROR") {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Server Error',
-                                    text: data.d[0].ItemDescription
-                                });
-                                return { results: [] };
-                            }
 
-                            // Handle null response
-                            if (!data || !data.d) {
-                                return { results: [] };
-                            }
+                initializeDataTable();
+                //if (typeof (Sys) !== 'undefined') {
+                //    Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
+                //        initializeDataTable();
+                //    });
+                //}
 
-                            var items = data.d || [];
-
-                            if (items.length === 0) {
-                                setTimeout(function () {
-                                    Swal.fire({
-                                        icon: 'warning',
-                                        title: 'No Items Found',
-                                        text: 'No items match your search. Please try again.'
-                                    });
-                                }, 300);
-                            }
-
-                            return {
-                                results: items.map(function (item) {
-                                    return {
-                                        id: item.ItemNo,
-                                        text: item.ItemNo + " - " + item.ItemDescription,
-                                        description: item.ItemDescription,
-                                        barcode: item.Barcode || [],
-                                        uom: item.UOM || '',
-                                        packing: item.PackingInfo || ''
-                                    };
-                                })
-                            };
-                        },
-                        error: function (xhr, status, error) {
-                            try {
-                                var jsonResponse = JSON.parse(xhr.responseText);
-                                var errorMessage = jsonResponse.Message || error;
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Request Failed',
-                                    text: 'Server error: ' + errorMessage
-                                });
-                            } catch (e) {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Request Failed',
-                                    text: 'Server error: ' + error
-                                });
-                            }
-                        },
-                        cache: true
-                    }
-                });
-
-                var selectedItemId = $('#<%= hiddenSelectedItem.ClientID %>').val();
-                var selectedItemText = $('#<%= hiddenDescription.ClientID %>').val();
-
-                if (selectedItemId) {
-                    // Manually add the selected option to Select2
-                    var $itemNo = $('#<%= itemNo.ClientID %>');
-                    var option = new Option(selectedItemId + " - " + selectedItemText, selectedItemId, true, true);
-                    $itemNo.append(option).trigger('change');
-                }
-
-                $("#<%= itemNo.ClientID %>").on('focus', function () {
-                    $(this).select2('open');
-                });
-
-                $('#<%= itemNo.ClientID %>').on('select2:select', function (e) {
-                    clearFields();
-
-                    var selectedData = e.params.data;
-
-                    $('#<%= desc.ClientID %>').val(selectedData.description);
-                    $('#<%= uom.ClientID %>').val(selectedData.uom);
-                    $('#<%= packingInfo.ClientID %>').val(selectedData.packing);
-
-                    var barcode = selectedData.barcode.length > 0 ? selectedData.barcode[0] : '';
-                    $('#<%= barcodeNo.ClientID %>').val(barcode);
-                    $('#<%= hiddenSelectedItem.ClientID %>').val(selectedData.id);
-                    $('#<%= hiddenBarcodeNo.ClientID %>').val(barcode);
-                    $('#<%= hiddenDescription.ClientID %>').val(selectedData.description);
-                    $('#<%= hiddenUOM.ClientID %>').val(selectedData.uom);
-                    $('#<%= hiddenPackingInfo.ClientID %>').val(selectedData.packing);
-                    $('#<%= hiddenVendorNo.ClientID %>').val($('#<%= vendorNo.ClientID %>').val());
-                });
-
-                $('#<%= itemNo.ClientID %>').on('select2:clear', function (e) {
-                    clearFields();
-                });
+               
 
             });
+
 
             document.addEventListener('DOMContentLoaded', function () {
                     document.getElementById("link_home").href = "../AdminDashboard.aspx";
             });
 
+            function initializeDataTable() {
+                const grid = $("#<%= GridView.ClientID %>");
+     
+                 if (grid.length === 0 || grid.find('tr').length === 0) {
+                     return;
+                 }
+     
+                 if ($.fn.DataTable.isDataTable(grid)) {
+                     grid.DataTable().destroy();
+                     grid.removeAttr('style');
+                 }
+     
+                if (<%= GridView.EditIndex >= 0 ? "true" : "false" %> === false) {
+                    // Ensure table has proper structure
+                    if (grid.find('thead').length === 0) {
+                        const headerRow = grid.find('tr:first').detach();
+                        grid.prepend($('<thead/>').append(headerRow));
+                    }
+
+                    const headerCols = grid.find('thead tr:first th').length;
+                    const bodyCols = grid.find('tbody tr:first td').length;
+
+                    if (headerCols !== bodyCols) {
+                        console.error('Header and body column count mismatch:', headerCols, 'vs', bodyCols);
+                        return;
+                    }
+
+                    try {
+                        grid.DataTable({
+                            responsive: true,
+                            paging: true,
+                            searching: true,
+                            scrollY: 497,
+                            info: true,                           
+                            order: [[0, 'asc']],
+                            lengthMenu: [[50, 100, 150, 200], [50, 100, 150, 200]],
+                            columnDefs: [
+                               { orderable: false, targets: [3, 4, 5, 6] }  
+                            ],
+                        });
+                    } catch (e) {
+                        console.error('DataTable initialization error:', e);
+                    }                    
+                }
+            }
+            <%--function initializeComponents() {
+                var grid = $('#<%= GridView.ClientID %>');
+
+                var hasRows = grid.find('tbody tr').length > 0 && !grid.find('tbody tr td').hasClass('empty-row');
+
+                if (hasRows) {
+                    if (grid.find('thead').length === 0) {
+                        grid.prepend($('<thead/>').append(grid.find('tr:first').detach()));
+                    }
+                    grid.DataTable({
+                        responsive: true,
+                        ordering: true,
+                        //serverSide: true,
+                        paging: true,
+                        filter: true,
+                        scroll: 400,
+                        scrollCollapse: true,
+                        autoWidth: false,
+                        stateSave: true,
+                        processing: true,
+                        searching: true,
+                        //initComplete: function () {
+                        ////    if ('<%= ViewState["EmptyRowAdded"] != null %>') {
+                        //        // hide the added empty row
+                        //        $(this).find('tbody tr').hide();
+                        //    }
+                        //},
+                        //ajax: {
+                        //    url: '/ConsignItem/rege1.aspx',
+                        //    type: 'POST',
+                        //},
+                        fixedColumns: {
+                            leftColumns: 0,
+                            rightColumns: 0,
+                            heightMatch: 'none'
+                        },
+                        //columns: [
+                        //    //{ data: 'no', width: "100px" },
+                        //    { data: 'itemNo', /*width: "50px"*/ },
+                        //    { data: 'description',/* width: "197px"*/ },
+                        //    { data: 'qty', /*width: "97px"*/ },
+                        //    { data: 'uom', /*width: "80px"*/ },
+                        //    { data: 'packingInfo', /*width: "100px"*/ },
+                        //    { data: 'note',/* width: "125px"*/ },
+                        //    { data: 'action'}
+                            //{
+                            //    data: 'id', // or 'actions' if you don’t need the id directly
+                            //    render: function (data, type, row) {
+                            //        return `
+                            //    <button class="btn btn-sm btn-success m-1" onclick="editRow('${data}')">
+                            //        <i class="fa-solid fa-pen-to-square"></i>
+                            //    </button>
+                            //    <button class="btn btn-sm btn-danger m-1" onclick="deleteRow('${data}')">
+                            //        <i class="fa-solid fa-trash"></i>
+                            //    </button>`;
+                            //    },
+                            //    orderable: false,
+                            //    searchable: false,
+                            //    /*width: "120px"*/
+                            //}
+                        //],
+                        lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
+                        initComplete: function (settings) {
+                            if (isEmpty) {
+                                $(this).closest('.dataTables_wrapper').hide(); // hide empty DataTable
+                            }
+                            var api = this.api();
+                            setTimeout(function () {
+                                api.columns.adjust();
+                            }, 50);
+                        },
+                        "error": function (xhr, error, thrown) {
+                            console.error("DataTables error:", error, thrown);
+                            alert("Error loading data. Check console for details.");
+                        }
+
+                    });
+                }
+            }
+            --%>
             function isNumberKey(evt) {
                 var charCode = (evt.which) ? evt.which : evt.keyCode;
                 if (charCode == 8 || charCode == 9 || charCode == 13 || charCode == 27 || charCode == 46)
@@ -236,40 +262,7 @@
                 if (charCode >= 48 && charCode <= 57)
                     return true;
                 return false;
-            }
-
-            // Clear textboxes when a new item is selected
-            function clearFields() {
-                $('#<%= desc.ClientID %>').val('');
-                $('#<%= uom.ClientID %>').val('');
-                $('#<%= packingInfo.ClientID %>').val('');
-                $('#<%= barcodeNo.ClientID %>').val('');
-                $('#<%= qty.ClientID %>').val('');
-                $('#<%= note.ClientID %>').val('');
-
-                // Clear hidden fields as well
-                $('#<%= hiddenSelectedItem.ClientID %>').val('');
-                $('#<%= hiddenBarcodeNo.ClientID %>').val('');
-                $('#<%= hiddenDescription.ClientID %>').val('');
-                $('#<%= hiddenUOM.ClientID %>').val('');
-                $('#<%= hiddenPackingInfo.ClientID %>').val('');
-                $('#<%= hiddenQty.ClientID %>').val('');
-            }
-
-            function restoreFields(itemNoValue, itemDescription) {
-                if (itemNoValue) {
-                    var $itemNo = $('#<%= itemNo.ClientID %>');
-                    $itemNo.empty(); 
-                    var option = new Option(itemNoValue + " - " + itemDescription, itemNoValue, true, true);
-                    $itemNo.append(option).trigger('change');
-                }
-
-                // Restore other fields from hidden values
-                $('#<%= desc.ClientID %>').val($('#<%= hiddenDescription.ClientID %>').val());
-                $('#<%= uom.ClientID %>').val($('#<%= hiddenUOM.ClientID %>').val());
-                $('#<%= packingInfo.ClientID %>').val($('#<%= hiddenPackingInfo.ClientID %>').val());
-                $('#<%= barcodeNo.ClientID %>').val($('#<%= hiddenBarcodeNo.ClientID %>').val());
-            }
+            }            
 
             Sys.Application.addEventListener("load", function () {
                 var prevVendorNo = $(hiddenVendorNoSelector).val();
@@ -291,15 +284,18 @@
                 location.reload();
             });
 
+            //Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
+
+            //    initializeComponents();
+            //});
+
         </script>
 
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-
-    <div class="container-fluid" style="background-color: #f1f1f2;">
-        <div class="row g-2">
-
-            <div class="col-12 col-lg-5 col-md-4">
+    <div class="container" style="background-color: #f1f1f2;">
+        <%--<div class="g-2">--%>
+            <div class="offset-lg-1 col-lg-10 col-md-8 7ustify-content-center mb-3">
                 <div class="card shadow-sm h-100">
                     <!-- Card Header -->
                     <div class="card-header text-white text-center"
@@ -311,266 +307,228 @@
 
                     <!-- Card Body -->
                     <div class="card-body">
-
-                        <asp:ScriptManager ID="ScriptManager1" runat="server"></asp:ScriptManager>
-                        <asp:UpdatePanel runat="server" ID="UpdatePanel1" UpdateMode="Conditional">
-                            <ContentTemplate>
-                                <!-- No Field -->
-                                <div class="row g-2 mb-3">
-                                    <label for="<%= no.ClientID %>" class="col-sm-4 col-form-label">No</label>
-                                    <div class="col-sm-8">
-                                        <asp:TextBox runat="server" CssClass="form-control form-control-sm" ID="no" ReadOnly="true" />
+                        <div class="row">
+                            <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true">
+                            <Scripts>
+                                <asp:ScriptReference Name="MicrosoftAjax.js" />
+                                <asp:ScriptReference Name="MicrosoftAjaxWebForms.js" />
+                            </Scripts>
+                            </asp:ScriptManager>
+                            <asp:UpdatePanel class="col-2" runat="server" ID="UpdatePanel1" UpdateMode="Conditional">
+                                <ContentTemplate>
+                                    <!-- No Field -->
+                                    <div class="row justify-content-center p-0">
+                                        <label for="<%= no.ClientID %>" class="col-sm-2 col-form-label ps-0 px-0">No</label>
+                                        <div class="col-sm-6">
+                                            <asp:TextBox runat="server" CssClass="form-control text-center" ID="no" ReadOnly="true" />
+                                        </div>
                                     </div>
+                                </ContentTemplate>
+                             </asp:UpdatePanel>
+
+                             <!-- Hidden Fields -->
+                             <asp:HiddenField ID="hiddenVendorNo" runat="server" />
+                             <asp:HiddenField ID="hiddenVendorText" runat="server" />
+                             <!-- Vendor No Field -->
+                             <div class="row col-6">
+                                <label for="<%= vendorNo.ClientID %>" class="col-sm-2 col-form-label px-0">Vendor</label>
+                                <div class="col-sm-9">
+                                     <asp:DropDownList ID="vendorNo" runat="server" 
+                                        CssClass="form-control select2 ps-0 pe-0"
+                                        AppendDataBoundItems="true">
+                                        <asp:ListItem Text="" Value="" />
+                                    </asp:DropDownList>
+                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server"
+                                        ErrorMessage="Vendor must be selected!"
+                                        ControlToValidate="vendorNo" Display="Dynamic"
+                                        CssClass="text-danger" SetFocusOnError="True" />
                                 </div>
-                            </ContentTemplate>
-                        </asp:UpdatePanel>
+                            </div>
+                            <div class="row col-4">
+                                <div class="text-center col-lg-3 col-md-4 col-sm-3 col-lg-3 px-0 div-btn-rp">
+                                    <asp:Button Text="Show Items" runat="server" CssClass="btn fw-bold text-white btn-font"
+                                        Style="background-color: #0D330E; border-radius: 10px;"
+                                        ID="getItemBtn" onClick="btnGetItems_Click"/>
+                                </div>
 
-                        <!-- Hidden Fields -->
-                        <asp:HiddenField ID="hiddenItemNo" runat="server" />
-                        <asp:HiddenField ID="hiddenSelectedItem" runat="server" />
-                        <asp:HiddenField ID="hiddenDescription" runat="server" />
-                        <asp:HiddenField ID="hiddenBarcodeNo" runat="server" />
-                        <asp:HiddenField ID="hiddenUOM" runat="server" />
-                        <asp:HiddenField ID="hiddenPackingInfo" runat="server" />
-                        <asp:HiddenField ID="hiddenNote" runat="server" />
-                        <asp:HiddenField ID="hiddenQty" runat="server" />
-                        <asp:HiddenField ID="hiddenStaffName" runat="server" />
-                        <asp:HiddenField ID="hiddenVendorNo" runat="server" />
-                         <asp:HiddenField ID="hiddenVendorText" runat="server" />
-
-                     <!-- Vendor No Field -->
-                     <div class="row g-2 mb-3">
-                        <label for="<%= vendorNo.ClientID %>" class="col-sm-4 col-form-label">Vendor</label>
-                        <div class="col-sm-8">
-                             <asp:DropDownList ID="vendorNo" runat="server" 
-                                CssClass="form-control form-control-sm select2"
-                                AppendDataBoundItems="true">
-                                <asp:ListItem Text="" Value="" />
-                            </asp:DropDownList>
-                            <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server"
-                                ErrorMessage="Vendor must be selected!"
-                                ControlToValidate="vendorNo" Display="Dynamic"
-                                CssClass="text-danger" SetFocusOnError="True" />
-                        </div>
-                    </div>
-
-                        <!-- Item No Field -->
-                        <div class="row g-2 mb-3">
-                            <label for="<%= itemNo.ClientID %>" class="col-sm-4 col-form-label">Item No</label>
-                            <div class="col-sm-8">
-                                <asp:DropDownList ID="itemNo" runat="server" CssClass="form-control form-control-sm select2" OnSelectedIndexChanged="itemNo_SelectedIndexChanged1">
-                                    <asp:ListItem Text="" Value="" />
-                                </asp:DropDownList>
-                                <asp:RequiredFieldValidator ID="RequiredFieldValidator2" runat="server"
-                                    ErrorMessage="Item must be selected!"
-                                    ControlToValidate="itemNo" Display="Dynamic"
-                                    CssClass="text-danger" SetFocusOnError="True" />
+                                <div class="text-center col-lg-3 col-md-4 col-sm-3 col-lg-3 px-0 me-lg-1 div-btn-rp">
+                                    <asp:Button Text="Export Excel" runat="server" CssClass="btn fw-bold text-white btn-font"
+                                        Style="background-color: #0D330E; border-radius: 10px;"
+                                        ID="Button1" onClick="btnExportExcel_Click"/>
+                                </div>
+                                <div class="text-center col-lg-3 col-md-4 col-sm-3 col-lg-3 px-0 div-btn-rp">
+                                    <asp:Button Text="Clear Vendor" runat="server" CssClass="btn fw-bold text-white btn-font"
+                                        Style="background-color: #0D330E; border-radius: 10px;"
+                                        ID="Button2" onClick="btnClearVendor_Click"/>
+                                </div>
                             </div>
                         </div>
-
-                        <!-- Description Field -->
-                        <div class="row g-2 mb-3">
-                            <label for="<%= desc.ClientID %>" class="col-sm-4 col-form-label">Description</label>
-                            <div class="col-sm-8">
-                                <asp:TextBox runat="server" CssClass="form-control form-control-sm"
-                                    TextMode="MultiLine" ID="desc"
-                                    Enabled="false" ReadOnly="true" />
-                            </div>
-                        </div>
-
-                        <!-- Quantity Field -->
-                        <div class="row g-2 mb-3">
-                            <label for="<%= qty.ClientID %>" class="col-sm-4 col-form-label">Quantity</label>
-                            <div class="col-sm-8">
-                                <asp:TextBox runat="server" CssClass="form-control form-control-sm no-spinners"
-                                    ID="qty" name="qty" TextMode="Number"
-                                    onkeypress="return isNumberKey(event)" onpaste="return false" />
-                                <asp:RequiredFieldValidator ID="rfvQty" runat="server"
-                                    ErrorMessage="Quantity is required!"
-                                    ControlToValidate="qty" Display="Dynamic"
-                                    CssClass="text-danger" SetFocusOnError="True" />
-                                <asp:RangeValidator ID="rvQty" runat="server"
-                                    ErrorMessage="Please enter a valid whole number."
-                                    ControlToValidate="qty" Display="Dynamic"
-                                    MinimumValue="0" MaximumValue="1000000" Type="Integer"
-                                    CssClass="text-danger" SetFocusOnError="True" />
-                            </div>
-                        </div>
-
-                        <!-- Base UOM Field -->
-                        <div class="row g-2 mb-3">
-                            <label for="<%= uom.ClientID %>" class="col-sm-4 col-form-label">Base UOM</label>
-                            <div class="col-sm-8">
-                                <asp:TextBox runat="server" CssClass="form-control form-control-sm" ID="uom"
-                                    Enabled="false" ReadOnly="true" />
-                            </div>
-                        </div>
-
-                        <!-- Packing Info Field -->
-                        <div class="row g-2 mb-3">
-                            <label for="<%= packingInfo.ClientID %>" class="col-sm-4 col-form-label">Packing Info</label>
-                            <div class="col-sm-8">
-                                <asp:TextBox runat="server" CssClass="form-control form-control-sm" ID="packingInfo"
-                                    Enabled="false" ReadOnly="true" />
-                            </div>
-                        </div>
-
-                        <!-- Barcode No Field -->
-                        <div class="row g-2 mb-3">
-                            <label for="<%= barcodeNo.ClientID %>" class="col-sm-4 col-form-label">Barcode No</label>
-                            <div class="col-sm-8">
-                                <asp:TextBox runat="server" CssClass="form-control form-control-sm" ID="barcodeNo"
-                                    Enabled="false" ReadOnly="true" />
-                            </div>
-                        </div>
-
-                        <!-- Store No Field -->
-                        <div class="row g-2 mb-3">
-                            <label for="<%= storeNo.ClientID %>" class="col-sm-4 col-form-label">Location</label>
-                            <div class="col-sm-8">
-                                <asp:TextBox runat="server" CssClass="form-control form-control-sm"
-                                    ID="storeNo" name="store_no"
-                                    Enabled="false" ReadOnly="true" />
-                            </div>
-                        </div>
-
-                        <!-- StaffName Field -->
-                        <div class="row g-2 mb-3">
-                            <label for="<%= staffName.ClientID %>" class="col-sm-4 col-form-label">Staff Name</label>
-                            <div class="col-sm-8">
-                                <asp:TextBox ID="staffName" runat="server" CssClass="form-control form-control-sm" Enabled="false" ReadOnly="true"></asp:TextBox>
-                            </div>
-                        </div>
-
-                        <!-- Note Field -->
-                        <div class="row g-2 mb-3">
-                            <label for="<%= note.ClientID %>" class="col-sm-4 col-form-label">Note</label>
-                            <div class="col-sm-8">
-                                <asp:TextBox runat="server" TextMode="MultiLine"
-                                    CssClass="form-control form-control-sm"
-                                    ID="note" name="note" Rows="2"
-                                    placeholder="Enter here..." />
-                            </div>
-                        </div>
-
-                        <!-- Add Button -->
-                        <div class="text-center ">
-                            <asp:Button Text="Save" runat="server" CssClass="btn px-4 me-2 fw-bolder text-white"
-                                Style="background-color: #0D330E; border-radius: 20px;"
-                                ID="addBtn" OnClick="addBtn_Click1" />
-
-                        </div>
-
                     </div>
                 </div>
             </div>
 
             <!-- Consignment List Column -->
-            <div class="col-lg-7 col-md-8 p-0">
+            <div class="offset-lg-1 col-lg-10 col-md-8 p-0">
                 <!-- Remove padding -->
                 <div class="card shadow-sm" style="border-radius: 10px;">
 
                     <!-- Card Header -->
                     <div class="card-header text-white text-center"
                         style="background-color: #477023; border-top-left-radius: 10px; border-top-right-radius: 10px;">
-                        <h2 class="mb-0 fw-bolder">Consignment List</h2>
+                        <%--<h2 class="mb-0 fw-bolder">Consignment List</h2>--%>
                     </div>
 
-                    <div class="card-body p-2 overflow-scroll">
-                        <asp:Button Text="Confirm" runat="server" ID="btnConfirmAll"
+                    <div class="card-body p-2">
+                       <%-- <asp:Button Text="Confirm" runat="server" ID="btnConfirmAll"
                             CssClass="btn btn-whitw m-1 fa-1x text-white fw-bold"
-                            CausesValidation="false" Style="background-color: #0D330E;" OnClick="btnConfirmAll_Click1" />
+                            CausesValidation="false" Style="background-color: #0D330E;" OnClick="btnConfirmAll_Click1" />--%>
 
-                        <div class="table-responsive">
-                            <asp:GridView runat="server" BackColor="#E6DED1" ်ForeColor="#B1C095"
-                                ID="gridTable"
-                                AutoGenerateColumns="false"
-                                ShowFooter="true" DataKeyNames="No"
-                                CssClass="table table-striped table-hover border-black border-2 shadow-lg mt-2 border-top fw-bold"
-                                GridLines="None" Width="100%"
-                                OnRowEditing="GridView_RowEditing"
-                                OnRowDeleting="GridView_RowDeleting"
-                                OnRowCancelingEdit="GridView_RowCancelingEdit"
-                                OnRowUpdating="GridView_RowUpdating"
-                                EnableViewState="true">
+                        <div class="col-md-12" id="gridCol">
+                            <asp:UpdatePanel ID="UpdatePanel2" runat="server" UpdateMode="Conditional">
+                            <ContentTemplate>
 
-                                <HeaderStyle Wrap="true" BackColor="#6A7D4F" Font-Bold="True" ForeColor="#B1C095"></HeaderStyle>
-                                <EditRowStyle BackColor="#999999" />
-                                <FooterStyle BackColor="#6A7D4F" Font-Bold="True" ForeColor="#B1C095" />
-                                <PagerStyle CssClass="pagination-wrapper" HorizontalAlign="Center" VerticalAlign="Middle" />
-                                <RowStyle CssClass="table-row data-row" BackColor="#E6DED1" ForeColor="#333333"></RowStyle>
-                                <AlternatingRowStyle CssClass="table-alternating-row" BackColor="#B1C095" ForeColor="#284775"></AlternatingRowStyle>
+                               <asp:Panel ID="pnlNoData" runat="server" Visible="false">
+                                     <div class="alert alert-info">No items to Filter</div>
+                               </asp:Panel>
 
-                                <EmptyDataTemplate>
-                                    <div class="alert" style="background-color:#B1C095;">No items to confirm!</div>
-                                </EmptyDataTemplate>
+                                <div class="table-responsive gridview-container " style="min-height: 665px">
+                                    <asp:GridView id="GridView" runat="server"
+                                        CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto"
+                                        AutoGenerateColumns="False"
+                                        DataKeyNames="No"
+                                        UseAccessibleHeader="true"
+                                        OnRowEditing="GridView_RowEditing"
+                                        OnRowDeleting="GridView_RowDeleting"
+                                        OnRowCancelingEdit="GridView_RowCancelingEdit"
+                                        OnRowUpdating="GridView_RowUpdating"
+                                        AllowPaging="false"
+                                        PageSize="100"
+                                        CellPadding="4"
+                                        ForeColor="#333333"
+                                        GridLines="None"
+                                        ShowHeaderWhenEmpty="true"  >
 
-                                <Columns>
-                                    <asp:BoundField DataField="ItemNo" HeaderText="Item No" HeaderStyle-Font-Bold="true" HeaderStyle-ForeColor="#B1C095" ReadOnly="True" />
-                                    <asp:BoundField DataField="Description" HeaderText="Description" ReadOnly="True" HeaderStyle-ForeColor="#B1C095" />
+                                        <EditRowStyle BackColor="#999999" />
+                                        <FooterStyle BackColor="#5D7B9D" Font-Bold="True" ForeColor="White" />
 
-                                    <asp:TemplateField HeaderText="Qty" HeaderStyle-ForeColor="#B1C095"  HeaderStyle-Font-Bold="true">
-                                        <ItemTemplate>
-                                            <asp:Label ID="lblQuantity" runat="server" Text='<%# Eval("Qty") %>'></asp:Label>
-                                        </ItemTemplate>
-                                        <EditItemTemplate>
-                                            <asp:TextBox ID="txtQuantity" runat="server"
-                                                Text='<%# Bind("Qty") %>' Width="59px"
-                                                onkeypress="return blockInvalidChars(event)" onpaste="return false"></asp:TextBox>
-                                        </EditItemTemplate>
-                                    </asp:TemplateField>
+                                        <HeaderStyle Wrap="true" BackColor="#6A7D4F" Font-Bold="True" ForeColor="#B1C095"></HeaderStyle>
+                                        <EditRowStyle BackColor="#999999" />
+                                        <FooterStyle BackColor="#6A7D4F" Font-Bold="True" ForeColor="#B1C095" />
+                                        <PagerStyle CssClass="pagination-wrapper" HorizontalAlign="Center" VerticalAlign="Middle" />
+                                        <RowStyle CssClass="table-row data-row" BackColor="#E6DED1" ForeColor="#333333"></RowStyle>
+                                        <%--<AlternatingRowStyle CssClass="table-alternating-row" BackColor="#B1C095" ForeColor="#284775"></AlternatingRowStyle>--%>
 
-                                    <asp:TemplateField HeaderText="UOM" HeaderStyle-ForeColor="#B1C095" HeaderStyle-Font-Bold="true">
-                                        <ItemTemplate>
-                                            <asp:Label ID="lblUom" runat="server" Text='<%# Eval("UOM") %>'></asp:Label>
-                                        </ItemTemplate>
-                                    </asp:TemplateField>
+                                        <EmptyDataTemplate>
+                                            <div class="alert" style="background-color:#B1C095;">No Item Found!</div>
+                                        </EmptyDataTemplate>
 
-                                    <asp:TemplateField HeaderText="Packing Info" HeaderStyle-ForeColor="#B1C095" HeaderStyle-Font-Bold="true">
-                                        <ItemTemplate>
-                                            <asp:Label ID="lblPack" runat="server" Text='<%# Eval("PackingInfo") %>'></asp:Label>
-                                        </ItemTemplate>
-                                    </asp:TemplateField>
+                                        <Columns>
+                                            <asp:BoundField DataField="No" Visible="false" />
+                                            <asp:BoundField DataField="ItemNo" HeaderText="Item No" HeaderStyle-Font-Bold="true" HeaderStyle-ForeColor="#B1C095" HeaderStyle-BackColor="#6A7D4F" ReadOnly="True" HeaderStyle-CssClass="position-sticky top-0 z-3" />
+                                            <asp:BoundField DataField="Description" HeaderText="Description" ReadOnly="True" HeaderStyle-ForeColor="#B1C095" HeaderStyle-BackColor="#6A7D4F" HeaderStyle-Font-Bold="true" HeaderStyle-CssClass="position-sticky top-0 z-3"/>                                            
+                                            
+                                            <asp:TemplateField HeaderText="Qty" HeaderStyle-ForeColor="#B1C095" HeaderStyle-BackColor="#6A7D4F" HeaderStyle-Font-Bold="true" HeaderStyle-CssClass="position-sticky top-0 z-3">
+                                                <ItemTemplate>
+                                                    <asp:Label ID="lblQuantity" runat="server" Text='<%# Eval("Qty") %>'></asp:Label>
+                                                </ItemTemplate>
+                                                <EditItemTemplate>
+                                                    <asp:TextBox ID="txtQuantity" runat="server"
+                                                        Text='<%# Bind("Qty") %>' Width="59px"
+                                                        onkeypress="return blockInvalidChars(event)" onpaste="return false"></asp:TextBox> <%--onkeypress="return blockInvalidChars(event)"--%>
+                                                </EditItemTemplate>
+                                            </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="Note" HeaderStyle-ForeColor="#B1C095" HeaderStyle-Font-Bold="true" >
-                                        <ItemTemplate>
-                                            <asp:Label ID="lblNote" runat="server" Text='<%# Eval("Note") %>'></asp:Label>
-                                        </ItemTemplate>
-                                        <EditItemTemplate>
-                                            <asp:TextBox ID="txtNote" runat="server" Text='<%# Bind("Note") %>' Width="157px"></asp:TextBox>
-                                        </EditItemTemplate>
-                                    </asp:TemplateField>
+                                            <asp:TemplateField HeaderText="UOM" HeaderStyle-ForeColor="#B1C095" HeaderStyle-BackColor="#6A7D4F" HeaderStyle-Font-Bold="true" HeaderStyle-CssClass="position-sticky top-0 z-3">
+                                                <ItemTemplate>
+                                                    <asp:Label ID="lblUom" runat="server" Text='<%# Eval("UOM") %>'></asp:Label>
+                                                </ItemTemplate>
+                                            </asp:TemplateField>
 
-                                    <asp:TemplateField Visible="false">
-                                        <ItemTemplate>
-                                            <asp:HiddenField ID="hfBarcodeNo" runat="server" Value='<%# Eval("BarcodeNo") %>' />
-                                            <asp:HiddenField ID="hfCompleted" runat="server" Value='<%# Eval("completedDate") %>' />
-                                        </ItemTemplate>
-                                        <EditItemTemplate>
-                                            <asp:HiddenField ID="hfBarcodeNo" runat="server" Value='<%# Bind("BarcodeNo") %>' />
-                                            <asp:HiddenField ID="hfCompleted" runat="server" Value='<%# Bind("completedDate") %>' />
-                                        </EditItemTemplate>
-                                    </asp:TemplateField>
+                                            <asp:TemplateField HeaderText="Packing Info" HeaderStyle-ForeColor="#B1C095" HeaderStyle-BackColor="#6A7D4F" HeaderStyle-Font-Bold="true" HeaderStyle-CssClass="position-sticky top-0 z-3">
+                                                <ItemTemplate>
+                                                    <asp:Label ID="lblPack" runat="server" Text='<%# Eval("PackingInfo") %>'></asp:Label>
+                                                </ItemTemplate>
+                                            </asp:TemplateField>
 
-                                    <asp:CommandField ShowEditButton="True" ShowDeleteButton="True"
-                                        CausesValidation="false" EditText="<i class='fa-solid fa-pen-to-square'></i>"
-                                        DeleteText="<i class='fa-solid fa-trash'></i>"
-                                        UpdateText="<i class='fa-solid fa-file-arrow-up'></i>"
-                                        CancelText="<i class='fa-solid fa-xmark'></i>"
-                                        ControlStyle-CssClass="btn m-1 text-white" ControlStyle-BackColor="#477023" />
-                                </Columns>
+                                            <asp:TemplateField HeaderText="Note" HeaderStyle-ForeColor="#B1C095" HeaderStyle-BackColor="#6A7D4F" HeaderStyle-Font-Bold="true" HeaderStyle-CssClass="position-sticky top-0 z-3">
+                                                <ItemTemplate>
+                                                    <asp:Label ID="lblNote" runat="server" Text='<%# Eval("Note") %>'></asp:Label>
+                                                </ItemTemplate>
+                                                <EditItemTemplate>
+                                                    <asp:TextBox ID="txtNote" runat="server" Text='<%# Bind("Note") %>' Width="157px"></asp:TextBox>
+                                                </EditItemTemplate>
+                                            </asp:TemplateField>
 
-                                  <SelectedRowStyle BackColor="#E2DED6" Font-Bold="True" ForeColor="#333333" />
-                                  <SortedAscendingCellStyle BackColor="#E9E7E2" />
-                                  <SortedAscendingHeaderStyle BackColor="#506C8C" />
-                                  <SortedDescendingCellStyle BackColor="#FFFDF8" />
-                                  <SortedDescendingHeaderStyle BackColor="#6F8DAE" />
-                            </asp:GridView>
+                                           <%-- <asp:TemplateField Visible="false">
+                                                <ItemTemplate>
+                                                    <asp:HiddenField ID="hfBarcodeNo" runat="server" Value='<%# Eval("BarcodeNo") %>' />
+                                                   </ItemTemplate>
+                                                <EditItemTemplate>
+                                                    <asp:HiddenField ID="hfBarcodeNo" runat="server" Value='<%# Bind("BarcodeNo") %>' />
+                                                   </EditItemTemplate>
+                                            </asp:TemplateField>--%>
+
+                                            <asp:CommandField ShowEditButton="True"
+                                                CausesValidation="false" EditText="<i class='fa-solid fa-pen-to-square'></i>"
+                                                UpdateText="<i class='fa-solid fa-file-arrow-up'></i>"
+                                                CancelText="<i class='fa-solid fa-xmark'></i>"
+                                                ControlStyle-CssClass="btn m-1 text-white" ControlStyle-BackColor="#477023" HeaderStyle-BackColor="#6A7D4F" HeaderStyle-CssClass="position-sticky top-0 z-3">
+                                            <ItemStyle HorizontalAlign="Center" CssClass="text-center" />
+                                            </asp:CommandField>
+                                           <%-- <asp:TemplateField HeaderText="Actions" >
+                                                <ItemTemplate>
+                                                    <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit" CausesValidation="False"
+                                                        CssClass="btn btn-sm text-white ms-2 me-2" BackColor="#0a61ae" ToolTip="Edit">
+                                                        <i class="fas fa-pencil-alt"></i>
+                                                    </asp:LinkButton>
+                                                    <asp:LinkButton ID="btnDelete" runat="server" CommandName="Delete" CausesValidation="False"
+                                                        CssClass="btn btn-sm me-2 text-white" BackColor="#453b3b" ToolTip="Delete" >
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </asp:LinkButton>
+                                                </ItemTemplate>
+                                                <EditItemTemplate>
+                                                    <asp:LinkButton ID="btnUpdate" runat="server" CommandName="Update" CausesValidation="False"
+                                                        CssClass="btn btn-sm text-white" BackColor="#9ad9fe" ToolTip="Update">
+                                                        <i class="fas fa-save"></i>
+                                                    </asp:LinkButton>
+                                                    <asp:LinkButton ID="btnCancel" runat="server" CommandName="Cancel" CausesValidation="False"
+                                                        CssClass="btn btn-sm ms-2 text-white btn-secondary" ToolTip="Cancel">
+                                                        <i class="fas fa-times"></i>
+                                                    </asp:LinkButton>
+                                                </EditItemTemplate>
+                                                <HeaderStyle CssClass="text-white text-center" BackColor="#B1C095" HorizontalAlign="Center" />
+                                                <ItemStyle HorizontalAlign="Center" CssClass="text-center" />
+                                            </asp:TemplateField>--%>
+
+                                           <%-- <asp:TemplateField HeaderText="Actions" ItemStyle-Width="10%">
+                                                <ItemTemplate>
+                                                    <a href="javascript:void(0);" class="btn btn-sm text-white" style="background-color:#022f56;">
+                                                       <i class="fa fa-eye"></i> Details
+                                                    </a>
+                                                    <a href="javascript:void(0);" class="btn btn-sm btn-info text-white">
+                                                       <i class="fa fa-user-plus"></i> Register
+                                                    </a>
+                                                </ItemTemplate>
+                                            </asp:TemplateField>--%>
+
+                                        </Columns>
+
+                                            <SelectedRowStyle BackColor="#E2DED6" Font-Bold="True" ForeColor="#333333" />
+                                            <SortedAscendingCellStyle BackColor="#E9E7E2" />
+                                            <SortedAscendingHeaderStyle BackColor="#506C8C" />
+                                            <SortedDescendingCellStyle BackColor="#FFFDF8" />
+                                            <SortedDescendingHeaderStyle BackColor="#6F8DAE" />
+                                    </asp:GridView>
+                                </div>
+                                </ContentTemplate>
+                            </asp:UpdatePanel>
                         </div>
+                       
                     </div>
                 </div>
             </div>
-        </div>
+        <%--</div>--%>
     </div>
-
+    <asp:Button ID="btnHiddenOk" runat="server" Text="HiddenPostback" 
+    OnClick="btnOk_Click" Style="display:none;" />
 </asp:Content>
