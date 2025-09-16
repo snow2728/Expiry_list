@@ -172,16 +172,18 @@
                   console.error('DataTable initialization error:', e);
               }
           }
-      }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById("link_home").href = "../AdminDashboard.aspx";
+        });
+
 
     </script>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <asp:ScriptManager ID="ScriptManager1" runat="server" />
-    <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #022f56;">
-        <i class="fa-solid fa-left-long"></i>Home
-    </a>
     <div class="container py-4"> 
         <asp:UpdatePanel ID="upGrid" runat="server" UpdateMode="Conditional">
             <ContentTemplate>

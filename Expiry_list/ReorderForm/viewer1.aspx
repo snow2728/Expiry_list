@@ -202,7 +202,6 @@
                         "order[0][dir]": d.order[0].dir,
                         "search[value]": d.search.value,
 
-                        // 🔹 Filters (read directly from controls or hidden fields)
                         action: $('#<%= ddlActionFilter.ClientID %>').val(),
                         status: $('#<%= ddlStatusFilter.ClientID %>').val(),
                         store: $('#<%= lstStoreFilter.ClientID %>').val(),
@@ -219,28 +218,18 @@
                 }
             },
             colReorder: true,
-            //fixedColumns: {
-            //    leftColumns: 4,
-            //    rightColumns: 0,
-            //    heightMatch: 'none'
-            //},
+            fixedColumns: {
+                leftColumns: 4,
+                rightColumns: 0,
+                heightMatch: 'none'
+            },
             columns: [
-                /*{ data: 'id', visible: false }, */
-                {
-                    data: 'checkbox',
-                    orderable: false,
-                    width: "50px",
-                    render: function (data, type, row, meta) {
-                        return '<input type="checkbox" class="rowCheckbox" data-id="' + row.id + '" onclick="handleSingleSelection(this)"/>';
-                    }
-                },
                 {
                     data: null,
-                    width: "50px",
                     orderable: false,
-                    visible: false,
-                    render: function (data, type, row, meta) {
-                        return meta.row + 1;
+                    width: "50px",
+                    render: function (data, type, row) {
+                        return '<input type="checkbox" class="rowCheckbox" data-id="' + row.id + '" onclick="handleSingleSelection(this)"/>';
                     }
                 },
                 { data: 'no', width: "100px" },
@@ -251,6 +240,7 @@
                     width: "120px",
                     type: 'date',
                     render: function (data, type) {
+                        if (!data) return '';
                         if (type === 'sort') return data;
                         const date = new Date(data);
                         return date.toLocaleDateString('en-GB');
@@ -270,13 +260,13 @@
                     data: 'note',
                     width: "125px",
                     render: function (data, type, row) {
+                        if (!data) return '';
                         if (type === 'display') {
                             var words = data.split(/\s+/);
                             var truncated = words.slice(0, 5).join(' ');
-                            if (words.length > 5) {
-                                truncated += ' ...';
-                            }
-                            return '<span class="truncated-note text-black-50" data-fullnote="' + $('<div/>').text(data).html() + '">' + truncated + '</span>';
+                            if (words.length > 5) truncated += ' ...';
+                            return '<span class="truncated-note text-black-50" data-fullnote="' +
+                                $('<div/>').text(data).html() + '">' + truncated + '</span>';
                         }
                         return data;
                     }
@@ -288,18 +278,14 @@
                     width: "120px",
                     type: 'date',
                     render: function (data, type) {
+                        if (!data) return '';
                         if (type === 'sort') return data;
                         const date = new Date(data);
                         return date.toLocaleDateString('en-GB');
                     }
                 },
-                {
-                    data: null,
-                    orderable: false,
-                    defaultContent: '',
-                    className: 'dt-center',
-                    visible: false
-                }
+                { data: null, orderable: false, defaultContent: '', className: 'dt-center', visible: false },
+                { data: null, orderable: false, defaultContent: '', className: 'dt-center', visible: false },
             ],
             order: [[1, 'asc'], [2, 'asc']],
             columnDefs: [
@@ -1443,24 +1429,15 @@
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
 
-                                     <asp:TemplateField ItemStyle-HorizontalAlign="Justify" HeaderText="No" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header2" ItemStyle-CssClass="fixed-column-2">
-                                         <ItemTemplate>
-                                             <asp:Label ID="lblLinesNo" runat="server" Text='<%# Container.DataItemIndex + 1 %>' />
-                                         </ItemTemplate>
-                                         <ControlStyle Width="50px" />
-                                         <HeaderStyle ForeColor="White" BackColor="#BD467F" />
-                                         <ItemStyle HorizontalAlign="Justify" />
-                                     </asp:TemplateField>
-
-                                     <asp:TemplateField HeaderText="Lines No" ItemStyle-Width="100px" SortExpression="no" HeaderStyle-ForeColor="White" ItemStyle-HorizontalAlign="Justify" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header3" ItemStyle-CssClass="fixed-column-3">
+                                     <asp:TemplateField HeaderText="Lines No" ItemStyle-Width="100px" SortExpression="no" HeaderStyle-ForeColor="White" ItemStyle-HorizontalAlign="Justify" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header2" ItemStyle-CssClass="fixed-column-2">
                                          <ItemTemplate>
                                              <asp:Label ID="lblNo" runat="server" Text='<%# Eval("no") %>' />
-                                             <ControlStyle Width="100px" />
+                                             <ControlStyle Width="150px" />
                                          </ItemTemplate><HeaderStyle ForeColor="White" BackColor="#BD467F" />
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
 
-                                       <asp:TemplateField HeaderText="Location" SortExpression="storeNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header4" ItemStyle-CssClass="fixed-column-4">
+                                       <asp:TemplateField HeaderText="Location" SortExpression="storeNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header3" ItemStyle-CssClass="fixed-column-3">
                                           <ItemTemplate>
                                               <asp:Label ID="lblStoreNo" runat="server" Text='<%# Eval("storeNo") %>' />
                                           </ItemTemplate>
@@ -1469,7 +1446,7 @@
                                           <ItemStyle HorizontalAlign="Justify" />
                                       </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="Division" SortExpression="divisionCode" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-6">
+                                     <asp:TemplateField HeaderText="Division" SortExpression="divisionCode" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header-4" ItemStyle-CssClass="fixed-column-4">
                                         <ItemTemplate>
                                             <asp:Label ID="lblDivisionCode" runat="server" Text='<%# Eval("divisionCode") %>' />
                                         </ItemTemplate>

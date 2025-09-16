@@ -277,7 +277,7 @@ namespace Expiry_list.Training
                 SELECT 
                     s.id,
                     s.tranNo,
-                    tw.topic AS topicId,
+                    tw.id AS topicId,
                     t.topicName AS topicName,
                     ISNULL(l.name, '') AS traineeLevel, 
                     ISNULL(tr.name, '') AS trainerName,  
@@ -433,19 +433,21 @@ namespace Expiry_list.Training
 
         protected void btnSaveRegister_Click(object sender, EventArgs e)
         {
-            int scheduleId = Convert.ToInt32(hfScheduleId.Value);
-            int topicId;
-
-            if (!int.TryParse(hfTopicId.Value, out topicId))
+            if (!int.TryParse(hfScheduleId.Value, out int scheduleId))
             {
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", "alert('Please select a valid topic.');", true);
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alert",
+                    "Swal.fire('Invalid Schedule Id!', '', 'error');", true);
+                return;
+            }
+
+            if (!int.TryParse(hfTopicId.Value, out int topicId))
+            {
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "alert",
+                    "Swal.fire('Invalid Topic Id!', '', 'error');", true);
                 return;
             }
 
             string selectedJson = hfSelectedTrainees.Value;
-            DateTime updatedAt = DateTime.Now;
-            string updatedBy = User.Identity.Name;
-
             if (string.IsNullOrWhiteSpace(selectedJson))
                 return;
 
@@ -455,47 +457,63 @@ namespace Expiry_list.Training
             {
                 conn.Open();
 
-                // Optional: validate scheduleId
-                using (SqlCommand checkSchedule = new SqlCommand("SELECT COUNT(1) FROM scheduleT WHERE id=@scheduleId", conn))
-                {
-                    checkSchedule.Parameters.AddWithValue("@scheduleId", scheduleId);
-                    if ((int)checkSchedule.ExecuteScalar() == 0)
-                    {
-                        ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", "alert('Invalid schedule.');", true);
-                        return;
-                    }
-                }
-
-                // Optional: validate topicId
-                using (SqlCommand checkTopic = new SqlCommand("SELECT COUNT(1) FROM topicWLT WHERE id=@topicId", conn))
-                {
-                    checkTopic.Parameters.AddWithValue("@topicId", topicId);
-                    if ((int)checkTopic.ExecuteScalar() == 0)
-                    {
-                        ScriptManager.RegisterStartupScript(this, this.GetType(), "alert", "alert('Invalid topic.');", true);
-                        return;
-                    }
-                }
+                // Collect duplicate trainee NAMES instead of IDs
+                List<string> duplicateTrainees = new List<string>();
 
                 foreach (var trainee in selectedTrainees)
                 {
-                    // Validate traineeId
+                    if (!int.TryParse(trainee.Id?.ToString(), out int traineeId))
+                        continue;
+
+                    // Validate trainee exists
                     using (SqlCommand checkTrainee = new SqlCommand("SELECT COUNT(1) FROM traineeT WHERE id=@traineeId", conn))
                     {
-                        checkTrainee.Parameters.AddWithValue("@traineeId", trainee.Id);
-                        if ((int)checkTrainee.ExecuteScalar() == 0)
+                        checkTrainee.Parameters.AddWithValue("@traineeId", traineeId);
+                        if (Convert.ToInt32(checkTrainee.ExecuteScalar()) == 0)
                             continue;
                     }
 
+                    // Check duplicate registration
+                    using (SqlCommand checkDup = new SqlCommand(@"
+                SELECT COUNT(1)
+                FROM traineeTopicT
+                WHERE traineeId=@traineeId AND topicId=@topicId AND scheduleId=@scheduleId", conn))
+                    {
+                        checkDup.Parameters.AddWithValue("@traineeId", traineeId);
+                        checkDup.Parameters.AddWithValue("@topicId", topicId);
+                        checkDup.Parameters.AddWithValue("@scheduleId", scheduleId);
+
+                        if (Convert.ToInt32(checkDup.ExecuteScalar()) > 0)
+                        {
+                            // Add trainee NAME instead of ID
+                            duplicateTrainees.Add(trainee.Name ?? traineeId.ToString());
+                        }
+                    }
+                }
+
+                if (duplicateTrainees.Count > 0)
+                {
+                    string dupList = string.Join(", ", duplicateTrainees);
+                    ScriptManager.RegisterStartupScript(this, this.GetType(), "dupAlert",
+                        $"Swal.fire('Duplicate Registration', 'The following trainee(s) are already registered: {dupList}', 'warning');", true);
+                    return;
+                }
+
+                // Insert trainees
+                foreach (var trainee in selectedTrainees)
+                {
+                    if (!int.TryParse(trainee.Id?.ToString(), out int traineeId))
+                        continue;
+
                     string query = @"
-                    INSERT INTO traineeTopicT
-                    (traineeId, topicId, scheduleId, status, exam, updatedAt, updatedBy)
-                    VALUES
-                    (@traineeId, @topicId, @scheduleId, @status, @exam, @updatedAt, @updatedBy)";
+                INSERT INTO traineeTopicT
+                (traineeId, topicId, scheduleId, status, exam, updatedAt, updatedBy)
+                VALUES
+                (@traineeId, @topicId, @scheduleId, @status, @exam, @updatedAt, @updatedBy)";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@traineeId", trainee.Id);
+                        cmd.Parameters.AddWithValue("@traineeId", traineeId);
                         cmd.Parameters.AddWithValue("@topicId", topicId);
                         cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
                         cmd.Parameters.AddWithValue("@status", "Registered");
@@ -508,18 +526,10 @@ namespace Expiry_list.Training
                 }
             }
 
-            BindGrid();
-        }
+            ScriptManager.RegisterStartupScript(this, this.GetType(), "successAlert",
+                "Swal.fire('Success!', 'Trainees registered successfully.', 'success');", true);
 
-        protected string FormatDisplayDate(object dateValue)
-        {
-            if (dateValue == null || dateValue == DBNull.Value)
-                return string.Empty;
-            if (DateTime.TryParse(dateValue.ToString(), out DateTime date))
-            {
-                return date.ToString("dd-MMM-yyyy");
-            }
-            return dateValue.ToString();
+            BindGrid();
         }
 
         private static List<string> GetLoggedInUserStoreNames()

@@ -19,10 +19,12 @@ namespace Expiry_list.Training
             {
                 con.Open();
                 string query = @"
-                    SELECT t.id, t.topicName, tr.name AS trainerName
-                    FROM topicT t 
+                    SELECT t.id, tp.topicName as topic, tr.name AS trainerName, l.name as traineeLevel, t.IsActive 
+                    FROM topicWLT t 
+                    INNER JOIN topicT tp ON tp.id = t.topic
                     INNER JOIN trainerT tr ON t.trainerId = tr.id
-                     where t.IsActive = 'true' ORDER BY t.topicName";
+                    INNER JOIN levelT l ON t.traineeLevel = l.id
+                     where t.IsActive = 'true' ORDER BY t.topic";
 
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 using (SqlDataReader reader = cmd.ExecuteReader())
@@ -32,7 +34,7 @@ namespace Expiry_list.Training
 
                     while (reader.Read())
                     {
-                        ListItem item = new ListItem(reader["topicName"].ToString(),
+                        ListItem item = new ListItem(reader["topic"].ToString(),
                                                      reader["id"].ToString());
                         item.Attributes["data-trainer"] = reader["trainerName"].ToString();
                         ddlTopic.Items.Add(item);
