@@ -149,12 +149,14 @@
     <Content Include="ConsignItem\viewer3.aspx" />
     <Content Include="css\customestylesheet.css" />
     <Content Include="CarWay\dash2.aspx" />
+    <Content Include="datatables\css\buttons.dataTables.min.css" />
     <Content Include="datatables\css\colReorder.dataTables.min.css" />
     <Content Include="datatables\css\dataTables.dataTables.min.css" />
     <Content Include="datatables\css\fixedColumns.dataTables.min.css" />
     <Content Include="datatables\css\jquery.dataTables.colResize.css" />
     <Content Include="datatables\css\jquery.dataTables.min.css" />
     <Content Include="datatables\js\colResizable-1.6.min.js" />
+    <Content Include="datatables\js\dataTables.buttons.min.js" />
     <Content Include="datatables\js\dataTables.colReorder.min.js" />
     <Content Include="datatables\js\dataTables.fixedColumns.js" />
     <Content Include="datatables\js\dataTables.fixedColumns.min.js" />

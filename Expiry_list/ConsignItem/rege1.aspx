@@ -18,15 +18,23 @@
             .swal-text-left {
                 text-align: left;
             }
-/*            th, td {
-                border: 1px solid #ccc;
-                padding: 8px;
-                overflow: hidden;
+
+            .btn-confirm {
+                float: right;
+                background-color: #0D330E;
+                color: white;
+                border-radius: 10px;
+                margin-right: 10px;
+                height: 35px;
             }
-            th {
-                position: relative;
-                background-color: #f2f2f2;
-            }*/
+
+            div.dt-buttons {
+              float: right;
+            }
+
+            button.dt-button.btn-confirm:hover {
+                background-color: #477023 !important; 
+            }
         </style>
         <script type="text/javascript">
 
@@ -114,13 +122,11 @@
                 // Initialize Select2 for item search
 
                 initializeDataTable();
-                //if (typeof (Sys) !== 'undefined') {
-                //    Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
-                //        initializeDataTable();
-                //    });
-                //}
-
-               
+                if (typeof (Sys) !== 'undefined') {
+                    Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
+                        initializeDataTable();
+                    });
+                }
 
             });
 
@@ -165,6 +171,16 @@
                             info: true,                           
                             order: [[0, 'asc']],
                             lengthMenu: [[50, 100, 150, 200], [50, 100, 150, 200]],
+                            dom: 'fBltip',
+                            buttons: [
+                                {
+                                    className: 'btn btn-success text-white fw-bold btn-confirm',
+                                    text: 'Confirm',
+                                    action: function () {
+                                        document.getElementById('<%= btnConfirmConsign.ClientID %>').click();
+                                    }
+                                }
+                            ],
                             columnDefs: [
                                { orderable: false, targets: [3, 4, 5, 6] }  
                             ],
@@ -174,86 +190,7 @@
                     }                    
                 }
             }
-            <%--function initializeComponents() {
-                var grid = $('#<%= GridView.ClientID %>');
 
-                var hasRows = grid.find('tbody tr').length > 0 && !grid.find('tbody tr td').hasClass('empty-row');
-
-                if (hasRows) {
-                    if (grid.find('thead').length === 0) {
-                        grid.prepend($('<thead/>').append(grid.find('tr:first').detach()));
-                    }
-                    grid.DataTable({
-                        responsive: true,
-                        ordering: true,
-                        //serverSide: true,
-                        paging: true,
-                        filter: true,
-                        scroll: 400,
-                        scrollCollapse: true,
-                        autoWidth: false,
-                        stateSave: true,
-                        processing: true,
-                        searching: true,
-                        //initComplete: function () {
-                        ////    if ('<%= ViewState["EmptyRowAdded"] != null %>') {
-                        //        // hide the added empty row
-                        //        $(this).find('tbody tr').hide();
-                        //    }
-                        //},
-                        //ajax: {
-                        //    url: '/ConsignItem/rege1.aspx',
-                        //    type: 'POST',
-                        //},
-                        fixedColumns: {
-                            leftColumns: 0,
-                            rightColumns: 0,
-                            heightMatch: 'none'
-                        },
-                        //columns: [
-                        //    //{ data: 'no', width: "100px" },
-                        //    { data: 'itemNo', /*width: "50px"*/ },
-                        //    { data: 'description',/* width: "197px"*/ },
-                        //    { data: 'qty', /*width: "97px"*/ },
-                        //    { data: 'uom', /*width: "80px"*/ },
-                        //    { data: 'packingInfo', /*width: "100px"*/ },
-                        //    { data: 'note',/* width: "125px"*/ },
-                        //    { data: 'action'}
-                            //{
-                            //    data: 'id', // or 'actions' if you don’t need the id directly
-                            //    render: function (data, type, row) {
-                            //        return `
-                            //    <button class="btn btn-sm btn-success m-1" onclick="editRow('${data}')">
-                            //        <i class="fa-solid fa-pen-to-square"></i>
-                            //    </button>
-                            //    <button class="btn btn-sm btn-danger m-1" onclick="deleteRow('${data}')">
-                            //        <i class="fa-solid fa-trash"></i>
-                            //    </button>`;
-                            //    },
-                            //    orderable: false,
-                            //    searchable: false,
-                            //    /*width: "120px"*/
-                            //}
-                        //],
-                        lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
-                        initComplete: function (settings) {
-                            if (isEmpty) {
-                                $(this).closest('.dataTables_wrapper').hide(); // hide empty DataTable
-                            }
-                            var api = this.api();
-                            setTimeout(function () {
-                                api.columns.adjust();
-                            }, 50);
-                        },
-                        "error": function (xhr, error, thrown) {
-                            console.error("DataTables error:", error, thrown);
-                            alert("Error loading data. Check console for details.");
-                        }
-
-                    });
-                }
-            }
-            --%>
             function isNumberKey(evt) {
                 var charCode = (evt.which) ? evt.which : evt.keyCode;
                 if (charCode == 8 || charCode == 9 || charCode == 13 || charCode == 27 || charCode == 46)
@@ -283,11 +220,6 @@
             window.addEventListener("popstate", function (event) {
                 location.reload();
             });
-
-            //Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
-
-            //    initializeComponents();
-            //});
 
         </script>
 
@@ -375,7 +307,6 @@
                     <!-- Card Header -->
                     <div class="card-header text-white text-center"
                         style="background-color: #477023; border-top-left-radius: 10px; border-top-right-radius: 10px;">
-                        <%--<h2 class="mb-0 fw-bolder">Consignment List</h2>--%>
                     </div>
 
                     <div class="card-body p-2">
@@ -416,7 +347,6 @@
                                         <FooterStyle BackColor="#6A7D4F" Font-Bold="True" ForeColor="#B1C095" />
                                         <PagerStyle CssClass="pagination-wrapper" HorizontalAlign="Center" VerticalAlign="Middle" />
                                         <RowStyle CssClass="table-row data-row" BackColor="#E6DED1" ForeColor="#333333"></RowStyle>
-                                        <%--<AlternatingRowStyle CssClass="table-alternating-row" BackColor="#B1C095" ForeColor="#284775"></AlternatingRowStyle>--%>
 
                                         <EmptyDataTemplate>
                                             <div class="alert" style="background-color:#B1C095;">No Item Found!</div>
@@ -434,7 +364,7 @@
                                                 <EditItemTemplate>
                                                     <asp:TextBox ID="txtQuantity" runat="server"
                                                         Text='<%# Bind("Qty") %>' Width="59px"
-                                                        onkeypress="return blockInvalidChars(event)" onpaste="return false"></asp:TextBox> <%--onkeypress="return blockInvalidChars(event)"--%>
+                                                        onkeypress="return blockInvalidChars(event)" onpaste="return false"></asp:TextBox>
                                                 </EditItemTemplate>
                                             </asp:TemplateField>
 
@@ -521,6 +451,12 @@
                                     </asp:GridView>
                                 </div>
                                 </ContentTemplate>
+                                <Triggers>
+                                    <asp:AsyncPostBackTrigger ControlID="GridView" EventName="RowEditing" />
+                                    <asp:AsyncPostBackTrigger ControlID="GridView" EventName="RowUpdating" />
+                                    <asp:AsyncPostBackTrigger ControlID="GridView" EventName="RowDeleting" />
+                                    <asp:AsyncPostBackTrigger ControlID="GridView" EventName="RowCancelingEdit" />
+                                </Triggers>
                             </asp:UpdatePanel>
                         </div>
                        
@@ -531,4 +467,6 @@
     </div>
     <asp:Button ID="btnHiddenOk" runat="server" Text="HiddenPostback" 
     OnClick="btnOk_Click" Style="display:none;" />
+    <asp:Button ID="btnConfirmConsign" runat="server" Text="HiddenConfirm" 
+    OnClick="btnConfirmConsign_Click" Style="display:none;" />
 </asp:Content>
