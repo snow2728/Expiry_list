@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery-resizable-columns@0.2.3/dist/jquery.resizableColumns.min.css">
 
     <%-- DataTables Button --%>
-    <link href="datatables\css\fixedColumns.dataTables.buttons.min.css" rel="stylesheet" />
+    <link href="datatables\css\buttons.dataTables.min.css" rel="stylesheet" />
 
     <!-- FontAwesome --> 
     <link href="fontawesome/css/all.css" rel="stylesheet" />

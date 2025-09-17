@@ -15,21 +15,26 @@
                     font-size: 14px;
                 }
             }
+             @media (max-width: 1250px) {
+                 .div-btn-rp .btn-font {
+                     font-size: 10px;
+                 }
+             }
             .swal-text-left {
                 text-align: left;
             }
 
             .btn-confirm {
                 float: right;
-                background-color: #0D330E;
+                background-color: #0D330E !important;
                 color: white;
-                border-radius: 10px;
-                margin-right: 10px;
-                height: 35px;
+                border-radius: 10px !important;
+                margin-right: 10px !important;
             }
 
             div.dt-buttons {
               float: right;
+              margin-bottom: 0px;
             }
 
             button.dt-button.btn-confirm:hover {
@@ -227,7 +232,7 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     <div class="container" style="background-color: #f1f1f2;">
         <%--<div class="g-2">--%>
-            <div class="offset-lg-1 col-lg-10 col-md-8 7ustify-content-center mb-3">
+            <div class="offset-lg-1 col-lg-10 col-md-8 Justify-content-center mb-3">
                 <div class="card shadow-sm h-100">
                     <!-- Card Header -->
                     <div class="card-header text-white text-center"
@@ -239,7 +244,7 @@
 
                     <!-- Card Body -->
                     <div class="card-body">
-                        <div class="row">
+                        <div class="row justify-content-center">
                             <asp:ScriptManager ID="ScriptManager1" runat="server" EnablePartialRendering="true">
                             <Scripts>
                                 <asp:ScriptReference Name="MicrosoftAjax.js" />
@@ -250,7 +255,7 @@
                                 <ContentTemplate>
                                     <!-- No Field -->
                                     <div class="row justify-content-center p-0">
-                                        <label for="<%= no.ClientID %>" class="col-sm-2 col-form-label ps-0 px-0">No</label>
+                                        <label for="<%= no.ClientID %>" class="col-sm-2 col-form-label ps-0 px-0 text-end fw-bold">No</label>
                                         <div class="col-sm-6">
                                             <asp:TextBox runat="server" CssClass="form-control text-center" ID="no" ReadOnly="true" />
                                         </div>
@@ -263,7 +268,7 @@
                              <asp:HiddenField ID="hiddenVendorText" runat="server" />
                              <!-- Vendor No Field -->
                              <div class="row col-6">
-                                <label for="<%= vendorNo.ClientID %>" class="col-sm-2 col-form-label px-0">Vendor</label>
+                                <label for="<%= vendorNo.ClientID %>" class="col-sm-2 col-form-label px-0 text-end fw-bold">Vendor</label>
                                 <div class="col-sm-9">
                                      <asp:DropDownList ID="vendorNo" runat="server" 
                                         CssClass="form-control select2 ps-0 pe-0"
@@ -276,7 +281,7 @@
                                         CssClass="text-danger" SetFocusOnError="True" />
                                 </div>
                             </div>
-                            <div class="row col-4">
+                            <div class="row col-4 justify-content-center">
                                 <div class="text-center col-lg-3 col-md-4 col-sm-3 col-lg-3 px-0 div-btn-rp">
                                     <asp:Button Text="Show Items" runat="server" CssClass="btn fw-bold text-white btn-font"
                                         Style="background-color: #0D330E; border-radius: 10px;"
