@@ -273,7 +273,7 @@
                                else if (activeModule == "TrainingList" && permissions.ContainsKey("TrainingList"))
                                {
                                     string perm = permissions["TrainingList"];
-                                    bool isActive = currentPage == "rege1.aspx" || currentPage == "scheduleList.aspx" || currentPage == "viewTrainee.aspx" || currentPage == "viewTopic.aspx" ||
+                                    bool isActive = currentPage == "rege1.aspx" || currentPage == "viewTrainee.aspx" || currentPage == "viewTopic.aspx" ||
                                                 currentPage == "viewTrainer.aspx" || currentPage == "viewTopicWL.aspx";
                                %>
                                    <div class="dropdown">

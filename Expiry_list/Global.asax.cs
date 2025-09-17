@@ -75,10 +75,17 @@ namespace Expiry_list
             //Response.Redirect("~/loginPage.aspx");
         }
 
-
-        protected void Application_End(object sender, EventArgs e)
+        protected void Application_EndRequest(Object sender, EventArgs e)
         {
-
+            if (Response.StatusCode == 302 && Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                Response.Clear();
+                Response.StatusCode = 401;
+                Response.ContentType = "application/json";
+                Response.Write("{\"error\":\"Session expired\"}");
+                Response.End();
+            }
         }
+
     }
 }

@@ -3,23 +3,9 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 
  <script type="text/javascript">
-    function updateTrainerAndLevel() {
-         var ddl = document.getElementById('<%= topicDP.ClientID %>');
-        if (!ddl) return;
-
-        var selectedOption = ddl.options[ddl.selectedIndex];
-        if (!selectedOption || selectedOption.value === "") {
-            document.getElementById('<%= trainerDp.ClientID %>').value = "";
-            document.getElementById('<%= position.ClientID %>').value = "";
-            return;
-        }
-
-        document.getElementById('<%= trainerDp.ClientID %>').value = selectedOption.getAttribute("data-trainer-name") || '';
-        document.getElementById('<%= position.ClientID %>').value = selectedOption.getAttribute("data-level-name") || '';
-    }
 
      document.addEventListener("DOMContentLoaded", function () {
-         updateTrainerAndLevel();
+         updateLevel();
          document.getElementById("link_home").href = "../AdminDashboard.aspx";
      });
 
@@ -33,7 +19,7 @@
      if (typeof (Sys) !== "undefined" && Sys.WebForms && Sys.WebForms.PageRequestManager) {
          Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
              attachTopicHandler();
-             updateTrainerAndLevel();
+             updateLevel();
          });
     }
 
@@ -92,55 +78,10 @@
                                 <div class="row g-2 mb-3">
                                     <label for="<%= topicDP.ClientID %>" class="col-sm-4 col-form-label fw-bolder fa-1x" style="color: #076585;">Topic</label>
                                     <div class="col-sm-8">
-                                        <asp:DropDownList ID="topicDP" runat="server" CssClass="form-control form-control-sm dropdown-icon" AppendDataBoundItems="true" >
+                                        <asp:DropDownList ID="topicDP" runat="server" CssClass="form-control form-control-sm dropdown-icon"
+                                            AutoPostBack="true" OnSelectedIndexChanged="topicDP_SelectedIndexChanged">
+                                            <asp:ListItem Text="Select Topic" Value="" />
                                         </asp:DropDownList>
-
-                                        <script type="text/javascript">
-                                            var topicMap = {};
-                                            <% 
-                                               var dt = ViewState["TopicMapping"] as System.Data.DataTable;
-                                               if (dt != null) {
-                                                   foreach(System.Data.DataRow row in dt.Rows) {
-                                            %>
-                                                                                    topicMap["<%= row["id"] %>"] = { trainer: "<%= row["trainerName"] %>", level: "<%= row["levelName"] %>" };
-                                            <% 
-                                                   } 
-                                               } 
-                                            %>
-
-                                            function updateTrainerAndLevel() {
-                                                var ddl = document.getElementById('<%= topicDP.ClientID %>');
-                                                if (!ddl) return;
-
-                                                var selectedValue = ddl.value;
-                                                var trainerInput = document.getElementById('<%= trainerDp.ClientID %>');
-                                                var levelInput = document.getElementById('<%= position.ClientID %>');
-
-                                                if (!selectedValue || !topicMap[selectedValue]) {
-                                                    trainerInput.value = "";
-                                                    levelInput.value = "";
-                                                    return;
-                                                }
-
-                                                trainerInput.value = topicMap[selectedValue].trainer;
-                                                levelInput.value = topicMap[selectedValue].level;
-                                            }
-
-                                            document.addEventListener("DOMContentLoaded", function () {
-                                                var ddl = document.getElementById('<%= topicDP.ClientID %>');
-                                                if (ddl) ddl.onchange = updateTrainerAndLevel;
-                                                updateTrainerAndLevel(); // update on first load
-                                            });
-
-                                            if (typeof (Sys) !== "undefined" && Sys.WebForms && Sys.WebForms.PageRequestManager) {
-                                                Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
-                                                    var ddl = document.getElementById('<%= topicDP.ClientID %>');
-                                                    if (ddl) ddl.onchange = updateTrainerAndLevel;
-                                                    updateTrainerAndLevel(); // update after partial postback
-                                                });
-                                                                                    }
-                                                                                </script>
-
 
                                         <asp:RequiredFieldValidator ID="RequiredFieldValidator3" runat="server"
                                             ErrorMessage="Topic must be selected!"
@@ -176,7 +117,10 @@
                                 <div class="row g-2 mb-3">
                                     <label for="<%= trainerDp.ClientID %>" class="col-sm-4 col-form-label fw-bolder fa-1x" style="color: #076585;">Trainer</label>
                                     <div class="col-sm-8">
-                                        <asp:TextBox runat="server" CssClass="form-control form-control-sm" ID="trainerDp" ReadOnly="true" />
+                                        <asp:DropDownList ID="trainerDp" runat="server" CssClass="form-control form-control-sm dropdown-icon"
+                                            AutoPostBack="false">
+                                            <asp:ListItem Text="Select Trainer" Value="" />
+                                        </asp:DropDownList>
                                     </div>
                                 </div>
 

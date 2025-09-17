@@ -67,18 +67,23 @@ namespace Expiry_list.Training
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string query = @"
-                    SELECT 
+                    WITH tp_unique AS (
+                        SELECT *,
+                               ROW_NUMBER() OVER (PARTITION BY topicId, traineeId ORDER BY id) AS rn
+                        FROM traineeTopicT
+                    )
+                    SELECT
                         t.id AS id,
                         t.topicName,
-                        ISNULL(tp.status, 'Registered') AS Status,
-                        ISNULL(tp.exam, 'Not Taken') AS Exam
+                        ISNULL(tp.Status, 'Not Registered') AS Status,
+                        ISNULL(tp.Exam, 'Not Taken') AS Exam
                     FROM topicWLT w
                     INNER JOIN traineeT tr ON tr.id = @traineeId
-                    INNER JOIN TopicT t ON t.id = w.topic
-                    LEFT JOIN traineeTopicT tp 
-                        ON tp.topicId = t.id AND tp.traineeId = tr.id  
-                    WHERE w.traineeLevel = tr.position
-                    ORDER BY t.topicName";
+                    INNER JOIN TopicT t ON t.id = w.topic 
+                    LEFT JOIN tp_unique tp 
+                        ON tp.topicId = t.id AND tp.traineeId = tr.id AND tp.rn = 1
+                    WHERE w.traineeLevel = tr.position and t.IsActive=1
+                    ORDER BY t.topicName;";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
@@ -110,14 +115,14 @@ namespace Expiry_list.Training
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string query = @"
-                MERGE traineeTopicT AS target
-                USING (SELECT @traineeId AS traineeId, @topicId AS topicId) AS source
-                ON target.traineeId = source.traineeId AND target.topicId = source.topicId
-                WHEN MATCHED THEN 
-                    UPDATE SET status = @status, exam = @exam, updatedAt = GETDATE()
-                WHEN NOT MATCHED THEN
-                    INSERT (traineeId, topicId, status, exam, updatedAt)
-                    VALUES (@traineeId, @topicId, @status, @exam, GETDATE());";
+                        MERGE traineeTopicT AS target
+                        USING (SELECT @traineeId AS traineeId, @topicId AS topicId) AS source
+                        ON target.traineeId = source.traineeId AND target.topicId = source.topicId
+                        WHEN MATCHED THEN 
+                            UPDATE SET status = @status, exam = @exam, updatedAt = GETDATE()
+                        WHEN NOT MATCHED THEN
+                            INSERT (traineeId, topicId, status, exam, updatedAt)
+                            VALUES (@traineeId, @topicId, @status, @exam, GETDATE());";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {

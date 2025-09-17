@@ -13,7 +13,6 @@
       $(document).ready(function () {
           initializeDataTable();
 
-          // Reinitialize after AJAX postbacks
           if (typeof (Sys) !== 'undefined') {
               Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
                   initializeDataTable();
@@ -38,7 +37,6 @@
           }
           
           if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %> === false) {
-              // Ensure table has proper structure
               if (grid.find('thead').length === 0) {
                   const headerRow = grid.find('tr:first').detach();
                   grid.prepend($('<thead/>').append(headerRow));

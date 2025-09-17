@@ -135,7 +135,7 @@
                 new bootstrap.Modal(document.getElementById("traineeDetailsModal")).show();
             }
 
-            $('#traineeDetailsModal, #registerModal').on('hidden.bs.modal', function () {
+           $('#traineeDetailsModal, #registerModal').on('hidden.bs.modal', function () {
                 $('#<%= GridView2.ClientID %> tbody tr').removeClass('selected-row');
            });
 
@@ -162,12 +162,27 @@
                 searching: true,
                 info: true,
                 autoWidth: false,
+                stateSave: true,
                 scrollX: true,
                 scrollY: 407,
                 scrollCollapse: true,
-                order: [[0, 'asc']],
+                order: [[9, 'desc']],
                 lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-                columnDefs: [{ orderable: false, targets: [ 10, 11 ] }, { targets: [4, 5], visible: false }]
+
+                columnDefs: [
+                    { orderable: false, targets: [8] },
+                    { targets: [2, 3], visible: false },
+
+                    {
+                        targets: 6, 
+                        render: function (data, type, row, meta) {
+                            if (type === 'sort' || type === 'type') {
+                                return $(data).attr("data-order") || data;
+                            }
+                            return data;
+                        }
+                    }
+                ]
             });
         }
 
@@ -266,18 +281,6 @@
 
                      <Columns>
 
-                        <asp:TemplateField HeaderText="No" ItemStyle-Width="5%" HeaderStyle-CssClass="text-center">
-                            <ItemTemplate>
-                                <asp:Label ID="lblLinesNo" runat="server" Text='<%# Container.DataItemIndex + 1 %>' />
-                            </ItemTemplate>
-                        </asp:TemplateField>
-
-                        <asp:TemplateField HeaderText="Trans No" ItemStyle-Width="5%">
-                            <ItemTemplate>
-                                <asp:Label ID="lblNo" runat="server" Text='<%# Eval("tranNo") %>' />
-                            </ItemTemplate>
-                        </asp:TemplateField>
-
                         <asp:TemplateField HeaderText="Topic Name" ItemStyle-Width="18%">
                             <ItemTemplate>
                                 <asp:Label ID="lblTopicName" runat="server" Text='<%# Eval("topicName") %>' />
@@ -321,9 +324,11 @@
                         </asp:TemplateField>
 
                         <asp:TemplateField HeaderText="Training Date" ItemStyle-Width="10%">
-                            <ItemTemplate>
-                                <asp:Label ID="lblDate" runat="server" Text='<%# FormatDisplayDate(Eval("date")) %>' />
-                            </ItemTemplate>
+                          <ItemTemplate>
+                            <asp:Label ID="lblDate" runat="server"
+                               Text='<%# Eval("date", "{0:dd-MM-yyyy}") %>'
+                               data-order='<%# Eval("date", "{0:yyyy-MM-dd}") %>' />
+                          </ItemTemplate>
                         </asp:TemplateField>
 
                         <asp:TemplateField HeaderText="Training Time" ItemStyle-Width="10%">
@@ -358,6 +363,7 @@
                     </asp:TemplateField>
 
                     </Columns>
+
                 </asp:GridView>
                 </div>
             </div>

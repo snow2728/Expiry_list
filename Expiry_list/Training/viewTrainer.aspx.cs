@@ -63,7 +63,7 @@ namespace Expiry_list.Training
                 string query = $@"SELECT 
                         t.id, 
                         t.name, 
-                        t.position,              -- Add this FK column!
+                        t.position,            
                         p.position AS positionName
                     FROM trainerT t
                     INNER JOIN positionT p ON t.position = p.id

@@ -60,6 +60,15 @@ namespace Expiry_list.Training
         protected global::System.Web.UI.WebControls.HiddenField hfEditedRowId;
 
         /// <summary>
+        /// hfSelectedTrainers control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hfSelectedTrainers;
+
+        /// <summary>
         /// ScriptManager1 control.
         /// </summary>
         /// <remarks>
@@ -102,7 +111,7 @@ namespace Expiry_list.Training
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList topicName;
+        protected global::System.Web.UI.WebControls.TextBox topicName;
 
         /// <summary>
         /// RequiredFieldValidator7 control.
@@ -132,21 +141,30 @@ namespace Expiry_list.Training
         protected global::System.Web.UI.WebControls.RequiredFieldValidator RequiredFieldValidator1;
 
         /// <summary>
-        /// trainerDp control.
+        /// hfTrainerDp control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox trainerDp;
+        protected global::System.Web.UI.WebControls.HiddenField hfTrainerDp;
 
         /// <summary>
-        /// addTopicBtn1 control.
+        /// HiddenField1 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button addTopicBtn1;
+        protected global::System.Web.UI.WebControls.HiddenField HiddenField1;
+
+        /// <summary>
+        /// addTopicBtn control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button addTopicBtn;
     }
 }

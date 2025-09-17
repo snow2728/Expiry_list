@@ -25,10 +25,46 @@ namespace Expiry_list.Training
             {
                 no.Text = GetNextTranNo();
                 tdyDate.Text = DateTime.Now.ToString("dd/MM/yyyy");
+
                 BindTopics();
                 Training.DataBind.BindRoom(locationDp);
             }
+        }
 
+        protected void topicDP_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            trainerDp.Items.Clear();
+            trainerDp.Items.Add(new ListItem("Select Trainer", ""));
+            position.Text = "";
+
+            if (string.IsNullOrEmpty(topicDP.SelectedValue)) return;
+            string selectedTopicName = topicDP.SelectedItem.Text;
+
+            var dt = ViewState["TopicMapping"] as System.Data.DataTable;
+            if (dt == null) return;
+
+            var rows = dt.AsEnumerable()
+                         .Where(r => r.Field<string>("topic").Equals(selectedTopicName, StringComparison.OrdinalIgnoreCase))
+                         .ToList();
+
+            if (!rows.Any()) return;
+
+            foreach (var r in rows)
+            {
+                trainerDp.Items.Add(new ListItem(r.Field<string>("trainerName"), r.Field<int>("trainerId").ToString()));
+            }
+
+            // one trainer
+            if (rows.Count == 1)
+            {
+                trainerDp.SelectedIndex = 1;
+                position.Text = rows[0].Field<string>("levelName");
+            }
+            else
+            {   // multiple trainers
+                trainerDp.SelectedIndex = 0; 
+                position.Text = rows[0].Field<string>("levelName");
+            }
         }
 
         protected void btnUploadExcel_Click(object sender, EventArgs e)
@@ -67,7 +103,6 @@ namespace Expiry_list.Training
                     // Rows
                     for (int row = 2; row <= ws.Dimension.End.Row; row++)
                     {
-                        // Skip empty rows
                         if (ws.Cells[row, 1].Value == null)
                             continue;
 
@@ -79,9 +114,13 @@ namespace Expiry_list.Training
                     }
                 }
 
-                InsertExcelDataToDB(dtExcel);
-                ShowAlert("Success!", "Schedules inserted successfully!", "success");
-                Response.Redirect("scheduleList.aspx");
+                bool success = InsertExcelDataToDB(dtExcel);
+
+                if (success)
+                {
+                    ShowAlert("Success!", "Schedules inserted successfully!", "success");
+                    Response.Redirect("scheduleList.aspx");
+                }
             }
             catch (Exception ex)
             {
@@ -89,16 +128,38 @@ namespace Expiry_list.Training
             }
         }
 
-        private void InsertExcelDataToDB(System.Data.DataTable dtExcel)
+        private bool InsertExcelDataToDB(System.Data.DataTable dtExcel)
         {
-            // Preload lookup data
-            var topicDict = LoadLookup("SELECT id, topicName FROM topicT");
-            var trainerDict = LoadLookup("SELECT id, name FROM trainerT");
-            var levelDict = LoadLookup("SELECT id, name FROM levelT");
-            var roomDict = LoadLookup("SELECT id, name FROM locationT");
-            var topicWLTDict = LoadTopicWLTDict();
+            var topicDict = LoadLookup("SELECT id, topic FROM topicT");  
+            var trainerDict = LoadLookup("SELECT id, name FROM trainerT"); 
+            var levelDict = LoadLookup("SELECT id, name FROM levelT");    
+            var roomDict = LoadLookup("SELECT id, name FROM locationT"); 
 
-            // Create DataTable for bulk insert
+            // Load topicWLT 
+            var topicWLTDict = new Dictionary<string, int>();
+            using (SqlConnection con = new SqlConnection(strcon))
+            using (SqlCommand cmd = new SqlCommand("SELECT id, topic, trainerId, traineeLevel, IsActive FROM topicWLT", con))
+            {
+                con.Open();
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    while (rdr.Read())
+                    {
+                        int id = rdr.GetInt32(0);
+                        int topicId = rdr.GetInt32(1);
+                        int trainerId = rdr.GetInt32(2);
+                        int levelId = rdr.GetInt32(3);
+                        bool isActive = rdr.GetBoolean(4);
+
+                        if (isActive)
+                        {
+                            string key = $"{topicId}-{trainerId}-{levelId}";
+                            topicWLTDict[key] = id;
+                        }
+                    }
+                }
+            }
+
             System.Data.DataTable dtBulk = new System.Data.DataTable();
             dtBulk.Columns.Add("tranNo", typeof(string));
             dtBulk.Columns.Add("topicName", typeof(int));
@@ -114,7 +175,6 @@ namespace Expiry_list.Training
 
             foreach (DataRow row in dtExcel.Rows)
             {
-                // increment in memory
                 lastTranNo++;
                 string tranNo = $"{prefix}-{lastTranNo}";
 
@@ -126,29 +186,37 @@ namespace Expiry_list.Training
                 string dateStr = row["Date"].ToString().Trim();
                 string timeStr = row["Time"].ToString().Trim();
 
+                // Validate Date
                 if (!DateTime.TryParse(dateStr, out DateTime dateValue))
                     throw new Exception($"Invalid Date format for Topic '{topicNameFromExcel}'");
 
-                if (!System.Text.RegularExpressions.Regex.IsMatch(timeStr,
-                    @"^\d{1,2}:\d{2}\s?(AM|PM)\s?-\s?\d{1,2}:\d{2}\s?(AM|PM)$", RegexOptions.IgnoreCase))
+                // Validate Time (hh:mm AM/PM - hh:mm AM/PM)
+                if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    timeStr, @"^\d{1,2}:\d{2}\s?(AM|PM)\s?-\s?\d{1,2}:\d{2}\s?(AM|PM)$", RegexOptions.IgnoreCase))
                     throw new Exception($"Invalid Time format for Topic '{topicNameFromExcel}'");
 
+                // Validate Topic against topicT
                 if (!topicDict.TryGetValue(topicNameFromExcel, out int topicId))
-                    throw new Exception($"Topic '{topicNameFromExcel}' not found in database.");
+                    throw new Exception($"Topic '{topicNameFromExcel}' not found.");
 
+                // Validate Trainer
                 if (!trainerDict.TryGetValue(trainerName, out int trainerId))
-                    throw new Exception($"Trainer '{trainerName}' not found in database.");
+                    throw new Exception($"Trainer '{trainerName}' not found.");
 
+                // Validate Level
                 if (!levelDict.TryGetValue(position, out int levelId))
-                    throw new Exception($"Trainee Level '{position}' not found in database.");
+                    throw new Exception($"Trainee Level '{position}' not found.");
 
+                // Validate Room
                 if (!roomDict.TryGetValue(roomFromExcel, out int roomId))
-                    throw new Exception($"Training Room '{roomFromExcel}' not found in database.");
+                    throw new Exception($"Training Room '{roomFromExcel}' not found.");
 
+                // Validate TopicWLT by composite key
                 string wltKey = $"{topicId}-{trainerId}-{levelId}";
                 if (!topicWLTDict.TryGetValue(wltKey, out int topicWLTId))
-                    throw new Exception($"No matching TopicWLT for Topic '{topicNameFromExcel}', Trainer '{trainerName}', Level '{position}'.");
+                    throw new Exception($"No active TopicWLT mapping for Topic '{topicNameFromExcel}', Trainer '{trainerName}', Level '{position}'.");
 
+                // Add to bulk insert table
                 dtBulk.Rows.Add(tranNo, topicWLTId, description, roomId, trainerId, levelId, dateValue, timeStr);
             }
 
@@ -171,9 +239,17 @@ namespace Expiry_list.Training
                     bulkCopy.WriteToServer(dtBulk);
                 }
             }
+            return true;
         }
 
-        // get last number only
+        private class TopicWLTInfo
+        {
+            public int Id { get; set; }     
+            public string TopicName { get; set; } 
+            public int TrainerId { get; set; }
+            public int LevelId { get; set; }
+            public bool IsActive { get; set; }
+        }
         private int GetLastTranNoNumber()
         {
             string prefix = "TS";
@@ -210,26 +286,22 @@ namespace Expiry_list.Training
             return dict;
         }
 
-        private Dictionary<string, int> LoadTopicWLTDict()
-        {
+        private Dictionary<string, int> LoadTopicWLTDict() { 
             var dict = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            using (SqlConnection con = new SqlConnection(strcon))
-            using (SqlCommand cmd = new SqlCommand("SELECT id, topic, trainerId, traineeLevel FROM topicWLT", con))
-            {
+            
+            using (SqlConnection con = new SqlConnection(strcon)) 
+            using (SqlCommand cmd = new SqlCommand("SELECT id, topic, trainerId, traineeLevel,IsActive FROM topicWLT", con)) { 
                 con.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        int id = reader.GetInt32(0);
-                        int topicId = reader.GetInt32(1);
+                using (SqlDataReader reader = cmd.ExecuteReader()) {
+                    while (reader.Read()) {
+                        int id = reader.GetInt32(0); int topicId = reader.GetInt32(1);
                         int trainerId = reader.GetInt32(2);
-                        int levelId = reader.GetInt32(3);
+                        int levelId = reader.GetInt32(3); 
                         string key = $"{topicId}-{trainerId}-{levelId}";
-                        dict[key] = id;
-                    }
-                }
-            }
+                        dict[key] = id; 
+                    } 
+                } 
+            } 
             return dict;
         }
 
@@ -239,29 +311,21 @@ namespace Expiry_list.Training
                 "swal('Error', '" + message.Replace("'", "\\'") + "', 'error').then(function(){ window.location=window.location.href; });", true);
         }
 
-        protected void gvExcelPreview_RowDataBound(object sender, GridViewRowEventArgs e)
-        {
-            if (e.Row.RowType == DataControlRowType.Header ||
-                e.Row.RowType == DataControlRowType.DataRow)
-            {
-               
-            }
-        }
-
         protected void createBtn_Click(object sender, EventArgs e)
         {
             try
             {
                 string tranNo = no.Text.Trim();
-                string topicId = topicDP.SelectedValue; 
+                string topicId = topicDP.SelectedValue;
                 string description = desc.Text.Trim();
                 string locationName = locationDp.SelectedItem.Text.Trim();
                 string date1 = date.Text.Trim();
                 string time1 = timeDp.SelectedValue;
 
-                if (string.IsNullOrEmpty(topicId) || string.IsNullOrEmpty(locationName) || string.IsNullOrEmpty(time1))
+                if (string.IsNullOrEmpty(topicId) || string.IsNullOrEmpty(locationName) ||
+                    string.IsNullOrEmpty(time1) || string.IsNullOrEmpty(trainerDp.SelectedValue))
                 {
-                    ShowAlert("Error!", "Topic, Training Room and Time are required!", "error");
+                    ShowAlert("Error!", "Topic, Trainer, Training Room and Time are required!", "error");
                     return;
                 }
 
@@ -269,35 +333,36 @@ namespace Expiry_list.Training
                 {
                     con.Open();
 
-                    int trainerId = 0;
+                    int trainerId = Convert.ToInt32(trainerDp.SelectedValue);
                     int level = 0;
                     int topicWLTId = 0;
 
-                    // 🔎 Get topicWLT.id, trainerId and level by topicT.id
-                    string query = @"SELECT TOP 1 id, trainerId, traineeLevel 
+                    string query = @"SELECT TOP 1 id, traineeLevel 
                              FROM topicWLT 
-                             WHERE topic = @topicId";
+                             WHERE topic = (SELECT topic FROM topicWLT WHERE id = @topicId)
+                               AND trainerId = @trainerId";
 
                     using (SqlCommand cmd = new SqlCommand(query, con))
                     {
                         cmd.Parameters.AddWithValue("@topicId", topicId);
+                        cmd.Parameters.AddWithValue("@trainerId", trainerId);
+
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
                             {
-                                topicWLTId = Convert.ToInt32(reader["id"]);  // this is what you want to store
-                                trainerId = Convert.ToInt32(reader["trainerId"]);
+                                topicWLTId = Convert.ToInt32(reader["id"]);
                                 level = Convert.ToInt32(reader["traineeLevel"]);
                             }
                             else
                             {
-                                ShowAlert("Error!", "No TopicWLT mapping found for the selected topic!", "error");
+                                ShowAlert("Error!", "No TopicWLT mapping found for the selected Topic & Trainer!", "error");
                                 return;
                             }
                         }
                     }
 
-                    // Get locationId 
+                    // Get locationId
                     string locationId = "";
                     string locQuery = @"SELECT id FROM locationT WHERE LOWER(name) = LOWER(@locationName)";
                     using (SqlCommand locCmd = new SqlCommand(locQuery, con))
@@ -305,9 +370,7 @@ namespace Expiry_list.Training
                         locCmd.Parameters.AddWithValue("@locationName", locationName);
                         object result = locCmd.ExecuteScalar();
                         if (result != null)
-                        {
                             locationId = result.ToString();
-                        }
                         else
                         {
                             ShowAlert("Error!", "Invalid Training Room selected!", "error");
@@ -315,7 +378,7 @@ namespace Expiry_list.Training
                         }
                     }
 
-                    // Insert schedule (note: topicName = topicWLT.id)
+                    // Insert schedule
                     string insertQuery = @"INSERT INTO scheduleT 
                                    (tranNo, topicName, description, room, trainerName, position, date, time)
                                    VALUES 
@@ -324,7 +387,7 @@ namespace Expiry_list.Training
                     using (SqlCommand insertCmd = new SqlCommand(insertQuery, con))
                     {
                         insertCmd.Parameters.AddWithValue("@tranNo", tranNo);
-                        insertCmd.Parameters.AddWithValue("@topicName", topicWLTId); // store topicWLT.id
+                        insertCmd.Parameters.AddWithValue("@topicName", topicWLTId);
                         insertCmd.Parameters.AddWithValue("@description", description);
                         insertCmd.Parameters.AddWithValue("@room", locationId);
                         insertCmd.Parameters.AddWithValue("@trainerId", trainerId);
@@ -337,7 +400,7 @@ namespace Expiry_list.Training
 
                     ShowAlert("Success!", "Schedule created successfully!", "success");
                     ClearForm();
-                    no.Text = GetNextTranNo(); 
+                    no.Text = GetNextTranNo();
                     tdyDate.Text = DateTime.Now.ToString("dd/MM/yyyy");
                 }
             }
@@ -352,40 +415,30 @@ namespace Expiry_list.Training
             using (SqlConnection con = new SqlConnection(strcon))
             {
                 con.Open();
-                string query = @"SELECT t.id, t.topicName, w.trainerId, w.traineeLevel, 
-                        tr.name as trainerName, l.name as levelName
-                 FROM topicT t
-                 INNER JOIN topicWLT w ON t.id = w.topic
-                 INNER JOIN trainerT tr ON w.trainerId = tr.id
-                 INNER JOIN levelT l ON w.traineeLevel = l.id";
+                string query = @"SELECT w.id, tp.topicName as topic, w.trainerId, w.traineeLevel, w.IsActive,
+                         tr.name as trainerName, l.name as levelName 
+                         FROM topicWLT w 
+                         INNER JOIN topicT tp ON w.topic = tp.id
+                         INNER JOIN trainerT tr ON w.trainerId = tr.id
+                         INNER JOIN levelT l ON w.traineeLevel = l.id where w.IsActive='true';";
 
                 SqlDataAdapter da = new SqlDataAdapter(query, con);
                 System.Data.DataTable dt = new System.Data.DataTable();
                 da.Fill(dt);
 
-                topicDP.Items.Clear();
-                topicDP.Items.Add(new ListItem("-- Select Topic --", "")); // Prompt
-
-                foreach (DataRow row in dt.Rows)
-                {
-                    topicDP.Items.Add(new ListItem(row["topicName"].ToString(), row["id"].ToString()));
-                }
-
-                // Store the mapping in ViewState for JS later
                 ViewState["TopicMapping"] = dt;
-            }
-        }
 
-        protected void topicDP_PreRender(object sender, EventArgs e)
-        {
-            DropDownList ddl = sender as DropDownList;
-            foreach (ListItem li in ddl.Items)
-            {
-                // Only inject if attributes exist
-                if (!string.IsNullOrEmpty(li.Attributes["trainerName"]))
-                    li.Attributes["data-trainer-name"] = li.Attributes["trainerName"];
-                if (!string.IsNullOrEmpty(li.Attributes["levelName"]))
-                    li.Attributes["data-level-name"] = li.Attributes["levelName"];
+                topicDP.Items.Clear();
+                topicDP.Items.Add(new ListItem("Select Topic", ""));
+
+                var topics = dt.AsEnumerable()
+                               .Where(r => r.Field<bool>("IsActive"))
+                               .GroupBy(r => r.Field<string>("topic")) 
+                               .Select(g => g.First())                
+                               .ToList();
+
+                foreach (var t in topics)
+                    topicDP.Items.Add(new ListItem(t.Field<string>("topic"), t.Field<int>("id").ToString()));
             }
         }
 
