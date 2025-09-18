@@ -5,6 +5,39 @@
         table thead tr,th{
             line-height: 15px !important;
         }
+        table.dataTable thead tr th {
+             border-bottom: none;
+         }
+
+         table td{
+             border-bottom: none;
+             border-spacing: 0;
+             box-shadow: none;
+         }
+
+         table.dataTable thead tr th{
+             border-right: none !important;
+         }
+
+         /* Base table borders */
+         table.dataTable th,
+         table.dataTable td {
+             border-right: 1px solid #ccc;
+         }
+
+         /* Remove per-cell borders on sticky columns */
+         table.dataTable th.dtfc-fixed-left,
+         table.dataTable td.dtfc-fixed-left {
+             border-right: none !important;
+         }
+
+         table.dataTable td:nth-child(6) {
+             border-left: 1px solid #ccc;
+         }
+         table.dataTable td:last-child {
+             border-right: none;
+         }
+
     </style>
     <script src="js/customJS.js"></script>
     <script type="text/javascript">
@@ -657,6 +690,8 @@
                 return false;
             }
 
+            document.getElementById ('gridCol').style.height = "70vh";
+
             return true;
         }
 
@@ -982,7 +1017,7 @@
 
                             <div class="gridview-container ">
                                 <asp:GridView ID="GridView2" runat="server"
-                                    CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid overflow-x-auto overflow-y-auto"
+                                    CssClass="table table-striped table-hover border-2 shadow-lg sticky-grid overflow-x-auto overflow-y-auto"
                                     AutoGenerateColumns="False"
                                     DataKeyNames="id"
                                     UseAccessibleHeader="true"

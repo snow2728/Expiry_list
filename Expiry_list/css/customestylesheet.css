@@ -548,8 +548,8 @@ table.dataTable {
 .fixed-column-5a {
     position: sticky;
 /*    z-index: ;*/
-    background: #F7F6F3 !important;
-    border-right: 1px solid #dee2e6;
+    background: #fff !important;
+/*    border-right: 1px solid #dee2e6;*/
 }
 
 /* Alternating rows for fixed columns */
