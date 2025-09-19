@@ -69,6 +69,9 @@ body {
         background-color: #8bc4d0;
     }
 
+h4 {
+    margin : 0px;
+}
 /* Mobile Optimization */
 @media (max-width: 991px) {
     .navbar-collapse {
@@ -587,7 +590,7 @@ table.dataTable {
 /* Container styling */
 .gridview-container {
     max-width: 100%;
-    height: 517px;
+/*    height: 517px;*/
     background: white;
     position: relative;
 }
@@ -599,22 +602,22 @@ table.dataTable {
 }
 
 .fixed-column-2, .sticky-header2 {
-    left: 33px;
+    left: 30px;
     min-width: 30px;
 }
 
 .fixed-column-3, .sticky-header3 {
-    left: 100px;
+    left: 67px;
     min-width: 77px;
 }
 
 .fixed-column-4, .sticky-header4 {
-    left: 193px;
+    left: 151px;
     min-width: 50px;
 }
 
 .fixed-column-5, .sticky-header5 {
-    left: 315px;
+    left: 225px;
     min-width: 217px;
 }
 

@@ -690,7 +690,7 @@
                 return false;
             }
 
-            document.getElementById ('gridCol').style.height = "70vh";
+            document.getElementById ('gridCol').style.height = "73vh";
 
             return true;
         }
@@ -725,7 +725,7 @@
             </div>
 
             <div class="card-body">
-                <div class="col-lg-12 col-md-12">
+                <div class="col-lg-12 col-md-12 mb-3">
                     <div class="row g-2 align-items-center">
                         <!-- Filter Button -->
                         <div class="col-6 col-md-auto">
@@ -821,7 +821,7 @@
                   </div>
                 </div>
 
-                <div class="d-flex p-2 col-lg-12 col-md-12 overflow-x-auto overflow-y-auto">
+                <div class="d-flex p-2 pt-0 col-lg-12 col-md-12 overflow-x-auto overflow-y-auto">
                     <div class="row">
                         <!-- Filter Panel (Hidden by default) -->
                         <div class="col" id="filterPane" style="display: none;">
@@ -1342,12 +1342,12 @@
                                             <ItemStyle HorizontalAlign="Justify" />
                                         </asp:TemplateField>
 
-                                        <asp:CommandField ShowEditButton="true" ShowCancelButton="true" ControlStyle-CssClass="m-1 text-white"
+                                        <asp:CommandField ShowEditButton="true" ShowCancelButton="true" ControlStyle-CssClass="m-1 text-white" HeaderStyle-CssClass="position-sticky top-0"
                                           EditText="-" UpdateText="<i class='fa-solid fa-file-arrow-up'></i>"
                                           CancelText="<i class='fa-solid fa-xmark'></i>">
                                           <ControlStyle CssClass="btn m-1 text-white" Width="105px" BackColor="#1995ad" />
                                             <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                            <ItemStyle HorizontalAlign="Justify" />
+                                            <ItemStyle HorizontalAlign="Justify" BackColor="White"/>
                                         </asp:CommandField>
 
                                     </Columns>
