@@ -1,7 +1,43 @@
 ﻿<%@ Page Title="" Language="C#" MasterPageFile="~/Site1.Master" AutoEventWireup="true" CodeBehind="viewer1.aspx.cs" Inherits="Expiry_list.ReorderForm.viewer1" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
+    <style>
+        table thead tr,th{
+            line-height: 15px !important;
+        }
+        table.dataTable thead tr th {
+             border-bottom: none;
+         }
 
+         table td{
+             border-bottom: none;
+             border-spacing: 0;
+             box-shadow: none;
+         }
+
+         table.dataTable thead tr th{
+             border-right: none !important;
+         }
+
+         /* Base table borders */
+         table.dataTable th,
+         table.dataTable td {
+             border-right: 1px solid #ccc;
+         }
+
+         /* Remove per-cell borders on sticky columns */
+         table.dataTable th.dtfc-fixed-left,
+         table.dataTable td.dtfc-fixed-left {
+             border-right: none !important;
+         }
+
+         table.dataTable td:nth-child(5) {
+             border-left: 1px solid #ccc;
+         }
+         table.dataTable td:last-child {
+             border-right: none;
+         }
+    </style>                
     <%
         var permissions = Session["formPermissions"] as Dictionary<string, string>;
         string expiryPerm = permissions != null && permissions.ContainsKey("ReorderQuantity") ? permissions["ReorderQuantity"] : "";
@@ -184,7 +220,7 @@
             paging: true,
             filter: true,
             scrollX: true,
-            scrollY: 407,
+            scrollY: "62vh",
             scrollCollapse: true,
             autoWidth: false,
             stateSave: true,
@@ -1056,7 +1092,7 @@
     }
 
 </script> 
-    <style>
+    <%--<style>
             table.dataTable > thead > tr > th {
                 background-color: #BD467F !important;
                 color: white !important;
@@ -1067,7 +1103,7 @@
                 background-color: #BD467F !important;
                 color: white !important;
             }
-        </style>  
+        </style>  --%>
 
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -1371,7 +1407,7 @@
                  <asp:HiddenField ID="hfIsSearchEdit" runat="server" />
 
                  <!-- Table -->
-                 <div class="col-md-12" id="gridCol">
+                 <div class="col-md-12 ms-4" id="gridCol">
                      <asp:UpdatePanel ID="UpdatePanel2" runat="server" UpdateMode="Conditional">
                      <ContentTemplate>
 
@@ -1379,9 +1415,9 @@
                               <div class="alert alert-info">No items to Filter</div>
                         </asp:Panel>
 
-                          <div class="table-responsive gridview-container ps-3 pe-1" style="height: 535px;">
+                          <div class="table-responsive gridview-container pt-2 px-2">
                             <asp:GridView ID="GridView2" runat="server"
-                                 CssClass="table table-striped table-bordered table-hover shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto display"
+                                 CssClass="table table-striped table-hover border-2 shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto display"
                                  AutoGenerateColumns="False"
                                  DataKeyNames="id"  ClientIDMode="Static"
                                  UseAccessibleHeader="true"

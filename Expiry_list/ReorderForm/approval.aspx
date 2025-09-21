@@ -2,6 +2,44 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 
       <%-- Viewer1 Form For Supers --%>
+     <style>
+         table thead tr,th{
+             line-height: 15px !important;
+         }
+         table.dataTable thead tr th {
+              border-bottom: none;
+          }
+
+          table td{
+              border-bottom: none;
+              border-spacing: 0;
+              box-shadow: none;
+          }
+
+          table.dataTable thead tr th{
+              border-right: none !important;
+          }
+
+          /* Base table borders */
+          table.dataTable th,
+          table.dataTable td {
+              border-right: 1px solid #ccc;
+          }
+
+          /* Remove per-cell borders on sticky columns */
+          table.dataTable th.dtfc-fixed-left,
+          table.dataTable td.dtfc-fixed-left {
+              border-right: none !important;
+          }
+
+          table.dataTable td:nth-child(5) {
+              border-left: 1px solid #ccc;
+          }
+          table.dataTable td:last-child {
+              border-right: none;
+          }
+
+     </style>
 
       <script type="text/javascript">
 
@@ -54,7 +92,7 @@
                   paging: true,
                   filter: true,
                   scrollX: true,
-                  scrollY: 407,
+                  scrollY: "63vh",
                   scrollCollapse: true,
                   autoWidth: false,
                   stateSave: true,
@@ -100,7 +138,7 @@
                           }
                       },
                       { data: 'no', width: "100px" },
-                      { data: 'itemNo', width: "50px" },
+                      { data: 'itemNo', width: "100px" },
                       { data: 'description', width: "297px" },
                       { data: 'barcodeNo', width: "127px" },
                       { data: 'qty', width: "97px" },
@@ -644,6 +682,9 @@
                   return false;
               }
 
+              document.getElementById('gridCol').style.height = "74vh";
+              document.getElementById('gridCol').style.width = "auto";
+
               return true;
           }
 
@@ -688,7 +729,7 @@
          </div>
 
         <div class="card-body">
-            <div class="col-lg-12 col-md-12">
+            <div class="col-lg-12 col-md-12 mb-2">
                 <div class="row g-2 align-items-center">
                     <!-- Filter Button -->
                     <div class="col-6 col-md-auto">
@@ -737,7 +778,7 @@
                 </div>
             </div>
 
-                <div class="d-flex p-2 col-lg-12 col-md-12 overflow-x-auto overflow-y-auto">
+                <div class="d-flex p-2 pt-0 col-lg-12 col-md-12 overflow-x-auto overflow-y-auto">
                     <div class="row">
                         <!-- Filter Panel (Hidden by default) -->
                         <div class="col" id="filterPane" style="display: none;">
@@ -875,16 +916,16 @@
                     <asp:HiddenField ID="hfEditedRowId" runat="server" />
 
                     <!-- Table -->
-                    <div class="col-md-12 ms-3" id="gridCol">
+                    <div class="col-md-12 ms-4" id="gridCol">
                     <asp:UpdatePanel ID="UpdatePanel2" runat="server" UpdateMode="Conditional">
                         <ContentTemplate>
                             <asp:Panel ID="pnlNoData" runat="server" Visible="false">
                                 <div class="alert alert-info">No items to Filter</div>
                             </asp:Panel>
 
-                            <div class="table-responsive gridview-container ps-3 pe-1 " style="height: 553px;">
+                            <div class="gridview-container p-2">
                                    <asp:GridView ID="GridView2" runat="server"
-                                        CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto"
+                                        CssClass="table table-striped table-hover border-2 shadow-lg sticky-grid overflow-x-auto overflow-y-auto"
                                         AutoGenerateColumns="False"
                                         DataKeyNames="id"
                                         UseAccessibleHeader="true"
@@ -900,7 +941,6 @@
                                         ForeColor="#333333"
                                         GridLines="None"
                                         AutoGenerateEditButton="false" ShowHeaderWhenEmpty="true"  >
-
                                         <EditRowStyle BackColor="white" />
                                         <FooterStyle BackColor="#5D7B9D" Font-Bold="True" ForeColor="White" />
                                         <HeaderStyle Wrap="false" BackColor="#bd467f" Font-Bold="True" ForeColor="White"></HeaderStyle>
@@ -1011,6 +1051,7 @@
                                                         <asp:Label ID="lblUomEdit" runat="server" Text='<%# Eval("uom") %>' />
                                                     </asp:PlaceHolder>
                                                 </EditItemTemplate>
+                                                <HeaderStyle ForeColor="White" BackColor="#bd467f" />
                                             </asp:TemplateField>
 
                                             <asp:TemplateField HeaderText="Packing Info" SortExpression="packingInfo" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-9">
@@ -1114,12 +1155,12 @@
                                                  <ItemStyle HorizontalAlign="Justify" />
                                             </asp:TemplateField>--%>
 
-                                            <asp:CommandField ShowEditButton="true" ShowCancelButton="true" ControlStyle-CssClass="m-1 text-white"
+                                            <asp:CommandField ShowEditButton="true" ShowCancelButton="true" ControlStyle-CssClass="m-1 text-white" HeaderStyle-CssClass="position-sticky top-0"
                                                 EditText="-" UpdateText="<i class='fa-solid fa-file-arrow-up'></i>"
                                                 CancelText="<i class='fa-solid fa-xmark'></i>">
                                                 <ControlStyle CssClass="btn m-1 text-white" Width="105px" BackColor="#bd467f" />
                                                 <HeaderStyle ForeColor="White" BackColor="#bd467f" />
-                                                <ItemStyle HorizontalAlign="Justify" />
+                                                <ItemStyle HorizontalAlign="Justify" BackColor="White"/>
                                             </asp:CommandField>
 
                                         </Columns>

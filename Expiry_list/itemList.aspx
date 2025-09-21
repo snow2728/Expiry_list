@@ -5,6 +5,39 @@
         table thead tr,th{
             line-height: 15px !important;
         }
+        table.dataTable thead tr th {
+             border-bottom: none;
+         }
+
+         table td{
+             border-bottom: none;
+             border-spacing: 0;
+             box-shadow: none;
+         }
+
+         table.dataTable thead tr th{
+             border-right: none !important;
+         }
+
+         /* Base table borders */
+         table.dataTable th,
+         table.dataTable td {
+             border-right: 1px solid #ccc;
+         }
+
+         /* Remove per-cell borders on sticky columns */
+         table.dataTable th.dtfc-fixed-left,
+         table.dataTable td.dtfc-fixed-left {
+             border-right: none !important;
+         }
+
+         table.dataTable td:nth-child(6) {
+             border-left: 1px solid #ccc;
+         }
+         table.dataTable td:last-child {
+             border-right: none;
+         }
+
     </style>
     <script src="js/customJS.js"></script>
     <script type="text/javascript">
@@ -657,6 +690,8 @@
                 return false;
             }
 
+            document.getElementById ('gridCol').style.height = "73vh";
+
             return true;
         }
 
@@ -690,7 +725,7 @@
             </div>
 
             <div class="card-body">
-                <div class="col-lg-12 col-md-12">
+                <div class="col-lg-12 col-md-12 mb-3">
                     <div class="row g-2 align-items-center">
                         <!-- Filter Button -->
                         <div class="col-6 col-md-auto">
@@ -786,7 +821,7 @@
                   </div>
                 </div>
 
-                <div class="d-flex p-2 col-lg-12 col-md-12 overflow-x-auto overflow-y-auto">
+                <div class="d-flex p-2 pt-0 col-lg-12 col-md-12 overflow-x-auto overflow-y-auto">
                     <div class="row">
                         <!-- Filter Panel (Hidden by default) -->
                         <div class="col" id="filterPane" style="display: none;">
@@ -982,7 +1017,7 @@
 
                             <div class="gridview-container ">
                                 <asp:GridView ID="GridView2" runat="server"
-                                    CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid overflow-x-auto overflow-y-auto"
+                                    CssClass="table table-striped table-hover border-2 shadow-lg sticky-grid overflow-x-auto overflow-y-auto"
                                     AutoGenerateColumns="False"
                                     DataKeyNames="id"
                                     UseAccessibleHeader="true"
@@ -1307,12 +1342,12 @@
                                             <ItemStyle HorizontalAlign="Justify" />
                                         </asp:TemplateField>
 
-                                        <asp:CommandField ShowEditButton="true" ShowCancelButton="true" ControlStyle-CssClass="m-1 text-white"
+                                        <asp:CommandField ShowEditButton="true" ShowCancelButton="true" ControlStyle-CssClass="m-1 text-white" HeaderStyle-CssClass="position-sticky top-0"
                                           EditText="-" UpdateText="<i class='fa-solid fa-file-arrow-up'></i>"
                                           CancelText="<i class='fa-solid fa-xmark'></i>">
                                           <ControlStyle CssClass="btn m-1 text-white" Width="105px" BackColor="#1995ad" />
                                             <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                            <ItemStyle HorizontalAlign="Justify" />
+                                            <ItemStyle HorizontalAlign="Justify" BackColor="White"/>
                                         </asp:CommandField>
 
                                     </Columns>
