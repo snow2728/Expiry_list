@@ -10,20 +10,44 @@
          </script>
 
     <script>
-         $(document).ready(function () {
-             initializeDataTable();
-             initTrainerMultiSelect("trainerDpMultiSelect", "<%= hfTrainerDp.ClientID %>");
-             
-             initAllGridTrainers();
+        $(document).ready(function () {
+            initializeDataTable();
 
-             if (typeof (Sys) !== 'undefined') {
-                 Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
-                     initializeDataTable();
-                     initTrainerMultiSelect("trainerDpMultiSelect", "<%= hfTrainerDp.ClientID %>");
-                    initAllGridTrainers();
-                });
-            }
-         });
+            if (!$("#trainerDpMultiSelect").data("initialized")) {
+                initTrainerMultiSelect("trainerDpMultiSelect", "<%= hfTrainerDp.ClientID %>", "<%= hfTrainerDpNames.ClientID %>");
+               $("#trainerDpMultiSelect").data("initialized", true);
+           }
+
+           initAllGridTrainers();
+
+           if (typeof (Sys) !== 'undefined') {
+               Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
+                   initializeDataTable();
+                   initAllGridTrainers();
+               });
+           }
+
+            $('#<%= addTopicBtn.ClientID %>').on('click', function () {
+                const container = $('#trainerDpMultiSelect');
+
+                const hiddenField = $('#<%= hfTrainerDp.ClientID %>');
+                const hiddenNamesField = $('#<%= hfTrainerDpNames.ClientID %>');
+                const selectedTrainers = container.data('selectedTrainers') || [];
+
+              if (selectedTrainers.length === 0) {
+                  Swal.fire({
+                      icon: 'warning',
+                      title: 'Please select at least one trainer!',
+                      confirmButtonText: 'OK'
+                  });
+                  return false; 
+              }
+
+              hiddenField.val(selectedTrainers.map(x => x.id).join(','));
+              hiddenNamesField.val(selectedTrainers.map(x => x.text).join(', '));
+          });
+
+       });
 
         function initAllGridTrainers() {
             $('.trainer-multi-select').each(function () {
@@ -84,70 +108,36 @@
              }
         }
 
-        function initTrainerMultiSelect(containerId, hiddenFieldId, topicId) {
+        function initTrainerMultiSelect(containerId, hiddenFieldId, namesFieldId) {
             const container = $("#" + containerId);
             const inputBox = container.find(".multi-select-input");
             const dropdown = container.find(".multi-select-dropdown");
             const hiddenField = $("#" + hiddenFieldId);
-            const hiddenNamesField = container.find("input[id$='hfTrainerNames']");
-
-            dropdown.empty();
-            const searchInput = $('<input type="text" class="dropdown-search" placeholder="Search trainers...">');
-            dropdown.append(searchInput);
+            const hiddenNamesField = $("#" + namesFieldId);
 
             let selectedTrainers = [];
 
-            function loadExistingTrainers() {
-                const existingIds = hiddenField.val() || "";
-                const existingNames = hiddenNamesField.val() || "";
-                const ids = existingIds.split(",").map(x => x.trim()).filter(x => x);
-                const names = existingNames.split(",").map(x => x.trim());
-
-                selectedTrainers = [];
-
-                for (let i = 0; i < ids.length; i++) {
-                    let trainerName = names[i];
-                    if (!trainerName || trainerName === ids[i]) {
-                        trainerName = ids[i];
-                    }
-                    selectedTrainers.push({ id: ids[i], text: trainerName });
-                }
-
-                if (selectedTrainers.some(t => t.text === t.id)) {
-                    $.ajax({
-                        url: 'viewTopicWL.aspx/GetTrainers',
-                        type: 'POST',
-                        contentType: 'application/json; charset=utf-8',
-                        dataType: 'json',
-                        data: JSON.stringify({ searchTerm: "" }),
-                        success: function (response) {
-                            const list = response.d || [];
-                            selectedTrainers.forEach(t => {
-                                const match = list.find(x => x.Id == t.id);
-                                if (match) t.text = match.Name;
-                            });
-                            renderSelectedTrainers(); 
-                        }
-                    });
-                }
-            }
-
             function renderSelectedTrainers() {
-                inputBox.html('');
+                inputBox.empty();
                 if (selectedTrainers.length === 0) {
                     inputBox.append('<input type="text" class="placeholder" placeholder="Select trainers..." readonly />');
                 } else {
                     selectedTrainers.forEach(t => {
-                        inputBox.append(`<span class="pill">${t.text} <span class="remove-pill" data-value="${t.id}" style="cursor:pointer;">&times;</span></span>`);
+                        inputBox.append(`<span class="pill">${t.text} <span class="remove-pill" data-value="${t.id}">&times;</span></span>`);
                     });
                     inputBox.append('<input type="text" style="width:2px;border:none;outline:none;" readonly />');
                 }
-                hiddenField.val(selectedTrainers.map(x => x.id).join(","));
-                hiddenNamesField.val(selectedTrainers.map(x => x.text).join(", "));
+
+                hiddenField.val(selectedTrainers.map(x => x.id).join(','));
+                hiddenNamesField.val(selectedTrainers.map(x => x.text).join(', '));
+                container.data('selectedTrainers', selectedTrainers);
             }
 
+
+            // Load trainers
             function loadTrainers(searchTerm) {
-                dropdown.find('div.trainer-item').remove();
+                dropdown.find(".trainer-item, .no-result").remove();
+
                 $.ajax({
                     url: 'viewTopicWL.aspx/GetTrainers',
                     type: 'POST',
@@ -157,60 +147,105 @@
                     success: function (response) {
                         const list = response.d || [];
                         if (list.length === 0) {
-                            dropdown.append('<div class="no-result text-muted px-2 py-1">No trainers found</div>');
+                            dropdown.append('<div class="no-result">No trainers found</div>');
                         } else {
                             list.forEach(t => {
                                 const isSelected = selectedTrainers.find(x => x.id == t.Id);
                                 const activeClass = isSelected ? 'active' : '';
-                                dropdown.append(`<div data-value="${t.Id}" class="trainer-item px-2 py-1 ${activeClass}">${t.Name}</div>`);
-                                if (isSelected) isSelected.text = t.Name; // sync name
+                                dropdown.append(`<div class="trainer-item ${activeClass}" data-value="${t.Id}">${t.Name}</div>`);
+                                if (isSelected) isSelected.text = t.Name;
                             });
                         }
                     }
                 });
             }
 
-            // --- Event handlers ---
-            inputBox.on("click", function (e) {
+            function loadExistingTrainers() {
+                const ids = (hiddenField.val() || "")
+                    .split(",")
+                    .map(x => x.trim())
+                    .filter(x => x);
+
+                const names = (hiddenNamesField && hiddenNamesField.val()
+                    ? hiddenNamesField.val().split(",").map(x => x.trim())
+                    : []);
+
+                selectedTrainers = [];
+
+                if (names.length === ids.length && names.length > 0) {
+                    for (let i = 0; i < ids.length; i++) {
+                        selectedTrainers.push({ id: ids[i], text: names[i] });
+                    }
+                    renderSelectedTrainers();
+                } else if (ids.length > 0) {
+                    $.ajax({
+                        url: 'viewTopicWL.aspx/GetTrainersByIds',
+                        type: 'POST',
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: 'json',
+                        data: JSON.stringify({ ids: ids }),
+                        success: function (response) {
+                            const list = response.d || [];
+                            list.forEach(t => {
+                                selectedTrainers.push({ id: t.Id, text: t.Name });
+                            });
+                            renderSelectedTrainers();
+                        }
+                    });
+                } else {
+                    renderSelectedTrainers();
+                }
+            }
+
+            if (dropdown.find("input.dropdown-search").length === 0) {
+                const searchInput = $('<input type="text" class="dropdown-search" placeholder="Search trainers...">');
+                dropdown.append(searchInput);
+                searchInput.on("keyup", function () {
+                    loadTrainers($(this).val());
+                });
+            }
+
+            inputBox.off("click").on("click", function (e) {
                 e.stopPropagation();
                 dropdown.toggle();
-                if (dropdown.is(":visible")) searchInput.focus();
-                loadTrainers("");
+                dropdown.find('input.dropdown-search').focus();
+
+                if (dropdown.is(":visible")) {
+                    loadTrainers(""); 
+                }
             });
 
-            searchInput.on("keyup", function () { loadTrainers($(this).val()); });
-
-            dropdown.on("click", ".trainer-item", function () {
+            dropdown.off("click", ".trainer-item").on("click", ".trainer-item", function () {
                 const id = $(this).data("value");
-                const name = $(this).text().trim();
-                if (!selectedTrainers.find(x => x.id == id)) selectedTrainers.push({ id, text: name });
+                const name = $(this).text();
+                if (!selectedTrainers.find(x => x.id == id)) {
+                    selectedTrainers.push({ id, text: name });
+                }
                 renderSelectedTrainers();
-                searchInput.val('').focus();
+                dropdown.find('input.dropdown-search').val('').focus();
             });
 
-            inputBox.on("click", ".remove-pill", function (e) {
+            inputBox.off("click", ".remove-pill").on("click", ".remove-pill", function (e) {
                 e.stopPropagation();
+                if (selectedTrainers.length <= 1) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Cannot remove all trainers',
+                        text: 'At least one trainer must be selected.',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
                 const id = $(this).data("value");
                 selectedTrainers = selectedTrainers.filter(x => x.id != id);
                 renderSelectedTrainers();
-                dropdown.show();
-                searchInput.focus();
             });
 
-            $(document).click(e => { if (!$(e.target).closest(container).length) dropdown.hide(); });
-
-            // --- Initial render ---
-            loadExistingTrainers();
-            renderSelectedTrainers();
-        }
-
-        // Initialize GridView rows on edit
-        function initAllGridTrainers() {
-            $('.trainer-multi-select').each(function () {
-                const hiddenId = $(this).find('input[type=hidden]').attr('id');
-                const topicId = $(this).data('topic');
-                initTrainerMultiSelect($(this).attr('id'), hiddenId, topicId);
+            $(document).off("click." + containerId).on("click." + containerId, function (e) {
+                if (!$(e.target).closest(container).length) dropdown.hide();
             });
+
+            loadExistingTrainers(); 
         }
 
         function updateTrainer() {
@@ -334,11 +369,14 @@
                                                 string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList") ? formPermissions["TrainingList"] : null;
                                             %>
 
-                                            <% if (perm == "admin") { %>
+                                            <% if (perm == "admin" || perm== "super") { %>
                                                  <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit" CausesValidation="False"
                                                      CssClass="btn btn-sm text-white mt-1 ms-1 me-2" style="background-color:#0a61ae;" ToolTip="Edit">
                                                      <i class="fas fa-pencil-alt"></i>
                                                  </asp:LinkButton>
+                                             <% } %>
+
+                                            <% if (perm == "admin") { %>
                                                  <asp:LinkButton ID="btnDelete" runat="server" CommandName="Delete" CausesValidation="False"
                                                      CssClass="btn btn-sm mt-1 ms-1 me-2 text-white" style="background-color:#453b3b;" ToolTip="Delete" >
                                                      <i class="fas fa-trash-alt"></i>
@@ -415,7 +453,7 @@
                                 <div class="multi-select-dropdown"></div>
                             </div>
                             <asp:HiddenField ID="hfTrainerDp" runat="server" />
-                            <asp:HiddenField ID="HiddenField1" runat="server" />
+                            <asp:HiddenField ID="hfTrainerDpNames" runat="server" />
                         </div>
                     </div>
                 </asp:Panel>

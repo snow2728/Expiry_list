@@ -11,34 +11,6 @@
      </script>
 
     <script type="text/javascript">
-        $(document).on('change', '.status-select, .exam-select', function () {
-            const traineeId = $("#hiddenTraineeId").val();
-            const topicId = $(this).data('id');
-            const status = $(this).hasClass('status-select') ? $(this).val() : null;
-            const exam = $(this).hasClass('exam-select') ? $(this).val() : null;
-
-            $.ajax({
-                url: 'viewTrainee.aspx/UpdateTraineeTopicStatusExam',
-                type: 'POST',
-                contentType: 'application/json; charset=utf-8',
-                data: JSON.stringify({
-                    traineeId: traineeId,
-                    topicId: topicId,
-                    status: status,
-                    exam: exam
-                }),
-                success: function (res) {
-                    if (res.d !== "success") {
-                        alert("Failed to update: " + res.d);
-                    } else {
-                        loadTraineeTopics(traineeId);
-                    }
-                },
-                error: function (xhr, status, error) {
-                    console.error(error);
-                }
-            });
-        });
 
         $(document).ready(function () {
             initializeDataTable();
@@ -47,6 +19,12 @@
                 Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
                     initializeDataTable();
                 });
+            }
+
+            window.openTraineeDetails = function (traineeId) {
+                $("#<%= hiddenTraineeId.ClientID %>").val(traineeId);
+                __doPostBack('<%= btnLoadTopics.UniqueID %>', '');
+                new bootstrap.Modal(document.getElementById("topicsModal")).show();
             }
         });
 
@@ -58,120 +36,106 @@
             $('#traineeModal').modal('hide');
         }
 
-        function handleUpdate(btn) {
-            if (typeof (Page_ClientValidate) == 'function') {
-                Page_ClientValidate();
-            }
-            return true;
-        }
+        function initializeDataTable() {
+          const grid = $("#<%= GridView2.ClientID %>");
 
-        function loadTraineeTopics(traineeId) {
-            const table = $("#topicsTable");
-
-            // Destroy existing DataTable (if already initialized)
-            if ($.fn.DataTable.isDataTable(table)) {
-                table.DataTable().destroy();
-                $("#topicsTableBody").empty();
+            if (grid.length === 0 || grid.find('tr').length === 0) {
+                return;
             }
 
-            $("#topicsTableBody").html(
-                '<tr><td colspan="3" class="text-center text-muted py-4">Loading topics...</td></tr>'
-            );
+            // Destroy existing DataTable if already initialized
+            if ($.fn.DataTable.isDataTable(grid)) {
+                grid.DataTable().destroy();
+                grid.removeAttr('style');
+            }
 
-            $.ajax({
-                url: 'viewTrainee.aspx/GetTraineeTopics',
-                type: 'POST',
-                contentType: 'application/json; charset=utf-8',
-                dataType: 'json',
-                data: JSON.stringify({ traineeId: traineeId }),
-                success: function (response) {
-                    const list = response.d || [];
-                    if (list.length === 0) {
-                        $("#topicsTableBody").html(
-                            '<tr><td colspan="3" class="text-center text-muted py-4">No topics found</td></tr>'
-                        );
-                        return;
-                    }
+          if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %> === false) {
+                // Ensure proper table structure
+                if (grid.find('thead').length === 0) {
+                    const headerRow = grid.find('tr:first').detach();
+                    grid.prepend($('<thead/>').append(headerRow));
+                }
 
-                    let html = '';
-                    list.forEach(t => {
-                        html += `
-                    <tr>
-                        <td>${t.name}</td>
-                        <td class="text-center">${t.status}</td>
-                        <td class="text-center">${t.exam}</td>
-                    </tr>`;
-                    });
+                const headerCols = grid.find('thead tr:first th').length;
+                const bodyCols = grid.find('tbody tr:first td').length;
 
-                    $("#topicsTableBody").html(html);
+                if (headerCols !== bodyCols) {
+                    console.error('Header and body column count mismatch:', headerCols, 'vs', bodyCols);
+                    return;
+                }
 
-                    table.DataTable({
+                try {
+                    grid.DataTable({
                         responsive: true,
                         paging: true,
                         searching: true,
-                        ordering: true,
+                        sorting: true,
                         info: true,
-                        pageLength: 5,
-                        lengthMenu: [[5, 10, 25, 50], [5, 10, 25, 50]]
+                        order: [[0, 'asc']],
+                        stateSave: false,
+                        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                        dom: 'f<"top-toggle">ltip',
+                        initComplete: function () {
+                            const toggleHtml = `
+                            <div class="toggle-container">
+                                <span class="toggle-label">Status:</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="toggleSwitch">
+                                    <span class="slider round"></span>
+                                </label>
+                                <span class="toggle-status" id="toggleStatus">Off</span>
+                            </div>`;
+
+                            $('.top-toggle').append(toggleHtml);
+
+                            // Toggle functionality
+                            $('#toggleSwitch').on('change', function () {
+                                if (this.checked) {
+                                    $('#toggleStatus').text('On').css('color', '#0D330E');
+                                    console.log('Toggle is ON');
+                                } else {
+                                    $('#toggleStatus').text('Off').css('color', '#dc3545'); // red for off
+                                    console.log('Toggle is OFF');
+                                }
+                            });
+                        },
+                        columnDefs: [
+                            { orderable: false, targets: [4] }
+                        ]
                     });
-                },
-                error: function (xhr, status, error) {
-                    console.error(error);
+                } catch (e) {
+                    console.error('DataTable initialization error:', e);
                 }
+            }
+        }
+
+        function initializeDataTable2() {
+            const table = $('#gvTraineeTopics');
+            if (table.length === 0 || table.find('tr').length === 0) return;
+
+            if ($.fn.DataTable.isDataTable(table)) {
+                table.DataTable().destroy();
+                table.find('thead').remove();
+            }
+
+            if (table.find('thead').length === 0) {
+                const headerRow = table.find('tr:first');
+                if (headerRow.length > 0) {
+                    headerRow.detach();
+                    table.prepend($('<thead/>').append(headerRow));
+                }
+            }
+
+            table.DataTable({
+                paging: true,
+                searching: true,
+                ordering: true,
+                responsive: true,
+                autoWidth: false,
+                //columnDefs: [
+                //    { orderable: false, targets: [-1, -2] }
+                //]
             });
-        }
-
-        function openTopicsModal(traineeId) {
-            $("#hiddenTraineeId").val(traineeId);
-            loadTraineeTopics(traineeId);
-            new bootstrap.Modal(document.getElementById("topicsModal")).show();
-        }
-
-      function initializeDataTable() {
-            const grid = $("#<%= GridView2.ClientID %>");
-     
-          if (grid.length === 0 || grid.find('tr').length === 0) {
-              return;
-          }
-     
-          if ($.fn.DataTable.isDataTable(grid)) {
-              grid.DataTable().destroy();
-              grid.removeAttr('style');
-          }
-     
-          if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %> === false) {
-              // Ensure table has proper structure
-              if (grid.find('thead').length === 0) {
-                  const headerRow = grid.find('tr:first').detach();
-                  grid.prepend($('<thead/>').append(headerRow));
-              }
-
-              const headerCols = grid.find('thead tr:first th').length;
-              const bodyCols = grid.find('tbody tr:first td').length;
-
-              if (headerCols !== bodyCols) {
-                  console.error('Header and body column count mismatch:', headerCols, 'vs', bodyCols);
-                  return;
-              }
-
-              try {
-                  grid.DataTable({
-                      responsive: true,
-                      paging: true,
-                      searching: true,
-                      sorting: true,
-                      info: true,
-                      order: [[0, 'asc']],
-                      stateSave: false,
-                      lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-                      columnDefs: [
-                          { orderable: false, targets: [4] }
-                      ]
-                  });
-              } catch (e) {
-                  console.error('DataTable initialization error:', e);
-              }
-          }
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -180,6 +144,7 @@
 
 
     </script>
+
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -199,7 +164,7 @@
                
                     <div class="table-responsive">
                         <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-scroll"
-                             DataKeyNames="id"
+                            DataKeyNames="id,name,storeId,positionId,IsActive"
                              OnRowEditing="GridView2_RowEditing"
                              OnRowUpdating="GridView2_RowUpdating"
                              OnRowCancelingEdit="GridView2_RowCancelingEdit"
@@ -230,12 +195,12 @@
 
                                  <asp:TemplateField HeaderText="Store" SortExpression="store" HeaderStyle-VerticalAlign="Middle" >
                                      <ItemTemplate>
-                                         <asp:Label ID="lblStore" runat="server" Text='<%# Eval("store") %>' />
+                                         <asp:Label ID="lblStore" runat="server" Text='<%# Eval("storeName") %>' />
                                      </ItemTemplate>
                                      <EditItemTemplate>
                                         <asp:DropDownList ID="storeDp" runat="server" 
                                              CssClass="form-control form-control-sm dropdown-icon"
-                                             DataTextField="store"
+                                             DataTextField="storeNo"
                                              DataValueField="id">
                                          </asp:DropDownList>
                                      </EditItemTemplate>
@@ -245,20 +210,37 @@
 
                                  <asp:TemplateField HeaderText="Level" SortExpression="level" HeaderStyle-VerticalAlign="Middle" >
                                      <ItemTemplate>
-                                         <asp:Label ID="lblPosition" runat="server" Text='<%# Eval("position") %>'></asp:Label>
+                                         <asp:Label ID="lblPosition" runat="server" Text='<%# Eval("positionName") %>'></asp:Label>
                                      </ItemTemplate>
                                      <EditItemTemplate>
-                                         <asp:DropDownList ID="PositionDb" runat="server" CssClass="form-control form-control-sm dropdown-icon">
+                                         <asp:DropDownList ID="PositionDb" runat="server" CssClass="form-control form-control-sm dropdown-icon" DataTextField="name" DataValueField="id" >
                                          </asp:DropDownList>
                                      </EditItemTemplate>
                                      <HeaderStyle ForeColor="White" BackColor="#488db4" />
                                      <ItemStyle HorizontalAlign="Justify" />
                                  </asp:TemplateField>
 
+                                 <asp:TemplateField HeaderText="Status" SortExpression="IsActive">
+                                    <ItemTemplate>
+                                        <div style="text-align:left;">
+                                            <%# Convert.ToBoolean(Eval("IsActive")) ? "Active" : "Inactive" %>
+                                        </div>
+                                    </ItemTemplate>
+                                    <EditItemTemplate>
+                                        <div style="text-align:left;">
+                                            <asp:CheckBox ID="chkTopic_Enable" runat="server" 
+                                                Checked='<%# Convert.ToBoolean(Eval("IsActive")) %>' 
+                                                Text="Active" CssClass="chk-status" />
+                                        </div>
+                                    </EditItemTemplate>
+                                    <HeaderStyle ForeColor="White" BackColor="#488db4" HorizontalAlign="Left" Width="10%" />
+                                    <ItemStyle HorizontalAlign="Left" Width="10%" />
+                                </asp:TemplateField>
+
                                <asp:TemplateField HeaderText="Topics" SortExpression="topics" HeaderStyle-VerticalAlign="Middle" >
                                    <ItemTemplate>
                                      <button type="button" class="btn btn-sm btn-outline-info fw-bold"
-                                         onclick="openTopicsModal(<%# Eval("id") %>)">
+                                         onclick="openTraineeDetails(<%# Eval("id") %>)">
                                        Details
                                      </button>
                                    </ItemTemplate>
@@ -385,46 +367,66 @@
 
 
 <!-- View / Edit Topics Modal -->
-<div class="modal fade" id="topicsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content rounded-3 shadow-lg border-0">
-
-            <!-- Hidden Field -->
-            <asp:HiddenField ID="hiddenTraineeId" runat="server" />
+<div class="modal fade" id="topicsModal" tabindex="-1" aria-labelledby="topicsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+        <div class="modal-content rounded-3 shadow-lg h-100">
 
             <!-- Modal Header -->
-            <div class="modal-header text-white" style="background-color: #022f56; ">
-                <h5 class="modal-title fw-bold">
+            <div class="modal-header text-white" style="background-color:#022f56;">
+                <h5 class="modal-title fw-bold" id="topicsModalLabel">
                     <i class="bi bi-journal-text me-2"></i> Trainee Topics
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
             <!-- Modal Body -->
-            <div class="modal-body p-2" style="max-height: 70vh; overflow-y: auto;">
-                <div class="table-responsive">
-                    <table id="topicsTable" class="table table-striped table-hover table-bordered mb-0">
-                        <thead class="">
-                            <tr class="text-start" style="background-color:#488db4;" > 
-                                <th style="width: 55%;">Topic Name</th>
-                                <th style="width: 20%;">Status</th>
-                                <th style="width: 25%;">Exam Result</th>
-                            </tr>
-                        </thead>
-                        <tbody id="topicsTableBody" class="text-start" > 
-                            <tr>
-                                <td colspan="3" class="text-muted py-4">Loading topics...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <div class="modal-body p-2" style="max-height:75vh; overflow-y:auto;">
+
+                <asp:UpdatePanel ID="upTopics" runat="server" UpdateMode="Conditional">
+                    <ContentTemplate>
+
+                        <!-- Hidden trigger for async load -->
+                        <asp:Button ID="btnLoadTopics" runat="server" OnClick="btnLoadTopics_Click" Style="display:none;" />
+                        <asp:HiddenField ID="hiddenTraineeId" runat="server" />
+
+                        <!-- Topics Grid -->
+                        <asp:GridView ID="gvTraineeTopics" runat="server" AutoGenerateColumns="False"
+                            DataKeyNames="id"
+                            OnRowDataBound="gvTraineeTopics_RowDataBound"
+                            CssClass="table table-bordered table-striped dataTable w-100"
+                            ClientIDMode="Static"
+                            ShowHeader="true" HeaderStyle-BackColor="#4486ab" HeaderStyle-ForeColor="White"
+                            EmptyDataText="No topics found."
+                            UseAccessibleHeader="true">
+
+                            <Columns>
+                                <asp:BoundField DataField="topicName" HeaderText="Topic Name" />
+                                <asp:BoundField DataField="status" HeaderText="Status" />
+
+                                <asp:TemplateField HeaderText="Exam">
+                                     <ItemTemplate>
+                                         <asp:DropDownList ID="ddlExam" runat="server" CssClass="form-select form-select-sm"
+                                             AutoPostBack="true"
+                                             OnSelectedIndexChanged="ddlExam_SelectedIndexChanged"
+                                             SelectedValue='<%# Eval("exam") %>'>
+                                             <asp:ListItem Text="Not Taken" Value="Not Taken"></asp:ListItem>
+                                             <asp:ListItem Text="Passed" Value="Passed"></asp:ListItem>
+                                             <asp:ListItem Text="Failed" Value="Failed"></asp:ListItem>
+                                         </asp:DropDownList>
+                                     </ItemTemplate>
+                                </asp:TemplateField>
+                            </Columns>
+
+                        </asp:GridView>
+
+                    </ContentTemplate>
+                </asp:UpdatePanel>
+
             </div>
 
             <!-- Modal Footer -->
-            <div class="modal-footer justify-content-end">
-                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
-                    Close
-                </button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
 
         </div>

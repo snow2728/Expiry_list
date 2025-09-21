@@ -166,15 +166,15 @@
                 scrollX: true,
                 scrollY: 407,
                 scrollCollapse: true,
-                order: [[9, 'desc']],
+                order: [[8, 'desc']],
                 lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
 
                 columnDefs: [
-                    { orderable: false, targets: [8] },
-                    { targets: [2, 3], visible: false },
+                    { orderable: false, targets: [7] },
+                    { targets: [1, 2], visible: false },
 
                     {
-                        targets: 6, 
+                        targets: 5, 
                         render: function (data, type, row, meta) {
                             if (type === 'sort' || type === 'type') {
                                 return $(data).attr("data-order") || data;
@@ -226,6 +226,14 @@
 
 </script>
 
+    <style>
+        table.dataTable tbody td:first-child,
+        table.dataTable thead th:first-child {
+            text-align: left !important;
+            vertical-align: middle !important; 
+        }
+    </style>
+
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -239,20 +247,28 @@
         <h4 class="fw-bold mb-0">Schedule List</h4>
     </div>
             <div class="row g-2">
-                <div class="col-md-2"><asp:TextBox ID="dateTb" runat="server" CssClass="form-control form-control-sm" TextMode="Date" /></div>
-                <div class="col-md-2"><asp:DropDownList ID="timeDp" runat="server" CssClass="form-select form-select-sm">
-                    <asp:ListItem Text="Select Time" Value="" />
-                    <asp:ListItem Text="08:30 AM - 11:30 AM"  Value="08:30 AM - 11:30 AM" />
-                    <asp:ListItem Text="12:30 PM - 03:30 PM" Value="12:30 PM - 03:30 PM" />
-                    <asp:ListItem Text="09:00 AM - 12:00 PM" Value="09:00 AM - 12:00 PM" />
-                    <asp:ListItem Text="09:00 AM - 03:00 PM" Value="09:00 AM - 03:00 PM" />
-                </asp:DropDownList></div>
-                <div class="col-md-2"><asp:DropDownList ID="topicName" runat="server" CssClass="form-select form-select-sm" AppendDataBoundItems="True" /></div>
-                <div class="col-md-2"><asp:DropDownList ID="locationDp" runat="server" CssClass="form-select form-select-sm">
+                <div class="col-md-2">
+                    <asp:TextBox ID="dateTb" runat="server" CssClass="form-control form-control-sm" TextMode="Date" />
+
+                </div>
+                <div class="col-md-2">
+                    <asp:DropDownList ID="levelDp" runat="server" CssClass="form-select form-select-sm" AppendDataBoundItems="True">
+                        <asp:ListItem Text="Select Level" Value="" />
+                    </asp:DropDownList>
+                </div>
+                <div class="col-md-2">
+                    <asp:DropDownList ID="topicName" runat="server" CssClass="form-select form-select-sm" AppendDataBoundItems="True" />
+
+                </div>
+                <div class="col-md-2">
+                    <asp:DropDownList ID="locationDp" runat="server" CssClass="form-select form-select-sm">
                     <asp:ListItem Text="Select Location" Value="" />
-                </asp:DropDownList></div>
-                <div class="col-md-2"><asp:DropDownList ID="trainerDp" runat="server" CssClass="form-select form-select-sm" AppendDataBoundItems="True">
-                </asp:DropDownList></div>
+                    </asp:DropDownList>
+                </div>
+                <div class="col-md-2">
+                    <asp:DropDownList ID="trainerDp" runat="server" CssClass="form-select form-select-sm" AppendDataBoundItems="True">
+                    </asp:DropDownList>
+                </div>
                 <div class="col-md-2 d-flex gap-2">
                     <asp:Button ID="showBtn" runat="server" Text="Show" CausesValidation="false" OnClick="showBtn_Click" CssClass="btn btn-info btn-sm text-white flex-fill" />
                     <asp:Button ID="resetBtn" runat="server" Text="Reset" OnClick="resetBtn_Click"  CausesValidation="false" CssClass="btn btn-danger btn-sm flex-fill" />
@@ -261,11 +277,12 @@
         </div>
     </div>
 
+    <%-- Gridview --%>
     <div class="card shadow-sm">
         <div class="card-body">
-            <div class="table-responsive" style="max-height:70vh; overflow:auto;">
+           <div class="table-responsive" style="max-height:70vh; overflow:auto;">
                 <asp:GridView ID="GridView2" runat="server"
-                   CssClass="table table-striped table-hover table-sm table-bordered align-middle mb-0 mt-1"
+                    CssClass="table table-striped table-hover table-sm table-bordered mb-0"
                     AutoGenerateColumns="False"
                     DataKeyNames="id"
                     AllowPaging="false"
@@ -274,22 +291,18 @@
                     HeaderStyle-ForeColor="White"
                     GridLines="None"
                     AllowSorting="false"
-                    EmptyDataText="No records found."> 
-                    <HeaderStyle CssClass="text-center text-white" />
-                    <RowStyle CssClass="align-middle" />
-                    <EmptyDataTemplate>No Data!!</EmptyDataTemplate>
+                    EmptyDataText="No records found.">
 
-                     <Columns>
+                    <HeaderStyle CssClass="text-left text-white" />
+                    <EmptyDataTemplate>
+                        <div class="text-left text-muted">No Data!!</div>
+                    </EmptyDataTemplate>
 
-                        <asp:TemplateField HeaderText="Topic Name" ItemStyle-Width="18%">
+                    <Columns>
+
+                       <asp:TemplateField HeaderText="Topic Name" ItemStyle-Width="18%" ItemStyle-CssClass="text-left">
                             <ItemTemplate>
                                 <asp:Label ID="lblTopicName" runat="server" Text='<%# Eval("topicName") %>' />
-                            </ItemTemplate>
-                        </asp:TemplateField>
-
-                        <asp:TemplateField HeaderText="Description" ItemStyle-Width="15%">
-                            <ItemTemplate>
-                                <asp:Label ID="lblDesc" runat="server" Text='<%# Eval("description") %>' CssClass="description" />
                             </ItemTemplate>
                         </asp:TemplateField>
 
@@ -305,67 +318,68 @@
                             </ItemTemplate>
                         </asp:TemplateField>
 
-                        <asp:TemplateField HeaderText="Room" ItemStyle-Width="10%">
+                        <asp:TemplateField HeaderText="Room" ItemStyle-Width="10%" ItemStyle-CssClass="text-left">
                             <ItemTemplate>
-                                <asp:Label ID="lblRoom" runat="server" Text='<%# Eval("room") %>' />
+                                <asp:Label ID="lblRoom" runat="server" Text='<%# Eval("room") %>' CssClass="d-block text-left" />
                             </ItemTemplate>
                         </asp:TemplateField>
 
-                        <asp:TemplateField HeaderText="Trainer Name" ItemStyle-Width="10%">
+                        <asp:TemplateField HeaderText="Trainer Name" ItemStyle-Width="10%" ItemStyle-CssClass="text-left">
                             <ItemTemplate>
-                                <asp:Label ID="lblTrainerName" runat="server" Text='<%# Eval("trainerName") %>' />
+                                <asp:Label ID="lblTrainerName" runat="server" Text='<%# Eval("trainerName") %>' CssClass="d-block text-left" />
                             </ItemTemplate>
                         </asp:TemplateField>
 
-                        <asp:TemplateField HeaderText="Trainee Level" ItemStyle-Width="10%">
+                        <asp:TemplateField HeaderText="Trainee Level" ItemStyle-Width="10%" ItemStyle-CssClass="text-left">
                             <ItemTemplate>
-                                <asp:Label ID="lblTraineeLevel" runat="server" Text='<%# Eval("position") %>' />
+                                <asp:Label ID="lblTraineeLevel" runat="server" Text='<%# Eval("position") %>' CssClass="d-block text-left" />
                             </ItemTemplate>
                         </asp:TemplateField>
 
-                        <asp:TemplateField HeaderText="Training Date" ItemStyle-Width="10%">
-                          <ItemTemplate>
-                            <asp:Label ID="lblDate" runat="server"
-                               Text='<%# Eval("date", "{0:dd-MM-yyyy}") %>'
-                               data-order='<%# Eval("date", "{0:yyyy-MM-dd}") %>' />
-                          </ItemTemplate>
-                        </asp:TemplateField>
-
-                        <asp:TemplateField HeaderText="Training Time" ItemStyle-Width="10%">
+                        <asp:TemplateField HeaderText="Training Date" ItemStyle-Width="10%" ItemStyle-CssClass="text-left">
                             <ItemTemplate>
-                                <asp:Label ID="lblTime" runat="server" Text='<%# Eval("time") %>' />
+                                <asp:Label ID="lblDate" runat="server"
+                                    Text='<%# Eval("date", "{0:dd-MM-yyyy}") %>'
+                                    data-order='<%# Eval("date", "{0:yyyy-MM-dd}") %>'
+                                    CssClass="d-block text-left" />
                             </ItemTemplate>
                         </asp:TemplateField>
 
-                    <asp:TemplateField HeaderText="Actions" ItemStyle-Width="7%" HeaderStyle-CssClass="text-center">
-                        <ItemTemplate>
-                            <div class="text-center">
-                                <%
-                                    var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
-                                    string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList") ? formPermissions["TrainingList"] : null;
-                                %>
+                        <asp:TemplateField HeaderText="Training Time" ItemStyle-Width="10%" ItemStyle-CssClass="text-left">
+                            <ItemTemplate>
+                                <asp:Label ID="lblTime" runat="server" Text='<%# Eval("time") %>' CssClass="d-block text-left" />
+                            </ItemTemplate>
+                        </asp:TemplateField>
 
-                                <% if (perm == "admin" || perm == "super") { %>
-                                    <a href="javascript:void(0);" class="btn btn-sm text-white mb-2" style="background-color:#022f56;"
-                                       onclick='highlightRow(this); openTraineeDetails(<%# Eval("id") %>)'>
-                                       <i class="fa fa-eye"></i> Details
-                                    </a>
-                                <% } %>
+                        <asp:TemplateField HeaderText="Actions" ItemStyle-Width="7%" HeaderStyle-CssClass="text-center" ItemStyle-CssClass="text-center">
+                            <ItemTemplate>
+                                <div class="text-center">
+                                    <%
+                                        var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
+                                        string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList") ? formPermissions["TrainingList"] : null;
+                                    %>
 
-                                <% if (perm == "admin" || perm=="edit") { %>
-                                    <a href="javascript:void(0);" class="btn btn-sm btn-info text-white" 
-                                       onclick='highlightRow(this); openRegisterModal(<%# Eval("id") %>, "<%# Eval("topicId") %>", <%# Eval("positionId") %>)'>
-                                       <i class="fa fa-user-plus"></i> Register
-                                    </a>
-                                <% } %>
-                            </div>
-                        </ItemTemplate>
-                    </asp:TemplateField>
+                                    <% if (perm == "admin" || perm == "super") { %>
+                                        <a href="javascript:void(0);" class="btn btn-sm text-white" style="background-color:#022f56;"
+                                           onclick='highlightRow(this); openTraineeDetails(<%# Eval("id") %>)'>
+                                           <i class="fa fa-eye"></i> Details
+                                        </a>
+                                    <% } %>
+
+                                    <% if (perm == "admin" || perm=="edit") { %>
+                                        <a href="javascript:void(0);" class="btn btn-sm btn-info text-white" 
+                                           onclick='highlightRow(this); openRegisterModal(<%# Eval("id") %>, "<%# Eval("topicId") %>", <%# Eval("positionId") %>)'>
+                                           <i class="fa fa-user-plus"></i> Register
+                                        </a>
+                                    <% } %>
+                                </div>
+                            </ItemTemplate>
+                        </asp:TemplateField>
 
                     </Columns>
 
                 </asp:GridView>
-                </div>
+            </div>
             </div>
         </div>
 
@@ -411,19 +425,6 @@
                                             <asp:ListItem Text="Registered" Value="Registered"></asp:ListItem>
                                             <asp:ListItem Text="Waitlisted" Value="Waitlisted"></asp:ListItem>
                                             <asp:ListItem Text="Removed" Value="Removed"></asp:ListItem>
-                                        </asp:DropDownList>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-
-                                <asp:TemplateField HeaderText="Exam">
-                                    <ItemTemplate>
-                                        <asp:DropDownList ID="ddlExam" runat="server" CssClass="form-select form-select-sm"
-                                            AutoPostBack="true"
-                                            OnSelectedIndexChanged="ddlExam_SelectedIndexChanged"
-                                            SelectedValue='<%# Eval("exam") %>'>
-                                            <asp:ListItem Text="Not Taken" Value="Not Taken"></asp:ListItem>
-                                            <asp:ListItem Text="Passed" Value="Passed"></asp:ListItem>
-                                            <asp:ListItem Text="Failed" Value="Failed"></asp:ListItem>
                                         </asp:DropDownList>
                                     </ItemTemplate>
                                 </asp:TemplateField>

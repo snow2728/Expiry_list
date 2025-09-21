@@ -96,9 +96,13 @@ namespace Expiry_list.Training
                         return;
                     }
 
-                    // Columns
+                    // Columns - normalize header names by removing spaces
                     for (int col = 1; col <= ws.Dimension.End.Column; col++)
-                        dtExcel.Columns.Add(ws.Cells[1, col].Value?.ToString().Trim() ?? $"Column{col}");
+                    {
+                        string colName = ws.Cells[1, col].Value?.ToString().Trim() ?? $"Column{col}";
+                        colName = colName.Replace(" ", ""); // Remove spaces
+                        dtExcel.Columns.Add(colName);
+                    }
 
                     // Rows
                     for (int row = 2; row <= ws.Dimension.End.Row; row++)
@@ -130,12 +134,11 @@ namespace Expiry_list.Training
 
         private bool InsertExcelDataToDB(System.Data.DataTable dtExcel)
         {
-            var topicDict = LoadLookup("SELECT id, topic FROM topicT");  
-            var trainerDict = LoadLookup("SELECT id, name FROM trainerT"); 
-            var levelDict = LoadLookup("SELECT id, name FROM levelT");    
-            var roomDict = LoadLookup("SELECT id, name FROM locationT"); 
+            var topicDict = LoadLookup("SELECT id, topicName FROM topicT");
+            var trainerDict = LoadLookup("SELECT id, name FROM trainerT");
+            var levelDict = LoadLookup("SELECT id, name FROM levelT");
+            var roomDict = LoadLookup("SELECT id, name FROM locationT");
 
-            // Load topicWLT 
             var topicWLTDict = new Dictionary<string, int>();
             using (SqlConnection con = new SqlConnection(strcon))
             using (SqlCommand cmd = new SqlCommand("SELECT id, topic, trainerId, traineeLevel, IsActive FROM topicWLT", con))
@@ -183,19 +186,9 @@ namespace Expiry_list.Training
                 string roomFromExcel = row["Room"].ToString().Trim();
                 string trainerName = row["TrainerName"].ToString().Trim();
                 string position = row["Position"].ToString().Trim();
-                string dateStr = row["Date"].ToString().Trim();
                 string timeStr = row["Time"].ToString().Trim();
 
-                // Validate Date
-                if (!DateTime.TryParse(dateStr, out DateTime dateValue))
-                    throw new Exception($"Invalid Date format for Topic '{topicNameFromExcel}'");
-
-                // Validate Time (hh:mm AM/PM - hh:mm AM/PM)
-                if (!System.Text.RegularExpressions.Regex.IsMatch(
-                    timeStr, @"^\d{1,2}:\d{2}\s?(AM|PM)\s?-\s?\d{1,2}:\d{2}\s?(AM|PM)$", RegexOptions.IgnoreCase))
-                    throw new Exception($"Invalid Time format for Topic '{topicNameFromExcel}'");
-
-                // Validate Topic against topicT
+                // Validate Topic
                 if (!topicDict.TryGetValue(topicNameFromExcel, out int topicId))
                     throw new Exception($"Topic '{topicNameFromExcel}' not found.");
 
@@ -211,16 +204,37 @@ namespace Expiry_list.Training
                 if (!roomDict.TryGetValue(roomFromExcel, out int roomId))
                     throw new Exception($"Training Room '{roomFromExcel}' not found.");
 
-                // Validate TopicWLT by composite key
+                // Validate TopicWLT
                 string wltKey = $"{topicId}-{trainerId}-{levelId}";
                 if (!topicWLTDict.TryGetValue(wltKey, out int topicWLTId))
                     throw new Exception($"No active TopicWLT mapping for Topic '{topicNameFromExcel}', Trainer '{trainerName}', Level '{position}'.");
 
-                // Add to bulk insert table
+                // Validate Date (dd-MM-yy)
+                object dateObj = row["Date"];
+                DateTime dateValue;
+
+                if (dateObj == null || dateObj == DBNull.Value)
+                    throw new Exception($"Date is empty for Topic '{topicNameFromExcel}'");
+
+                if (dateObj is DateTime)
+                {
+                    dateValue = (DateTime)dateObj;
+                }
+                else
+                {
+                    if (!DateTime.TryParse(dateObj.ToString().Trim(), out dateValue))
+                        throw new Exception($"Invalid Date format for Topic '{topicNameFromExcel}'");
+                }
+
+                // Validate Time
+                if (!System.Text.RegularExpressions.Regex.IsMatch(
+                    timeStr, @"^\d{1,2}:\d{2}\s?(AM|PM)\s?-\s?\d{1,2}:\d{2}\s?(AM|PM)$", RegexOptions.IgnoreCase))
+                    throw new Exception($"Invalid Time format for Topic '{timeStr}'");
+
+
                 dtBulk.Rows.Add(tranNo, topicWLTId, description, roomId, trainerId, levelId, dateValue, timeStr);
             }
 
-            // Bulk insert
             using (SqlConnection con = new SqlConnection(strcon))
             {
                 con.Open();
@@ -239,6 +253,7 @@ namespace Expiry_list.Training
                     bulkCopy.WriteToServer(dtBulk);
                 }
             }
+
             return true;
         }
 

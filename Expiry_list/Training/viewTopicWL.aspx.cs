@@ -7,6 +7,9 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml.Wordprocessing;
+using System.Web.Services;
 
 namespace Expiry_list.Training
 {
@@ -85,6 +88,49 @@ namespace Expiry_list.Training
             return trainers;
         }
 
+        [System.Web.Services.WebMethod]
+        [System.Web.Script.Services.ScriptMethod]
+        public static List<TrainerDTO> GetTrainersByIds(List<int> ids)
+        {
+            List<TrainerDTO> trainers = new List<TrainerDTO>();
+
+            if (ids == null || ids.Count == 0)
+                return trainers;
+            
+            string inClause = string.Join(",", ids.Select((id, index) => "@id" + index));
+
+            string query = $@"
+                SELECT id, name 
+                FROM trainerT 
+                WHERE id IN ({inClause})
+                ORDER BY name";
+
+            using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["con"].ConnectionString))
+            using (SqlCommand cmd = new SqlCommand(query, con))
+            {
+                // Add parameters safely
+                for (int i = 0; i < ids.Count; i++)
+                {
+                    cmd.Parameters.AddWithValue("@id" + i, ids[i]);
+                }
+
+                con.Open();
+                using (SqlDataReader dr = cmd.ExecuteReader())
+                {
+                    while (dr.Read())
+                    {
+                        trainers.Add(new TrainerDTO
+                        {
+                            Id = Convert.ToInt32(dr["id"]),
+                            Name = dr["name"].ToString()
+                        });
+                    }
+                }
+            }
+
+            return trainers;
+        }
+
         public class TrainerDTO
         {
             public int Id { get; set; }
@@ -94,9 +140,29 @@ namespace Expiry_list.Training
         protected void GridView2_RowDataBound(object sender, GridViewRowEventArgs e)
         {
             if (e.Row.RowType == DataControlRowType.DataRow &&
-                (e.Row.RowState & DataControlRowState.Edit) == DataControlRowState.Edit)
+                (e.Row.RowState & DataControlRowState.Edit) > 0)
             {
                 DataRowView rowView = (DataRowView)e.Row.DataItem;
+
+                DropDownList ddlLevel = (DropDownList)e.Row.FindControl("ddlTraineeLevel");
+                if (ddlLevel != null)
+                {
+                    Training.DataBind.BindLevel(ddlLevel);
+
+                    string currentLevel = rowView["traineeLevel"] != DBNull.Value
+                                          ? rowView["traineeLevel"].ToString()
+                                          : null;
+
+                    if (!string.IsNullOrEmpty(currentLevel) && ddlLevel.Items.FindByValue(currentLevel) != null)
+                    {
+                        ddlLevel.SelectedValue = currentLevel; 
+                    }
+                    else
+                    {
+                        ddlLevel.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Select Level", "")); 
+                        ddlLevel.SelectedIndex = 0;
+                    }
+                }
 
                 DropDownList ddlTopic = (DropDownList)e.Row.FindControl("ddlTopic");
                 if (ddlTopic != null)
@@ -104,22 +170,13 @@ namespace Expiry_list.Training
                     Training.DataBind.BindTopic(ddlTopic);
                     if (rowView["topic"] != DBNull.Value)
                     {
-                        ddlTopic.SelectedValue = rowView["topic"].ToString();
+                        string topicVal = rowView["topic"].ToString();
+                        if (ddlTopic.Items.FindByValue(topicVal) != null)
+                            ddlTopic.SelectedValue = topicVal;
                     }
                 }
 
-                DropDownList ddlLevel = (DropDownList)e.Row.FindControl("ddlTraineeLevel");
-                if (ddlLevel != null)
-                {
-                    Training.DataBind.BindLevel(ddlLevel);
-                    if (rowView["traineeLevel"] != DBNull.Value)
-                    {
-                        ddlLevel.SelectedValue = rowView["traineeLevel"].ToString();
-                    }
-                }
-                var dataItem = (DataRowView)e.Row.DataItem;
-                var container = e.Row.FindControl("trainerMultiSelect_" + dataItem["id"]);
-
+                var container = e.Row.FindControl("trainerMultiSelect_" + rowView["id"]);
                 if (container != null)
                 {
                     var hfTrainerIds = (HiddenField)container.FindControl("hfTrainerIds");
@@ -127,10 +184,10 @@ namespace Expiry_list.Training
 
                     string script = $@"
                 $(function() {{
-                    initTrainerMultiSelect('{container.ClientID}', '{hfTrainerIds.ClientID}', '{dataItem["id"]}');
-                }});
-            ";
-                    ScriptManager.RegisterStartupScript(this, this.GetType(), "initTrainerMultiSelect" + dataItem["id"], script, true);
+                    initTrainerMultiSelect('{container.ClientID}', '{hfTrainerIds.ClientID}', '{rowView["id"]}');
+                }});";
+                    ScriptManager.RegisterStartupScript(this, this.GetType(),
+                        "initTrainerMultiSelect" + rowView["id"], script, true);
                 }
             }
         }
@@ -143,106 +200,83 @@ namespace Expiry_list.Training
 
         protected void btnaddTopic_Click(object sender, EventArgs e)
         {
-            try
+            string topicNameText = topicName.Text.Trim();
+            string level = levelDb.SelectedValue;
+            string selectedTrainerIds = hfTrainerDp.Value;
+
+            if (string.IsNullOrEmpty(topicNameText) || string.IsNullOrEmpty(level))
             {
-                string topicNameText = topicName.Text.Trim();
-                string level = levelDb.SelectedValue;
-
-                if (string.IsNullOrEmpty(topicNameText) || string.IsNullOrEmpty(level))
-                {
-                    ShowAlert("Error!", "Topic and Level are required!", "error");
-                    return;
-                }
-
-                string selectedTrainerIds = hfTrainerDp.Value;
-                if (string.IsNullOrEmpty(selectedTrainerIds))
-                {
-                    ShowAlert("Error!", "Please select at least one trainer!", "error");
-                    return;
-                }
-
-                using (SqlConnection con = new SqlConnection(strcon))
-                {
-                    con.Open();
-                    SqlTransaction tran = con.BeginTransaction();
-
-                    try
-                    {
-                        // Insert topic
-                        string getTopicIdQuery = "SELECT id FROM topicT WHERE topicName = @topicName";
-                        int topicId;
-
-                        using (SqlCommand getCmd = new SqlCommand(getTopicIdQuery, con, tran))
-                        {
-                            getCmd.Parameters.AddWithValue("@topicName", topicNameText);
-                            object existingId = getCmd.ExecuteScalar();
-
-                            if (existingId != null)
-                            {
-                                topicId = Convert.ToInt32(existingId);
-                            }
-                            else
-                            {
-                                string insertTopic = "INSERT INTO topicT (topicName) OUTPUT INSERTED.id VALUES (@topicName)";
-                                using (SqlCommand insertCmd = new SqlCommand(insertTopic, con, tran))
-                                {
-                                    insertCmd.Parameters.AddWithValue("@topicName", topicNameText);
-                                    topicId = (int)insertCmd.ExecuteScalar();
-                                }
-                            }
-                        }
-
-                        string[] trainerIds = selectedTrainerIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                        foreach (string tIdStr in trainerIds)
-                        {
-                            if (!int.TryParse(tIdStr, out int trainerId))
-                                continue;
-
-                            string checkQuery = @"SELECT COUNT(*) 
-                                          FROM topicWLT 
-                                          WHERE topic = @topicId 
-                                            AND traineeLevel = @level 
-                                            AND trainerId = @trainerId";
-                            using (SqlCommand checkCmd = new SqlCommand(checkQuery, con, tran))
-                            {
-                                checkCmd.Parameters.AddWithValue("@topicId", topicId);
-                                checkCmd.Parameters.AddWithValue("@level", level);
-                                checkCmd.Parameters.AddWithValue("@trainerId", trainerId);
-
-                                int existingCount = (int)checkCmd.ExecuteScalar();
-                                if (existingCount > 0)
-                                {
-                                    continue;
-                                }
-                            }
-
-                            // Insert into topicWLT
-                            string insertWLT = @"INSERT INTO topicWLT (topic, traineeLevel, trainerId, isActive) 
-                                         VALUES (@topicId, @level, @trainerId, 1)";
-                            using (SqlCommand insertCmd = new SqlCommand(insertWLT, con, tran))
-                            {
-                                insertCmd.Parameters.AddWithValue("@topicId", topicId);
-                                insertCmd.Parameters.AddWithValue("@level", level);
-                                insertCmd.Parameters.AddWithValue("@trainerId", trainerId);
-                                insertCmd.ExecuteNonQuery();
-                            }
-                        }
-
-                        tran.Commit();
-                        ShowAlert("Success!", "Topic with selected trainer(s) added successfully!", "success");
-                        ClearForm();
-                        BindUserGrid();
-                    }
-                    catch (Exception ex)
-                    {
-                        tran.Rollback();
-                        ShowAlert("Error!", $"Insert failed: {ex.Message}", "error");
-                    }
-                }
+                ShowAlert("Error!", "Topic and Level are required!", "error");
+                return;
             }
-            catch (Exception ex)
+
+            if (string.IsNullOrEmpty(selectedTrainerIds))
             {
-                ShowAlert("Error!", $"Unexpected error: {ex.Message}", "error");
+                ShowAlert("Error!", "Please select at least one trainer!", "error");
+                return;
+            }
+
+            using (SqlConnection con = new SqlConnection(strcon))
+            {
+                con.Open();
+                SqlTransaction tran = con.BeginTransaction();
+                try
+                {
+                    int topicId;
+                    string getTopicIdQuery = "SELECT id FROM topicT WHERE topicName = @topicName";
+                    using (SqlCommand cmd = new SqlCommand(getTopicIdQuery, con, tran))
+                    {
+                        cmd.Parameters.Add("@topicName", SqlDbType.NVarChar).Value = topicNameText;
+                        object existing = cmd.ExecuteScalar();
+                        topicId = existing != null ? Convert.ToInt32(existing) : 0;
+                    }
+
+                    if (topicId == 0)
+                    {
+                        string insertTopic = "INSERT INTO topicT (topicName) OUTPUT INSERTED.id VALUES (@topicName)";
+                        using (SqlCommand insertCmd = new SqlCommand(insertTopic, con, tran))
+                        {
+                            insertCmd.Parameters.Add("@topicName", SqlDbType.NVarChar).Value = topicNameText;
+                            topicId = (int)insertCmd.ExecuteScalar();
+                        }
+                    }
+
+                    foreach (string tIdStr in selectedTrainerIds.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        if (!int.TryParse(tIdStr, out int trainerId)) continue;
+
+                        string checkQuery = @"SELECT COUNT(*) FROM topicWLT 
+                                      WHERE topic = @topicId AND traineeLevel = @level AND trainerId = @trainerId";
+                        using (SqlCommand checkCmd = new SqlCommand(checkQuery, con, tran))
+                        {
+                            checkCmd.Parameters.Add("@topicId", SqlDbType.Int).Value = topicId;
+                            checkCmd.Parameters.Add("@level", SqlDbType.NVarChar).Value = level;
+                            checkCmd.Parameters.Add("@trainerId", SqlDbType.Int).Value = trainerId;
+                            int exists = (int)checkCmd.ExecuteScalar();
+                            if (exists > 0) continue;
+                        }
+
+                        string insertWLT = @"INSERT INTO topicWLT (topic, traineeLevel, trainerId, isActive)
+                                     VALUES (@topicId, @level, @trainerId, 1)";
+                        using (SqlCommand insertCmd = new SqlCommand(insertWLT, con, tran))
+                        {
+                            insertCmd.Parameters.Add("@topicId", SqlDbType.Int).Value = topicId;
+                            insertCmd.Parameters.Add("@level", SqlDbType.NVarChar).Value = level;
+                            insertCmd.Parameters.Add("@trainerId", SqlDbType.Int).Value = trainerId;
+                            insertCmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    tran.Commit();
+                    ShowAlert("Success!", "Topic with selected trainer(s) added successfully!", "success");
+                    ClearForm();
+                    BindUserGrid();
+                }
+                catch (Exception ex)
+                {
+                    tran.Rollback();
+                    ShowAlert("Error!", $"Insert failed: {ex.Message}", "error");
+                }
             }
         }
 
@@ -300,124 +334,130 @@ namespace Expiry_list.Training
             GridViewRow row = GridView2.Rows[e.RowIndex];
 
             string newTopicName = ((TextBox)row.FindControl("txtTopic")).Text.Trim();
-            string newTraineeLevel = ((DropDownList)row.FindControl("ddlTraineeLevel")).SelectedValue;
+            DropDownList ddlTraineeLevel = (DropDownList)row.FindControl("ddlTraineeLevel");
+            string selectedLevel = ddlTraineeLevel.SelectedValue;
             string newTrainerIdsCsv = ((HiddenField)row.FindControl("hfTrainerIds")).Value;
-            bool newIsActive = ((CheckBox)row.FindControl("chkTopic_Enable")).Checked;
+            bool newIsActive = ((System.Web.UI.WebControls.CheckBox)row.FindControl("chkTopic_Enable")).Checked;
+
+            List<int> selectedTrainerIds = string.IsNullOrEmpty(newTrainerIdsCsv)
+                ? new List<int>()
+                : newTrainerIdsCsv.Split(',').Select(x => int.Parse(x.Trim())).Distinct().ToList();
 
             using (SqlConnection con = new SqlConnection(strcon))
             {
                 con.Open();
 
-                int oldTopicId = 0;
-                string oldTraineeLevel = null;
-                bool oldIsActive = false;
+                int topicId;
+                using (SqlCommand cmdTopic = new SqlCommand("SELECT id FROM topicT WHERE topicName=@name", con))
+                {
+                    cmdTopic.Parameters.AddWithValue("@name", newTopicName);
+                    var idObj = cmdTopic.ExecuteScalar();
+                    if (idObj != null)
+                        topicId = Convert.ToInt32(idObj);
+                    else
+                    {
+                        using (SqlCommand cmdInsert = new SqlCommand(
+                            "INSERT INTO topicT(topicName) OUTPUT INSERTED.id VALUES(@name)", con))
+                        {
+                            cmdInsert.Parameters.AddWithValue("@name", newTopicName);
+                            topicId = (int)cmdInsert.ExecuteScalar();
+                        }
+                    }
+                }
 
-                // --- Get current row's old values ---
+                string currentTraineeLevel;
                 using (SqlCommand cmdOld = new SqlCommand(
-                    "SELECT topic, traineeLevel, IsActive FROM topicWLT WHERE id=@id", con))
+                    "SELECT traineeLevel FROM topicWLT WHERE id=@id", con))
                 {
                     cmdOld.Parameters.AddWithValue("@id", rowId);
-                    using (SqlDataReader dr = cmdOld.ExecuteReader())
+                    currentTraineeLevel = cmdOld.ExecuteScalar()?.ToString();
+                }
+
+                string traineeLevelToUse = (!string.IsNullOrEmpty(selectedLevel) && selectedLevel != "Select Level")
+                                            ? selectedLevel
+                                            : currentTraineeLevel;
+
+                if (string.IsNullOrEmpty(traineeLevelToUse))
+                    traineeLevelToUse = "DefaultLevel"; 
+
+                using (SqlCommand cmdUpdateBase = new SqlCommand(
+                    "UPDATE topicWLT SET topic=@topic, traineeLevel=@level, IsActive=@isActive WHERE id=@id AND trainerId IS NULL", con))
+                {
+                    cmdUpdateBase.Parameters.AddWithValue("@topic", topicId);
+                    cmdUpdateBase.Parameters.AddWithValue("@level", traineeLevelToUse);
+                    cmdUpdateBase.Parameters.AddWithValue("@isActive", newIsActive);
+                    cmdUpdateBase.Parameters.AddWithValue("@id", rowId);
+                    cmdUpdateBase.ExecuteNonQuery();
+                }
+
+                Dictionary<int, int> existingTrainerRows = new Dictionary<int, int>();
+                using (SqlCommand cmdExisting = new SqlCommand(
+                    "SELECT id, trainerId FROM topicWLT WHERE topic=@topic AND trainerId IS NOT NULL", con))
+                {
+                    cmdExisting.Parameters.AddWithValue("@topic", topicId);
+                    using (SqlDataReader dr = cmdExisting.ExecuteReader())
                     {
-                        if (dr.Read())
-                        {
-                            oldTopicId = Convert.ToInt32(dr["topic"]);
-                            oldTraineeLevel = dr["traineeLevel"]?.ToString();
-                            oldIsActive = dr["IsActive"] != DBNull.Value && (bool)dr["IsActive"];
-                        }
+                        while (dr.Read())
+                            existingTrainerRows[Convert.ToInt32(dr["trainerId"])] = Convert.ToInt32(dr["id"]);
                     }
                 }
 
-                // --- Get or insert topicT id ---
-                int newTopicId = oldTopicId;
-                if (!string.IsNullOrEmpty(newTopicName))
+                foreach (var trainerId in existingTrainerRows.Keys.Except(selectedTrainerIds))
                 {
-                    using (SqlCommand cmdTopic = new SqlCommand("SELECT id FROM topicT WHERE topicName=@name", con))
-                    {
-                        cmdTopic.Parameters.AddWithValue("@name", newTopicName);
-                        object idObj = cmdTopic.ExecuteScalar();
-                        if (idObj != null)
-                            newTopicId = Convert.ToInt32(idObj);
-                        else
-                        {
-                            using (SqlCommand cmdInsert = new SqlCommand("INSERT INTO topicT(topicName) OUTPUT INSERTED.id VALUES(@name)", con))
-                            {
-                                cmdInsert.Parameters.AddWithValue("@name", newTopicName);
-                                newTopicId = (int)cmdInsert.ExecuteScalar();
-                            }
-                        }
-                    }
-                }
+                    int rowPK = existingTrainerRows[trainerId];
 
-                List<int> newTrainerIds = new List<int>();
-                if (!string.IsNullOrEmpty(newTrainerIdsCsv))
-                {
-                    newTrainerIds = newTrainerIdsCsv.Split(',')
-                                    .Select(t => int.TryParse(t.Trim(), out int val) ? val : 0)
-                                    .Where(t => t > 0)
-                                    .ToList();
-                }
-
-                bool topicChanged = newTopicId != oldTopicId;
-                bool levelChanged = newTraineeLevel != oldTraineeLevel;
-                bool isActiveChanged = newIsActive != oldIsActive;
-
-                if (topicChanged || levelChanged || isActiveChanged)
-                {
-                    List<string> setClauses = new List<string>();
-                    SqlCommand cmdUpdate = new SqlCommand();
-                    cmdUpdate.Connection = con;
-
-                    if (topicChanged)
-                    {
-                        setClauses.Add("topic=@topicId");
-                        cmdUpdate.Parameters.AddWithValue("@topicId", newTopicId );
-                    }
-                    if (levelChanged)
-                    {
-                        setClauses.Add("traineeLevel=@level");
-                        cmdUpdate.Parameters.AddWithValue("@level", (object)newTraineeLevel ?? (object)oldTraineeLevel);
-                    }
-                    if (isActiveChanged)
-                    {
-                        setClauses.Add("IsActive=@isActive");
-                        cmdUpdate.Parameters.AddWithValue("@isActive", newIsActive);
-                    }
-
-                    cmdUpdate.CommandText = $@"
-                UPDATE topicWLT
-                SET {string.Join(", ", setClauses)}
-                WHERE topic=@oldTopic AND traineeLevel=@oldLevel AND IsActive=@oldIsActive";
-
-                    cmdUpdate.Parameters.AddWithValue("@oldTopic", oldTopicId);
-                    cmdUpdate.Parameters.AddWithValue("@oldLevel", (object)oldTraineeLevel);
-                    cmdUpdate.Parameters.AddWithValue("@oldIsActive", oldIsActive);
-                    cmdUpdate.ExecuteNonQuery();
-                }
-
-                // --- Sync trainers for the new topic/level/active ---
-                foreach (int trainerId in newTrainerIds)
-                {
                     using (SqlCommand cmdCheck = new SqlCommand(
-                        "SELECT COUNT(1) FROM topicWLT WHERE topic=@topic AND traineeLevel=@level AND trainerId=@trainerId AND IsActive=@isActive", con))
+                        "SELECT COUNT(*) FROM traineeTopicT WHERE topicId=@topicId", con))
                     {
-                        cmdCheck.Parameters.AddWithValue("@topic", newTopicId);
-                        cmdCheck.Parameters.AddWithValue("@level", (object)newTraineeLevel ?? DBNull.Value);
-                        cmdCheck.Parameters.AddWithValue("@trainerId", trainerId);
-                        cmdCheck.Parameters.AddWithValue("@isActive", newIsActive);
+                        cmdCheck.Parameters.AddWithValue("@topicId", rowPK);
 
-                        int exists = (int)cmdCheck.ExecuteScalar();
-                        if (exists == 0)
+                        int count = (int)cmdCheck.ExecuteScalar();
+                        if (count > 0)
                         {
-                            using (SqlCommand cmdInsert = new SqlCommand(
-                                "INSERT INTO topicWLT(topic, traineeLevel, trainerId, IsActive) VALUES(@topic,@level,@trainerId,@isActive)", con))
-                            {
-                                cmdInsert.Parameters.AddWithValue("@topic", newTopicId);
-                                cmdInsert.Parameters.AddWithValue("@level", (object)newTraineeLevel ?? DBNull.Value);
-                                cmdInsert.Parameters.AddWithValue("@trainerId", trainerId);
-                                cmdInsert.Parameters.AddWithValue("@isActive", newIsActive);
-                                cmdInsert.ExecuteNonQuery();
-                            }
+                            string script = @"Swal.fire({
+                                icon: 'error',
+                                title: 'Cannot Delete',
+                                text: 'This trainer has other schedules and cannot be deleted!',
+                                confirmButtonText: 'OK'
+                              });";
+
+                            ScriptManager.RegisterStartupScript(this, this.GetType(), "swalAlert", script, true);
+                            continue; 
+                        }
+                    }
+
+                    using (SqlCommand cmdDel = new SqlCommand(
+                        "DELETE FROM topicWLT WHERE id=@rowPK", con))
+                    {
+                        cmdDel.Parameters.AddWithValue("@rowPK", rowPK);
+                        cmdDel.ExecuteNonQuery();
+                    }
+                }
+
+
+                foreach (var trainerId in selectedTrainerIds)
+                {
+                    if (!existingTrainerRows.ContainsKey(trainerId))
+                    {
+                        using (SqlCommand cmdInsert = new SqlCommand(
+                            "INSERT INTO topicWLT(topic, traineeLevel, trainerId, IsActive) VALUES(@topic,@level,@trainerId,@isActive)", con))
+                        {
+                            cmdInsert.Parameters.AddWithValue("@topic", topicId);
+                            cmdInsert.Parameters.AddWithValue("@trainerId", trainerId);
+                            cmdInsert.Parameters.AddWithValue("@isActive", newIsActive);
+                            cmdInsert.Parameters.AddWithValue("@level", traineeLevelToUse);
+                            cmdInsert.ExecuteNonQuery();
+                        }
+                    }
+                    else
+                    {
+                        using (SqlCommand cmdUpdate = new SqlCommand(
+                            "UPDATE topicWLT SET traineeLevel=@level, IsActive=@isActive WHERE id=@rowPK", con))
+                        {
+                            cmdUpdate.Parameters.AddWithValue("@rowPK", existingTrainerRows[trainerId]);
+                            cmdUpdate.Parameters.AddWithValue("@isActive", newIsActive);
+                            cmdUpdate.Parameters.AddWithValue("@level", traineeLevelToUse);
+                            cmdUpdate.ExecuteNonQuery();
                         }
                     }
                 }

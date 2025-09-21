@@ -8,6 +8,7 @@ using System.Web.Services;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using static Expiry_list.regeForm1;
+using static Expiry_list.Training.scheduleList;
 
 namespace Expiry_list.Training
 {
@@ -33,10 +34,13 @@ namespace Expiry_list.Training
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
-                    SELECT t.id,
-                       t.name,
-                       st.storeNo as store,
-                       l.name as position
+                        SELECT t.id,
+                               t.name,
+                               st.id AS storeId,
+                               st.storeNo AS storeName,
+                               l.id AS positionId,
+                               l.name AS positionName,
+                               t.IsActive
                         FROM traineeT t
                         LEFT JOIN LevelT l ON t.position = l.id
                         LEFT JOIN stores st ON t.store = st.id
@@ -58,7 +62,55 @@ namespace Expiry_list.Training
             }
         }
 
-        [System.Web.Services.WebMethod]
+        protected void btnLoadTopics_Click(object sender, EventArgs e)
+        {
+            int traineeId;
+            if (int.TryParse(hiddenTraineeId.Value, out traineeId))
+            {
+                LoadTraineeTopics(traineeId);
+                upTopics.Update();
+
+                // Initialize DataTable after UpdatePanel refresh
+                ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
+            }
+        }
+
+        protected void LoadTraineeTopics(int traineeId)
+        {
+            using (SqlConnection conn = new SqlConnection(strcon))
+            using (SqlCommand cmd = new SqlCommand(@"
+                WITH tp_unique AS (
+                    SELECT *, 
+                           ROW_NUMBER() OVER (PARTITION BY topicId, traineeId, scheduleId ORDER BY updatedAt DESC, id DESC) AS rn
+                    FROM traineeTopicT
+                )
+                SELECT DISTINCT t.id AS id, 
+                       t.topicName,
+                       ISNULL(tp.Status, 'Not Registered') AS Status,
+                       ISNULL(tp.Exam, 'Not Taken') AS Exam
+                FROM topicWLT w
+                INNER JOIN TopicT t ON t.id = w.topic
+                LEFT JOIN tp_unique tp 
+                       ON tp.topicId = w.id 
+                      AND tp.traineeId = @traineeId 
+                      AND tp.rn = 1
+                WHERE w.traineeLevel = (SELECT position FROM traineeT WHERE id=@traineeId)
+                  AND w.IsActive = 1
+                ORDER BY t.topicName;", conn))                                                                                      
+            {
+                cmd.Parameters.AddWithValue("@traineeId", traineeId);
+                conn.Open();
+
+                DataTable dt = new DataTable();
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                da.Fill(dt);
+
+                gvTraineeTopics.DataSource = dt;
+                gvTraineeTopics.DataBind();
+            }
+        }
+
+        [WebMethod]
         public static List<object> GetTraineeTopics(int traineeId)
         {
             var topics = new List<object>();
@@ -68,131 +120,152 @@ namespace Expiry_list.Training
             {
                 string query = @"
                     WITH tp_unique AS (
-                        SELECT *,
-                               ROW_NUMBER() OVER (PARTITION BY topicId, traineeId ORDER BY id) AS rn
+                        SELECT *, 
+                               ROW_NUMBER() OVER (PARTITION BY topicId, traineeId, scheduleId ORDER BY updatedAt DESC, id DESC) AS rn
                         FROM traineeTopicT
                     )
-                    SELECT
-                        t.id AS id,
-                        t.topicName,
-                        ISNULL(tp.Status, 'Not Registered') AS Status,
-                        ISNULL(tp.Exam, 'Not Taken') AS Exam
+                    SELECT t.id AS topicId, 
+                           tp.id AS traineeTopicId,
+                           t.topicName,
+                           ISNULL(tp.Status, 'Not Registered') AS Status,
+                           ISNULL(tp.Exam, 'Not Taken') AS Exam
                     FROM topicWLT w
-                    INNER JOIN traineeT tr ON tr.id = @traineeId
-                    INNER JOIN TopicT t ON t.id = w.topic 
+                    INNER JOIN TopicT t ON t.id = w.topic
                     LEFT JOIN tp_unique tp 
-                        ON tp.topicId = t.id AND tp.traineeId = tr.id AND tp.rn = 1
-                    WHERE w.traineeLevel = tr.position and t.IsActive=1
+                           ON tp.topicId = w.id 
+                          AND tp.traineeId = @traineeId 
+                          AND tp.rn = 1
+                    WHERE w.traineeLevel = (SELECT position FROM traineeT WHERE id=@traineeId)
+                      AND w.IsActive = 1
                     ORDER BY t.topicName;";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@traineeId", traineeId);
                     conn.Open();
-
                     SqlDataReader dr = cmd.ExecuteReader();
                     while (dr.Read())
                     {
                         topics.Add(new
                         {
                             id = dr["id"].ToString(),
-                            name = dr["topicName"].ToString(),
-                            status = dr["Status"].ToString(),
-                            exam = dr["Exam"].ToString()
+                            topicName = dr["topicName"].ToString(),
+                            Status = dr["Status"].ToString(),
+                            Exam = dr["Exam"].ToString()
                         });
                     }
                 }
             }
+
             return topics;
         }
 
-        [WebMethod]
-        public static string UpdateTraineeTopicStatusExam(int traineeId, int topicId, string status, string exam)
+        protected void gvTraineeTopics_RowDataBound(object sender, GridViewRowEventArgs e)
         {
-            try
+            if (e.Row.RowType == DataControlRowType.DataRow)
             {
-                string connStr = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
-                using (SqlConnection conn = new SqlConnection(connStr))
+                gvTraineeTopics.UseAccessibleHeader = true;
+                if (gvTraineeTopics.HeaderRow != null)
+                    gvTraineeTopics.HeaderRow.TableSection = TableRowSection.TableHeader;
+
+                DropDownList ddlExam = (DropDownList)e.Row.FindControl("ddlExam");
+
+                DataRowView drv = (DataRowView)e.Row.DataItem;
+
+                string exam = drv["exam"].ToString();
+
+                if (ddlExam != null)
                 {
-                    string query = @"
-                        MERGE traineeTopicT AS target
-                        USING (SELECT @traineeId AS traineeId, @topicId AS topicId) AS source
-                        ON target.traineeId = source.traineeId AND target.topicId = source.topicId
-                        WHEN MATCHED THEN 
-                            UPDATE SET status = @status, exam = @exam, updatedAt = GETDATE()
-                        WHEN NOT MATCHED THEN
-                            INSERT (traineeId, topicId, status, exam, updatedAt)
-                            VALUES (@traineeId, @topicId, @status, @exam, GETDATE());";
+                    if (ddlExam.Items.FindByValue(exam) != null)
+                        ddlExam.SelectedValue = exam;
 
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    // --- Permission check ---
+                    var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
+                    string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList")
+                                  ? formPermissions["TrainingList"]
+                                  : null;
+
+                    if (perm == "edit")
                     {
-                        cmd.Parameters.AddWithValue("@traineeId", traineeId);
-                        cmd.Parameters.AddWithValue("@topicId", topicId);
-                        cmd.Parameters.AddWithValue("@status", (object)status ?? DBNull.Value);
-                        cmd.Parameters.AddWithValue("@exam", (object)exam ?? DBNull.Value);
-
-                        conn.Open();
-                        cmd.ExecuteNonQuery();
+                        ddlExam.Enabled = false; // make read-only
+                        ddlExam.CssClass += " bg-light"; // optional: visual cue
+                    }
+                    else
+                    {
+                        ddlExam.Enabled = true; // admin can edit
                     }
                 }
-                return "success";
-            }
-            catch (Exception ex)
-            {
-                return ex.Message;
             }
         }
 
-        //[System.Web.Services.WebMethod]
-        //public static bool SaveTraineeTopics(int traineeId, List<TopicStatus> topicStatuses)
-        //{
-        //    if (topicStatuses == null || topicStatuses.Count == 0)
-        //        return false;
+        protected void ddlExam_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            DropDownList ddl = sender as DropDownList;
+            GridViewRow row = ddl.NamingContainer as GridViewRow;
 
-        //    string connStr = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
+            int traineeId = Convert.ToInt32(hiddenTraineeId.Value);
+            int topicId = Convert.ToInt32(gvTraineeTopics.DataKeys[row.RowIndex].Value);
+            string newExam = ddl.SelectedValue;
 
-        //    using (SqlConnection conn = new SqlConnection(connStr))
-        //    {
-        //        conn.Open();
-        //        using (SqlTransaction transaction = conn.BeginTransaction())
-        //        {
-        //            try
-        //            {
-        //                foreach (var topic in topicStatuses)
-        //                {
-        //                    // Use MERGE to update if exists, insert if not
-        //                    string mergeQuery = @"
-        //                        MERGE INTO traineeTopicT AS target
-        //                        USING (SELECT @traineeId AS traineeId, @topicId AS topicId) AS source
-        //                        ON target.traineeId = source.traineeId AND target.topicId = source.topicId
-        //                        WHEN MATCHED THEN
-        //                            UPDATE SET status = @status, exam = @exam, updatedAt = GETDATE()
-        //                        WHEN NOT MATCHED THEN
-        //                            INSERT (traineeId, topicId, status, exam, updatedAt)
-        //                            VALUES (@traineeId, @topicId, @status, @exam, GETDATE());";
+            try
+            {
+                bool updated = UpdateExamResult(traineeId, topicId, newExam);
 
-        //                    using (SqlCommand cmd = new SqlCommand(mergeQuery, conn, transaction))
-        //                    {
-        //                        cmd.Parameters.Add("@traineeId", SqlDbType.Int).Value = traineeId;
-        //                        cmd.Parameters.Add("@topicId", SqlDbType.Int).Value = topic.TopicId;
-        //                        cmd.Parameters.Add("@status", SqlDbType.NVarChar, 50).Value = topic.Status ?? (object)DBNull.Value;
-        //                        cmd.Parameters.Add("@exam", SqlDbType.NVarChar, 50).Value = topic.Exam ?? (object)DBNull.Value;
-        //                        cmd.ExecuteNonQuery();
-        //                    }
-        //                }
+                if (updated)
+                {
+                    LoadTraineeTopics(traineeId);
+                    upTopics.Update();
 
-        //                transaction.Commit();
-        //                return true;
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                transaction.Rollback();
-        //                System.Diagnostics.Debug.WriteLine("Error saving topics: " + ex.Message);
-        //                return false;
-        //            }
-        //        }
-        //    }
-        //}
+                    ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
+                }
+                else
+                {
+                    ScriptManager.RegisterStartupScript(
+                        this,
+                        GetType(),
+                        "swal",
+                        "Swal.fire({ icon: 'error', title: 'Not Registered', text: 'Please register this topic first before updating exam!' });",
+                        true
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                ScriptManager.RegisterStartupScript(
+                    this,
+                    GetType(),
+                    "swalError",
+                    $"Swal.fire({{ icon: 'error', title: 'Error', text: '{ex.Message.Replace("'", "\\'")}' }});",
+                    true
+                );
+            }
+        }
+
+        private bool UpdateExamResult(int traineeId, int topicId, string exam)
+        {
+            using (SqlConnection con = new SqlConnection(strcon))
+            {
+                con.Open();
+
+                string updateQuery = @"
+            UPDATE tt
+            SET tt.exam = @exam,
+                tt.updatedAt = GETDATE()
+            FROM traineeTopicT tt
+            INNER JOIN topicWLT w ON tt.topicId = w.id
+            WHERE tt.traineeId = @traineeId AND w.topic = @topicTId";
+
+                using (SqlCommand cmd = new SqlCommand(updateQuery, con))
+                {
+                    cmd.Parameters.AddWithValue("@exam", exam);
+                    cmd.Parameters.AddWithValue("@traineeId", traineeId);
+                    cmd.Parameters.AddWithValue("@topicTId", topicId);
+
+                    int rowsAffected = cmd.ExecuteNonQuery();
+                    return rowsAffected > 0;
+                }
+            }
+        }
 
         public class TopicStatus
         {
@@ -218,41 +291,71 @@ namespace Expiry_list.Training
         {
             try
             {
-                int id = Convert.ToInt32(GridView2.DataKeys[e.RowIndex].Value);
+                int id = Convert.ToInt32(GridView2.DataKeys[e.RowIndex].Values["id"]);
                 GridViewRow row = GridView2.Rows[e.RowIndex];
 
-                // Find controls
                 TextBox txtName = (TextBox)row.FindControl("txtName");
                 DropDownList storeDb = (DropDownList)row.FindControl("storeDp");
                 DropDownList PositionDb = (DropDownList)row.FindControl("PositionDb");
+                CheckBox chkIsActive = (CheckBox)row.FindControl("chkTopic_Enable");
 
+                // Old values from DataKeys
+                string oldName = GridView2.DataKeys[e.RowIndex].Values["name"].ToString();
+                string oldStore = GridView2.DataKeys[e.RowIndex].Values["storeId"].ToString();
+                string oldLevel = GridView2.DataKeys[e.RowIndex].Values["positionId"].ToString();
+                bool oldIsActive = Convert.ToBoolean(GridView2.DataKeys[e.RowIndex].Values["IsActive"]);
+
+                // Validate controls
                 if (txtName == null || storeDb == null || PositionDb == null)
                 {
                     ShowMessage("Could not find form controls!", "error");
                     return;
                 }
 
+                // Use new value if entered, otherwise old value
+                string newName = string.IsNullOrWhiteSpace(txtName.Text) ? oldName : txtName.Text.Trim();
+                string newStore = !string.IsNullOrEmpty(storeDb.SelectedValue) ? storeDb.SelectedValue : oldStore;
+                string newLevel = !string.IsNullOrEmpty(PositionDb.SelectedValue) ? PositionDb.SelectedValue : oldLevel;
+                bool newIsActive = chkIsActive != null ? chkIsActive.Checked : oldIsActive;
+
+                // Debug: check values before updating
+                System.Diagnostics.Debug.WriteLine($"Updating ID: {id}, Name: {newName}, Store: {newStore}, Level: {newLevel}, Active: {newIsActive}");
+
                 using (SqlConnection con = new SqlConnection(strcon))
                 {
-                    string query = "UPDATE traineeT SET name=@name, store=@store, position=@level WHERE id=@id";
+                    string query = @"UPDATE traineeT 
+                             SET name = @name, 
+                                 store = @store, 
+                                 position = @level, 
+                                 IsActive = @isActive 
+                             WHERE id = @id";
+
                     using (SqlCommand cmd = new SqlCommand(query, con))
                     {
-                        cmd.Parameters.AddWithValue("@name", txtName.Text.Trim());
-                        cmd.Parameters.AddWithValue("@store", storeDb.SelectedValue);
-                        cmd.Parameters.AddWithValue("@level", PositionDb.SelectedValue);
+                        cmd.Parameters.AddWithValue("@name", newName);
+
+                        // Store
+                        if (int.TryParse(newStore, out int storeId))
+                            cmd.Parameters.Add("@store", SqlDbType.Int).Value = storeId;
+                        else
+                            cmd.Parameters.Add("@store", SqlDbType.NVarChar).Value = newStore;
+
+                        // Level
+                        if (int.TryParse(newLevel, out int levelId))
+                            cmd.Parameters.Add("@level", SqlDbType.Int).Value = levelId;
+                        else
+                            cmd.Parameters.Add("@level", SqlDbType.NVarChar).Value = newLevel;
+
+                        cmd.Parameters.AddWithValue("@isActive", newIsActive);
                         cmd.Parameters.AddWithValue("@id", id);
 
                         con.Open();
                         int rowsAffected = cmd.ExecuteNonQuery();
 
                         if (rowsAffected > 0)
-                        {
                             ShowMessage("Trainee updated successfully!", "success");
-                        }
                         else
-                        {
                             ShowMessage("No records were updated.", "info");
-                        }
                     }
                 }
 
@@ -265,34 +368,21 @@ namespace Expiry_list.Training
             }
         }
 
-        protected void GridView2_RowDataBound(object sender, GridViewRowEventArgs e)
-        {
-            if (e.Row.RowType == DataControlRowType.DataRow &&
-                (e.Row.RowState & DataControlRowState.Edit) == DataControlRowState.Edit)
-            {
-                DropDownList storeDp = (DropDownList)e.Row.FindControl("storeDp");
-                if (storeDp != null)
-                {
-                    Training.DataBind.BindStore(storeDp); 
-                    DataRowView rowView = (DataRowView)e.Row.DataItem;
-                    if (rowView["store"] != DBNull.Value)
-                    {
-                        storeDp.SelectedValue = rowView["store"].ToString();
-                    }
-                }
-
-                DropDownList PositionDb = (DropDownList)e.Row.FindControl("PositionDb");
-                if (PositionDb != null)
-                {
-                    DataRowView drv = (DataRowView)e.Row.DataItem;
-                    if (drv["position"] != DBNull.Value)
-                    {
-                        string posValue = drv["position"].ToString();
-                        if (PositionDb.Items.FindByValue(posValue) != null)
-                        {
-                            PositionDb.SelectedValue = posValue;
-                        }
-                    }
+        protected void GridView2_RowDataBound(object sender, GridViewRowEventArgs e) { 
+            if (e.Row.RowType == DataControlRowType.DataRow && (e.Row.RowState & DataControlRowState.Edit) == DataControlRowState.Edit) { 
+                DataRowView rowView = (DataRowView)e.Row.DataItem; 
+                DropDownList storeDp = (DropDownList)e.Row.FindControl("storeDp"); 
+                if (storeDp != null) {
+                    Training.DataBind.BindStore(storeDp); string currentStoreId = rowView["storeId"].ToString(); 
+                    if (storeDp.Items.FindByValue(currentStoreId) != null) 
+                        storeDp.SelectedValue = currentStoreId;
+                } 
+                DropDownList ddlLevel = (DropDownList)e.Row.FindControl("PositionDb"); 
+                if (ddlLevel != null) { Training.DataBind.BindLevel(ddlLevel); 
+                    string currentLevelId = rowView["positionId"].ToString();
+                    
+                if (ddlLevel.Items.FindByValue(currentLevelId) != null)
+                        ddlLevel.SelectedValue = currentLevelId;
                 }
             }
         }
@@ -362,7 +452,6 @@ namespace Expiry_list.Training
                 storeDp.SelectedIndex = 0;
                 BindUserGrid();
 
-                // Close the modal
                 ScriptManager.RegisterStartupScript(this, GetType(), "closeModal",
                     "$('#traineeModal').modal('hide');", true);
             }
@@ -374,7 +463,6 @@ namespace Expiry_list.Training
 
         private void ShowMessage(string message, string type)
         {
-            // Encode message to prevent JavaScript errors
             string safeMessage = HttpUtility.JavaScriptStringEncode(message);
             string script = $"swal('{type.ToUpper()}', '{safeMessage}', '{type}');";
 

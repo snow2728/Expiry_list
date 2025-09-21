@@ -27,15 +27,61 @@ namespace Expiry_list.Training
                 GridView2.DataBind();
 
                 BindGrid();
-                Training.DataBind.BindTrainer(trainerDp); 
+                Training.DataBind.BindTrainer(trainerDp);
                 Training.DataBind.BindRoom(locationDp);
+                Training.DataBind.BindLevel(levelDp);
                 Training.DataBind.BindTopic(topicName);
+
+                // Store initial empty filter values
+                ViewState["FilterDate"] = string.Empty;
+                ViewState["FilterLevel"] = "0";
+                ViewState["FilterTopicId"] = "0";
+                ViewState["FilterStoreId"] = "0";
+                ViewState["FilterTrainerId"] = "0";
+            }
+            else
+            {
+                // Restore filter values from ViewState on postback
+                if (ViewState["FilterDate"] != null)
+                    dateTb.Text = ViewState["FilterDate"].ToString();
+
+                if (ViewState["FilterLevel"] != null && levelDp.Items.FindByValue(ViewState["FilterLevel"].ToString()) != null)
+                    levelDp.SelectedValue = ViewState["FilterLevel"].ToString();
+
+                if (ViewState["FilterTopicId"] != null && topicName.Items.FindByValue(ViewState["FilterTopicId"].ToString()) != null)
+                    topicName.SelectedValue = ViewState["FilterTopicId"].ToString();
+
+                if (ViewState["FilterStoreId"] != null && locationDp.Items.FindByValue(ViewState["FilterStoreId"].ToString()) != null)
+                    locationDp.SelectedValue = ViewState["FilterStoreId"].ToString();
+
+                if (ViewState["FilterTrainerId"] != null && trainerDp.Items.FindByValue(ViewState["FilterTrainerId"].ToString()) != null)
+                    trainerDp.SelectedValue = ViewState["FilterTrainerId"].ToString();
             }
         }
 
         private void BindGrid()
         {
-            GridView2.DataSource = GetAllItems();
+            // Check if we need to apply filters
+            bool hasFilters = ViewState["HasFilters"] != null && (bool)ViewState["HasFilters"];
+
+            if (hasFilters)
+            {
+                // Apply saved filters
+                string filterDate = ViewState["FilterDate"] != null ? ViewState["FilterDate"].ToString() : "";
+                int filterLevel = ViewState["FilterLevel"] != null ? Convert.ToInt32(ViewState["FilterLevel"]) : 0;
+                int filterTopicId = ViewState["FilterTopicId"] != null ? Convert.ToInt32(ViewState["FilterTopicId"]) : 0;
+                int filterStoreId = ViewState["FilterStoreId"] != null ? Convert.ToInt32(ViewState["FilterStoreId"]) : 0;
+                int filterTrainerId = ViewState["FilterTrainerId"] != null ? Convert.ToInt32(ViewState["FilterTrainerId"]) : 0;
+
+                DataTable dt = GetFilteredData(filterDate, filterLevel, filterTopicId, filterStoreId, filterTrainerId);
+                GridView2.DataSource = dt;
+            }
+            else
+            {
+                // Show all data
+                GridView2.DataSource = GetAllItems();
+            }
+
             GridView2.DataBind();
         }
 
@@ -92,25 +138,17 @@ namespace Expiry_list.Training
         {
             if (e.Row.RowType == DataControlRowType.DataRow)
             {
-            //    HiddenField hf = (HiddenField)e.Row.FindControl("hfTopicId");
-            //    hf.Attributes["class"] = "hidden-field";
-
                 gvScheduleTrainees.UseAccessibleHeader = true;
                 gvScheduleTrainees.HeaderRow.TableSection = TableRowSection.TableHeader;
 
-            DropDownList ddlStatus = (DropDownList)e.Row.FindControl("ddlStatus");
-                DropDownList ddlExam = (DropDownList)e.Row.FindControl("ddlExam");
+                DropDownList ddlStatus = (DropDownList)e.Row.FindControl("ddlStatus");
 
                 DataRowView drv = (DataRowView)e.Row.DataItem;
 
                 string status = drv["status"].ToString();
-                string exam = drv["exam"].ToString();
 
                 if (ddlStatus.Items.FindByValue(status) != null)
                     ddlStatus.SelectedValue = status;
-
-                if (ddlExam.Items.FindByValue(exam) != null)
-                    ddlExam.SelectedValue = exam;
             }
         }
 
@@ -133,29 +171,8 @@ namespace Expiry_list.Training
             ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
         }
 
-        protected void ddlExam_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            DropDownList ddl = sender as DropDownList;
-            GridViewRow row = ddl.NamingContainer as GridViewRow;
-            int traineeId = Convert.ToInt32(gvScheduleTrainees.DataKeys[row.RowIndex].Value);
-
-            string newExam = ddl.SelectedValue;
-
-            UpdateTraineeStatusOrExam(traineeId, null, newExam);
-
-            int scheduleId = Convert.ToInt32(hfSelectedScheduleId.Value);
-            LoadScheduleTrainees(scheduleId);
-            upTrainees.Update();
-
-            // Re-initialize DataTables on client
-            ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
-
-
-        }
-
         private void UpdateTraineeStatusOrExam(int traineeId, string status, string exam)
         {
-
             using (SqlConnection con = new SqlConnection(strcon))
             {
                 con.Open();
@@ -166,13 +183,10 @@ namespace Expiry_list.Training
                     // Build dynamic query based on which value changed
                     if (status != null)
                         cmd.CommandText = "UPDATE traineeTopicT SET status=@status WHERE id=@id";
-                    else if (exam != null)
-                        cmd.CommandText = "UPDATE traineeTopicT SET exam=@exam WHERE id=@id";
 
                     cmd.Parameters.AddWithValue("@id", traineeId);
 
                     if (status != null) cmd.Parameters.AddWithValue("@status", status);
-                    if (exam != null) cmd.Parameters.AddWithValue("@exam", exam);
 
                     cmd.ExecuteNonQuery();
                 }
@@ -316,7 +330,7 @@ namespace Expiry_list.Training
         }
 
         // Get filtered data
-        private DataTable GetFilteredData(string filterDate, string filterTime, int filterTopicId, int filterStoreId, int filterTrainerId)
+        private DataTable GetFilteredData(string filterDate, int filterLevel, int filterTopicId, int filterStoreId, int filterTrainerId)
         {
             DataTable dt = new DataTable();
             var whereClauses = new List<string>();
@@ -332,15 +346,15 @@ namespace Expiry_list.Training
                 }
             }
 
-            if (!string.IsNullOrEmpty(filterTime))
+            if (filterLevel > 0)
             {
-                whereClauses.Add("s.time = @Time");
-                parameters.Add(new SqlParameter("@Time", filterTime));
+                whereClauses.Add("s.position = @Level");
+                parameters.Add(new SqlParameter("@Level", filterLevel));
             }
 
             if (filterTopicId > 0)
             {
-                whereClauses.Add("t.id = @TopicId");
+                whereClauses.Add("tw.topic = @TopicId");
                 parameters.Add(new SqlParameter("@TopicId", filterTopicId));
             }
 
@@ -362,8 +376,8 @@ namespace Expiry_list.Training
                 SELECT 
                     s.id,
                     s.tranNo,
-                    tw.topic AS topicId,        -- keep for JS
-                    s.position AS positionId,   -- keep for JS
+                    tw.topic AS topicId,      
+                    s.position AS positionId,
                     t.topicName AS topicName,
                     s.description,
                     lo.name AS room,
@@ -399,12 +413,20 @@ namespace Expiry_list.Training
         protected void showBtn_Click(object sender, EventArgs e)
         {
             string filterDate = dateTb.Text.Trim();
-            string filterTime = timeDp.SelectedValue;
+            int filterLevel = string.IsNullOrEmpty(levelDp.SelectedValue) ? 0 : Convert.ToInt32(levelDp.SelectedValue);
             int filterTopicId = string.IsNullOrEmpty(topicName.SelectedValue) ? 0 : Convert.ToInt32(topicName.SelectedValue);
             int filterStoreId = string.IsNullOrEmpty(locationDp.SelectedValue) ? 0 : Convert.ToInt32(locationDp.SelectedValue);
             int filterTrainerId = string.IsNullOrEmpty(trainerDp.SelectedValue) ? 0 : Convert.ToInt32(trainerDp.SelectedValue);
 
-            DataTable dt = GetFilteredData(filterDate, filterTime, filterTopicId, filterStoreId, filterTrainerId);
+            // Save filter values to ViewState
+            ViewState["FilterDate"] = filterDate;
+            ViewState["FilterLevel"] = filterLevel.ToString();
+            ViewState["FilterTopicId"] = filterTopicId.ToString();
+            ViewState["FilterStoreId"] = filterStoreId.ToString();
+            ViewState["FilterTrainerId"] = filterTrainerId.ToString();
+            ViewState["HasFilters"] = true;
+
+            DataTable dt = GetFilteredData(filterDate, filterLevel, filterTopicId, filterStoreId, filterTrainerId);
 
             if (dt.Rows.Count == 0)
             {
@@ -424,10 +446,19 @@ namespace Expiry_list.Training
         protected void resetBtn_Click(object sender, EventArgs e)
         {
             dateTb.Text = string.Empty;
-            timeDp.SelectedIndex = 0;
+            levelDp.SelectedIndex = 0;
             topicName.SelectedIndex = 0;
             locationDp.SelectedIndex = 0;
             trainerDp.SelectedIndex = 0;
+
+            // Clear filter state
+            ViewState["FilterDate"] = string.Empty;
+            ViewState["FilterLevel"] = "0";
+            ViewState["FilterTopicId"] = "0";
+            ViewState["FilterStoreId"] = "0";
+            ViewState["FilterTrainerId"] = "0";
+            ViewState["HasFilters"] = false;
+
             BindGrid();
         }
 
@@ -529,6 +560,7 @@ namespace Expiry_list.Training
             ScriptManager.RegisterStartupScript(this, this.GetType(), "successAlert",
                 "Swal.fire('Success!', 'Trainees registered successfully.', 'success');", true);
 
+            // Use BindGrid instead of BindGrid to preserve filters
             BindGrid();
         }
 
@@ -603,6 +635,5 @@ namespace Expiry_list.Training
 
             return forms;
         }
-
     }
 }

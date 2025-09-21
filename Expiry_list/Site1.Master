@@ -296,17 +296,12 @@
                                                         </a>
                                                     </li>
                                                     <li>
-                                                        <a href="viewTopic.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "viewTopic.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
-                                                            <i class="fa-solid fa-book-open"></i><span>Topic List</span>
-                                                        </a>
-                                                    </li>
-                                                    <li>
                                                         <a href="viewTopicWL.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "viewTopicWL.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">
                                                            <i class="fa-solid fa-layer-group"></i><span>Topic Via Level List</span>
                                                         </a>
                                                     </li>
                                             <% }
-                                               if (perm == "admin" || perm == "edit" )
+                                               if (perm == "admin" || perm == "edit" || perm == "super" )
                                                { %>
                                                     <li>
                                                         <a href="viewTrainee.aspx" class="dropdown-item dropdown-item1 d-flex align-items-center gap-2 fa-1x <%= (currentPage == "viewTrainee.aspx" ? "active3" : "") %>" style="transition: all 0.3s ease; color: white;">

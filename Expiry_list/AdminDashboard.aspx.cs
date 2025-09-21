@@ -322,13 +322,17 @@ namespace Expiry_list
 
             string redirectUrl = null;
 
-            if (allowedForms.ContainsKey("TrainingList") && (perm == "edit" || perm == "admin"))
+            if (allowedForms.ContainsKey("TrainingList") && (perm == "super" || perm == "admin"))
             {
                 redirectUrl = "~/Training/rege1.aspx";
             }
-            else if (allowedForms.ContainsKey("TrainingList") && perm == "view")
+            else if (allowedForms.ContainsKey("TrainingList") && perm == "edit")
             {
                 redirectUrl = "~/Training/viewTrainee.aspx";
+            }
+            else if (allowedForms.ContainsKey("TrainingList") && perm == "view")
+            {
+                redirectUrl = "~/Training/scheduleList.aspx";
             }
             else
             {

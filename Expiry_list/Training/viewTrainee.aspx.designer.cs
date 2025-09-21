@@ -96,6 +96,24 @@ namespace Expiry_list.Training
         protected global::System.Web.UI.WebControls.Button addTopicBtn1;
 
         /// <summary>
+        /// upTopics control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.UpdatePanel upTopics;
+
+        /// <summary>
+        /// btnLoadTopics control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnLoadTopics;
+
+        /// <summary>
         /// hiddenTraineeId control.
         /// </summary>
         /// <remarks>
@@ -103,5 +121,14 @@ namespace Expiry_list.Training
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.HiddenField hiddenTraineeId;
+
+        /// <summary>
+        /// gvTraineeTopics control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.GridView gvTraineeTopics;
     }
 }

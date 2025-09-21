@@ -74,7 +74,7 @@ namespace Expiry_list.Training
             using (SqlConnection con = new SqlConnection(strcon))
             {
                 con.Open();
-                string query = "SELECT id, name from levelT;";
+                string query = "SELECT id, name FROM levelT;";
                 using (SqlCommand cmd = new SqlCommand(query, con))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
@@ -83,12 +83,11 @@ namespace Expiry_list.Training
                         while (reader.Read())
                         {
                             ListItem item = new ListItem(reader["name"].ToString(), reader["id"].ToString());
-                            //item.Attributes["data-trainer"] = reader["trainerName"].ToString();
                             ddlLevel.Items.Add(item);
                         }
                     }
                 }
-                ddlLevel.Items.Insert(0, new ListItem("Select Level", ""));
+                ddlLevel.Items.Insert(0, new ListItem("Select Position", ""));
             }
         }
 

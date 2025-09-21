@@ -33,13 +33,13 @@ namespace Expiry_list.Training
         protected global::System.Web.UI.WebControls.TextBox dateTb;
 
         /// <summary>
-        /// timeDp control.
+        /// levelDp control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList timeDp;
+        protected global::System.Web.UI.WebControls.DropDownList levelDp;
 
         /// <summary>
         /// topicName control.

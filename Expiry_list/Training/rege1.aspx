@@ -5,9 +5,13 @@
  <script type="text/javascript">
 
      document.addEventListener("DOMContentLoaded", function () {
-         updateLevel();
          document.getElementById("link_home").href = "../AdminDashboard.aspx";
+         updateLevel();
      });
+
+     //document.addEventListener('DOMContentLoaded', function () {
+        
+     //});
 
      function attachTopicHandler() {
         var ddl = document.getElementById('<%= topicDP.ClientID %>');
