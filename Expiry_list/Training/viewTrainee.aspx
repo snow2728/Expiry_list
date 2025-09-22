@@ -63,7 +63,6 @@
                     console.error('Header and body column count mismatch:', headerCols, 'vs', bodyCols);
                     return;
                 }
-             /* <span class="toggle-label">Status:</span>*/
                 try {
                     var table = grid.DataTable({
                         responsive: true,
@@ -89,26 +88,15 @@
                             $('.top-toggle').append(toggleHtml);
 
                             var isActiveColIndex = -1;
-                            var api = this.api(); // this is the table instance
+                            var api = this.api(); 
                             api.columns().every(function (index) {
                                 var headerText = $(this.header()).text().trim().toLowerCase();
                                 if (headerText === 'status') {
                                     isActiveColIndex = index;
                                     console.log("col ind ", isActiveColIndex);
                                 }
-                            });
+                            });                           
                            
-                            //$('#toggleSwitch').on('change', function () {
-                            //    if (this.checked) {
-                            //        $('#toggleStatus').text('Inactive').css('color', '#dc3545');
-                            //        api.column(isActiveColIndex).search("Inactive").draw();
-                            //    } else {
-                            //        $('#toggleStatus').text('Active').css('color', '#000');
-                            //        api.column(isActiveColIndex).search("Active").draw();
-                            //    }
-                            //});
-
-                            //api.column(isActiveColIndex).search("Active").draw();
                             var hiddenColIndex = 5;
                             $('#toggleSwitch').on('change', function () {
                                 if (this.checked) {
@@ -119,22 +107,7 @@
                                     api.column(hiddenColIndex).search("True").draw();
                                 }
                             });
-
-                            // default show only active
                             api.column(hiddenColIndex).search("True").draw();
-
-                            // Toggle functionality
-                            //$('#toggleSwitch').on('change', function () {
-                            //    if (this.checked) {
-                            //        $('#toggleStatus').text('Inactive').css('color', '#dc3545'); /*'#0D330E'*/
-                            //        var isChecked = this.checked ? "1" : "0";
-                            //        __doPostBack('ToggleSwitch', isChecked);
-                            //        console.log('Toggle is ON');
-                            //    } else {
-                            //        $('#toggleStatus').text('Active').css('color', '#000'); // red for off
-                            //        console.log('Toggle is OFF');
-                            //    }
-                            //});
                         },
                         columnDefs: [
                             { orderable: false, targets: [4] }
