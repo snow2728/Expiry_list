@@ -128,7 +128,7 @@ namespace Expiry_list.Training
             }
             catch (Exception ex)
             {
-                ShowError("Error processing Excel file: " + ex.Message);
+                ShowError("Error in Excel file: " + ex.Message);
             }
         }
 
@@ -166,7 +166,6 @@ namespace Expiry_list.Training
             System.Data.DataTable dtBulk = new System.Data.DataTable();
             dtBulk.Columns.Add("tranNo", typeof(string));
             dtBulk.Columns.Add("topicName", typeof(int));
-            dtBulk.Columns.Add("description", typeof(string));
             dtBulk.Columns.Add("room", typeof(int));
             dtBulk.Columns.Add("trainerName", typeof(int));
             dtBulk.Columns.Add("position", typeof(int));
@@ -182,7 +181,6 @@ namespace Expiry_list.Training
                 string tranNo = $"{prefix}-{lastTranNo}";
 
                 string topicNameFromExcel = row["TopicName"].ToString().Trim();
-                string description = row["Description"].ToString().Trim();
                 string roomFromExcel = row["Room"].ToString().Trim();
                 string trainerName = row["TrainerName"].ToString().Trim();
                 string position = row["Position"].ToString().Trim();
@@ -214,7 +212,7 @@ namespace Expiry_list.Training
                 DateTime dateValue;
 
                 if (dateObj == null || dateObj == DBNull.Value)
-                    throw new Exception($"Date is empty for Topic '{topicNameFromExcel}'");
+                    throw new Exception($"Date is empty for Topic '{dateObj}'");
 
                 if (dateObj is DateTime)
                 {
@@ -223,7 +221,7 @@ namespace Expiry_list.Training
                 else
                 {
                     if (!DateTime.TryParse(dateObj.ToString().Trim(), out dateValue))
-                        throw new Exception($"Invalid Date format for Topic '{topicNameFromExcel}'");
+                        throw new Exception($"Invalid Date format for Topic '{dateObj}'");
                 }
 
                 // Validate Time
@@ -232,7 +230,7 @@ namespace Expiry_list.Training
                     throw new Exception($"Invalid Time format for Topic '{timeStr}'");
 
 
-                dtBulk.Rows.Add(tranNo, topicWLTId, description, roomId, trainerId, levelId, dateValue, timeStr);
+                dtBulk.Rows.Add(tranNo, topicWLTId, roomId, trainerId, levelId, dateValue, timeStr);
             }
 
             using (SqlConnection con = new SqlConnection(strcon))
@@ -243,7 +241,6 @@ namespace Expiry_list.Training
                     bulkCopy.DestinationTableName = "scheduleT";
                     bulkCopy.ColumnMappings.Add("tranNo", "tranNo");
                     bulkCopy.ColumnMappings.Add("topicName", "topicName");
-                    bulkCopy.ColumnMappings.Add("description", "description");
                     bulkCopy.ColumnMappings.Add("room", "room");
                     bulkCopy.ColumnMappings.Add("trainerName", "trainerName");
                     bulkCopy.ColumnMappings.Add("position", "position");
@@ -332,7 +329,6 @@ namespace Expiry_list.Training
             {
                 string tranNo = no.Text.Trim();
                 string topicId = topicDP.SelectedValue;
-                string description = desc.Text.Trim();
                 string locationName = locationDp.SelectedItem.Text.Trim();
                 string date1 = date.Text.Trim();
                 string time1 = timeDp.SelectedValue;
@@ -395,15 +391,14 @@ namespace Expiry_list.Training
 
                     // Insert schedule
                     string insertQuery = @"INSERT INTO scheduleT 
-                                   (tranNo, topicName, description, room, trainerName, position, date, time)
+                                   (tranNo, topicName, room, trainerName, position, date, time)
                                    VALUES 
-                                   (@tranNo, @topicName, @description, @room, @trainerId, @position, @date, @time)";
+                                   (@tranNo, @topicName, @room, @trainerId, @position, @date, @time)";
 
                     using (SqlCommand insertCmd = new SqlCommand(insertQuery, con))
                     {
                         insertCmd.Parameters.AddWithValue("@tranNo", tranNo);
                         insertCmd.Parameters.AddWithValue("@topicName", topicWLTId);
-                        insertCmd.Parameters.AddWithValue("@description", description);
                         insertCmd.Parameters.AddWithValue("@room", locationId);
                         insertCmd.Parameters.AddWithValue("@trainerId", trainerId);
                         insertCmd.Parameters.AddWithValue("@position", level);
@@ -489,7 +484,6 @@ namespace Expiry_list.Training
             topicDP.SelectedIndex = 0;
             trainerDp.Text = "";
             position.Text = "";
-            desc.Text = "";
             date.Text = string.Empty;
             timeDp.SelectedIndex = 0;
             locationDp.Text = "";

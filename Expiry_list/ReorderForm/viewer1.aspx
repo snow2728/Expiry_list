@@ -19,13 +19,11 @@
              border-right: none !important;
          }
 
-         /* Base table borders */
          table.dataTable th,
          table.dataTable td {
              border-right: 1px solid #ccc;
          }
 
-         /* Remove per-cell borders on sticky columns */
          table.dataTable th.dtfc-fixed-left,
          table.dataTable td.dtfc-fixed-left {
              border-right: none !important;
@@ -37,6 +35,60 @@
          table.dataTable td:last-child {
              border-right: none;
          }
+
+        .grip {
+            width: 3px;
+            background-color: transparent;
+            cursor: col-resize;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            right: -1.5px; 
+            z-index: 1;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .grip:hover {
+            background-color: #337ab7;
+            opacity: 0.5;
+        }
+
+        .dragging {
+            background-color: #000000;
+            opacity: 0.8;
+        }
+
+        #drag-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1px;
+            background-color: #337ab7;
+            z-index: 9999;
+            height: 100%;
+            display: none; 
+        }
+
+         .fixed-column-1, .sticky-header1 {
+              left: 0;
+              min-width: 30px !important;
+          }
+
+          .fixed-column-2, .sticky-header2 {
+              left: 30px;
+              min-width: 70px !important;
+          }
+
+          .fixed-column-3, .sticky-header3 {
+              left: 107px;
+              min-width: 107px !important;
+          }
+
+          .fixed-column-4, .sticky-header4 {
+              left: 207px;
+              min-width: 50px;
+          }
+
     </style>                
     <%
         var permissions = Session["formPermissions"] as Dictionary<string, string>;
@@ -57,11 +109,13 @@
         //initializeDataTable();
         setupEditMode();
         InitializeStoreFilter();
+        //initializeResizableColumns(); 
 
         if (typeof (Sys) !== 'undefined') {
             Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
                 updateFilterVisibility();
                 InitializeStoreFilter();
+                //initializeResizableColumns(); 
 
                 // Reattach change handlers after postback
                 Object.keys(filterMap).forEach(key => {
@@ -81,6 +135,7 @@
         setupEventDelegation();
         InitializeItemVendorFilter();
         setupFilterToggle();
+        //akeGridViewResizable('<%= GridView2.ClientID %>');
     });
 
     $(document).on('click', '.truncated-note', function (e) {
@@ -100,18 +155,18 @@
         else $container.hide();
     }
 
-    function storeSearchAndEdit() {
+  <%--  function storeSearchAndEdit() {
         const searchTerm = $('.dataTables_filter input').val();
         $('#<%= hfLastSearch.ClientID %>').val(searchTerm);
         $('#<%= searchValue.ClientID %>').val(searchTerm);
 
         __doPostBack('<%= btnEdit.UniqueID %>', '');
-    }
+  }--%>
 
-    $(document).on('click', '#<%= btnEdit.ClientID %>', function () {
+   <%-- $(document).on('click', '#<%= btnEdit.ClientID %>', function () {
         storeSearchAndEdit();
         return false;
-    });
+    });--%>
 
     function setupEditMode() {
         if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %>) {
@@ -145,6 +200,35 @@
         }
     }
 
+    let dragIndicator = null;
+    function initializeResizableColumns() {
+        if ($.fn.colResizable) {
+            $(".ResizableGrid").colResizable({ disable: true });
+
+            $(".ResizableGrid").colResizable({
+                liveDrag: true,
+                gripInnerHtml: "<div class='grip'></div>",
+                draggingClass: "dragging",
+                resizeMode: 'overflow', 
+                onDrag: function (e) {
+                    if (dragIndicator === null) {
+                        dragIndicator = $('<div id="drag-indicator"></div>').appendTo('body');
+                    }
+                    dragIndicator.css({
+                        'left': e.pageX + 'px',
+                        'height': $(this).outerHeight() + 'px',
+                        'display': 'block'
+                    });
+                },
+                onResize: function () {
+                    if (dragIndicator) {
+                        dragIndicator.hide();
+                    }
+                }
+            });
+        }
+    }
+
     function makeColumnsResizable(tableSelector) {
         let pressed = false, startX, startWidth, $th, index;
 
@@ -152,7 +236,6 @@
         const $wrapper = $table.closest('.dataTables_wrapper');
         const $headerCells = $wrapper.find('.dataTables_scrollHead thead th');
 
-        // Add resizers only once
         $headerCells.each(function () {
             if ($(this).find('.resizer').length === 0) {
                 $(this).css('position', 'relative')
@@ -160,7 +243,6 @@
             }
         });
 
-        // Handle mousedown
         $wrapper.find('.resizer').off('mousedown').on('mousedown', function (e) {
             pressed = true;
             startX = e.pageX;
@@ -172,29 +254,24 @@
             e.stopPropagation();
         });
 
-        // Handle mousemove
         $(document).off('mousemove.resizer').on('mousemove.resizer', function (e) {
             if (!pressed) return;
 
             let delta = e.pageX - startX;
             let newWidth = startWidth + delta;
 
-            if (newWidth < 40) newWidth = 40; // min width
+            if (newWidth < 40) newWidth = 40;
 
-            // Apply width to cloned header
             $headerCells.eq(index).css('width', newWidth);
 
-            // Apply width to body cells
             $wrapper.find('.dataTables_scrollBody tbody tr').each(function () {
                 $(this).find('td').eq(index).css('width', newWidth);
             });
 
-            // Apply width to original <colgroup> if present
             const $col = $table.find('colgroup col').eq(index);
             if ($col.length) $col.css('width', newWidth + 'px');
         });
 
-        // Handle mouseup
         $(document).off('mouseup.resizer').on('mouseup.resizer', function () {
             pressed = false;
         });
@@ -325,6 +402,7 @@
             ],
             order: [[1, 'asc'], [2, 'asc']],
             columnDefs: [
+                { targets: '_all', orderSequence: ["asc", "desc", ""] },
                 { targets: [20], visible: false, searchable: false }
             ],
             drawCallback: function (settings) {
@@ -1092,6 +1170,7 @@
     }
 
 </script> 
+
     <%--<style>
             table.dataTable > thead > tr > th {
                 background-color: #BD467F !important;
@@ -1133,12 +1212,12 @@
                      </div>
 
                      <!-- Edit Button -->
-                     <div class="col-6 col-md-auto">
+               <%--      <div class="col-6 col-md-auto">
                          <asp:Button Text="Edit" runat="server"
                              CssClass="btn btn-secondary text-white w-100"
                              ID="btnEdit" OnClientClick="document.getElementById('<%= hfLastSearch.ClientID %>').value = $('.dataTables_filter input').val();"
                              OnClick="btnEdit_Click" />
-                     </div>
+                     </div>--%>
 
                      <!-- Action Dropdown -->
                      <div class="col-12 col-md-auto">
@@ -1417,7 +1496,7 @@
 
                           <div class="table-responsive gridview-container pt-2 px-2">
                             <asp:GridView ID="GridView2" runat="server"
-                                 CssClass="table table-striped table-hover border-2 shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto display"
+                                 CssClass="table table-striped ResizableGrid table-hover border-2 shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto display"
                                  AutoGenerateColumns="False"
                                  DataKeyNames="id"  ClientIDMode="Static"
                                  UseAccessibleHeader="true"

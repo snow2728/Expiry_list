@@ -157,11 +157,6 @@ namespace Expiry_list.Training
                     {
                         ddlLevel.SelectedValue = currentLevel; 
                     }
-                    else
-                    {
-                        ddlLevel.Items.Insert(0, new System.Web.UI.WebControls.ListItem("Select Level", "")); 
-                        ddlLevel.SelectedIndex = 0;
-                    }
                 }
 
                 DropDownList ddlTopic = (DropDownList)e.Row.FindControl("ddlTopic");

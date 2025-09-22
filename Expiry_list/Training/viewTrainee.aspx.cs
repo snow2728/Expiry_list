@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Web;
 using System.Web.Services;
 using System.Web.UI;
@@ -30,6 +31,15 @@ namespace Expiry_list.Training
         {
             try
             {
+                string username = HttpContext.Current.User.Identity.Name;
+                var allowedForms = GetAllowedFormsByUser(username);
+
+                bool isAdmin = allowedForms.Values.Contains("admin")
+                               || allowedForms.Values.Contains("super")
+                               || username.Equals("admin", StringComparison.OrdinalIgnoreCase);
+
+                List<string> storeNos = GetLoggedInUserStoreNames();
+
                 using (var conn = new SqlConnection(strcon))
                 using (var cmd = conn.CreateCommand())
                 {
@@ -44,7 +54,20 @@ namespace Expiry_list.Training
                         FROM traineeT t
                         LEFT JOIN LevelT l ON t.position = l.id
                         LEFT JOIN stores st ON t.store = st.id
-                        ORDER BY t.id ASC";
+                        WHERE 1=1"; 
+
+                    if (!isAdmin && storeNos.Any())
+                    {
+                        var storeParams = storeNos.Select((s, i) => $"@store{i}").ToList();
+                        cmd.CommandText += $" AND st.storeNo IN ({string.Join(",", storeParams)})";
+
+                        for (int i = 0; i < storeNos.Count; i++)
+                        {
+                            cmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
+                        }
+                    }
+
+                    cmd.CommandText += " ORDER BY t.id ASC";
 
                     conn.Open();
                     using (var da = new SqlDataAdapter(cmd))
@@ -70,7 +93,6 @@ namespace Expiry_list.Training
                 LoadTraineeTopics(traineeId);
                 upTopics.Update();
 
-                // Initialize DataTable after UpdatePanel refresh
                 ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
             }
         }
@@ -179,7 +201,6 @@ namespace Expiry_list.Training
                     if (ddlExam.Items.FindByValue(exam) != null)
                         ddlExam.SelectedValue = exam;
 
-                    // --- Permission check ---
                     var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
                     string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList")
                                   ? formPermissions["TrainingList"]
@@ -187,12 +208,12 @@ namespace Expiry_list.Training
 
                     if (perm == "edit")
                     {
-                        ddlExam.Enabled = false; // make read-only
-                        ddlExam.CssClass += " bg-light"; // optional: visual cue
+                        ddlExam.Enabled = false;
+                        ddlExam.CssClass += " bg-light"; 
                     }
                     else
                     {
-                        ddlExam.Enabled = true; // admin can edit
+                        ddlExam.Enabled = true;
                     }
                 }
             }
@@ -377,6 +398,7 @@ namespace Expiry_list.Training
                     if (storeDp.Items.FindByValue(currentStoreId) != null) 
                         storeDp.SelectedValue = currentStoreId;
                 } 
+
                 DropDownList ddlLevel = (DropDownList)e.Row.FindControl("PositionDb"); 
                 if (ddlLevel != null) { Training.DataBind.BindLevel(ddlLevel); 
                     string currentLevelId = rowView["positionId"].ToString();
@@ -469,16 +491,76 @@ namespace Expiry_list.Training
             ScriptManager.RegisterStartupScript(this, GetType(), "showMessage", script, true);
         }
 
-        //public void toggleSwitch_CheckedChanged(object sender, EventArgs e)
-        //{
-        //    bool showInactive = toggleSwitch.Checked;
-        //    var dt = GridView2.DataSource as DataTable;
-        //    if (dt == null) return;
+        private static List<string> GetLoggedInUserStoreNames()
+        {
+            List<string> storeNos = HttpContext.Current.Session["storeListRaw"] as List<string>;
+            List<string> storeNames = new List<string>();
 
-        //    DataView dv = dt.DefaultView;
-        //    dv.RowFilter = showInactive? "Status = Inactive" : "Status = Active";   // or "Status = 'Inactive'"
-        //    GridView2.DataSource = dv;
-        //    GridView2.DataBind();
-        //}
+            if (storeNos == null || storeNos.Count == 0)
+                return storeNames;
+
+            string strcon = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
+            string query = $"SELECT storeNo FROM Stores WHERE storeNo IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})";
+
+            using (SqlConnection conn = new SqlConnection(strcon))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                for (int i = 0; i < storeNos.Count; i++)
+                {
+                    cmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
+                }
+
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        storeNames.Add(reader["storeNo"].ToString());
+                    }
+                }
+            }
+
+            return storeNames;
+        }
+
+        private static Dictionary<string, string> GetAllowedFormsByUser(string username)
+        {
+            Dictionary<string, string> forms = new Dictionary<string, string>();
+            string strcon = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
+
+            using (SqlConnection conn = new SqlConnection(strcon))
+            {
+                string query = @"
+            SELECT f.name AS FormName,
+                   CASE up.permission_level
+                        WHEN 1 THEN 'view'
+                        WHEN 2 THEN 'edit'
+                        WHEN 3 THEN 'admin'
+                        WHEN 4 THEN 'super'
+                        WHEN 5 THEN 'super1'
+                        ELSE 'none'
+                   END AS Permission
+            FROM UserPermissions up
+            INNER JOIN Forms f ON up.form_id = f.id
+            INNER JOIN Users u ON up.user_id = u.id
+            WHERE u.username = @Username";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@Username", username);
+                conn.Open();
+
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string form = reader["FormName"].ToString();
+                        string permission = reader["Permission"].ToString();
+                        forms[form] = permission;
+                    }
+                }
+            }
+
+            return forms;
+        }
     }
 }
