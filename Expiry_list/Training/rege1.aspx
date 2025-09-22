@@ -94,15 +94,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Description Field -->
-                                <div class="row g-2 mb-3">
-                                    <label for="<%= desc.ClientID %>" class="col-sm-4 col-form-label fw-bolder fa-1x" style="color: #076585;">Description</label>
-                                    <div class="col-sm-8">
-                                        <asp:TextBox runat="server" CssClass="form-control form-control-sm"
-                                            TextMode="MultiLine" ID="desc" />
-                                    </div>
-                                </div>
-
                                 <!-- Location Field -->
                                 <div class="row g-2 mb-3">
                                     <label for="<%= locationDp.ClientID %>" class="col-sm-4 col-form-label fw-bolder fa-1x" style="color: #076585;">Training Room</label>

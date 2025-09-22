@@ -490,12 +490,6 @@ table.dataTable {
     padding: 0 !important;
 }
 
-/* Remove border spacing */
-table.dataTable {
-    border-collapse: collapse !important;
-    border-spacing: 0 !important;
-}
-
 /* Remove any remaining gaps */
 .dataTables_scrollHead + .dataTables_scrollBody {
     margin-top: -1px !important;

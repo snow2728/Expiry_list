@@ -24,15 +24,6 @@ namespace Expiry_list.ReorderForm
         protected global::System.Web.UI.WebControls.Button btnFilter;
 
         /// <summary>
-        /// btnEdit control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnEdit;
-
-        /// <summary>
         /// ddlAction control.
         /// </summary>
         /// <remarks>

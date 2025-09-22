@@ -154,7 +154,7 @@
                 </div>
 
                 <!-- Card Body -->
-                  <div class="card-body">
+                  <div class="card-body" style="color:#a10d54; ">
                      <%-- style="background-color: #F1B4D1;"--%>
                     <asp:ScriptManager ID="ScriptManager1" runat="server"></asp:ScriptManager>
                     <asp:UpdatePanel runat="server" ID="UpdatePanel1" UpdateMode="Conditional">

@@ -145,6 +145,9 @@
                         fixedColumns: { leftColumns: 4, rightColumns: 0, heightMatch: 'none' },
                         columns: columns,
                         order: [[1, 'asc'], [2, 'asc']],
+                        columnDefs: [
+                            { targets: '_all', orderSequence: ["asc", "desc", ""] }
+                        ],
                         select: { style: 'multi', selector: 'td:first-child' },
                         lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
                         initComplete: function () {
@@ -1010,7 +1013,7 @@
                               <div class="alert alert-info">No items to Filter</div>
                         </asp:Panel>
 
-                         <div class="table-responsive gridview-container ps-1 rounded-1 " style="height: 535px;">
+                         <div class="table-responsive gridview-container p-2 rounded-1 " style="height: 535px;">
                             <asp:GridView ID="GridView2" runat="server"
                                 CssClass="table table-striped table-bordered table-hover shadow-lg"
                                 AutoGenerateColumns="False"

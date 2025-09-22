@@ -61,12 +61,10 @@ namespace Expiry_list.Training
 
         private void BindGrid()
         {
-            // Check if we need to apply filters
             bool hasFilters = ViewState["HasFilters"] != null && (bool)ViewState["HasFilters"];
 
             if (hasFilters)
             {
-                // Apply saved filters
                 string filterDate = ViewState["FilterDate"] != null ? ViewState["FilterDate"].ToString() : "";
                 int filterLevel = ViewState["FilterLevel"] != null ? Convert.ToInt32(ViewState["FilterLevel"]) : 0;
                 int filterTopicId = ViewState["FilterTopicId"] != null ? Convert.ToInt32(ViewState["FilterTopicId"]) : 0;
@@ -78,7 +76,6 @@ namespace Expiry_list.Training
             }
             else
             {
-                // Show all data
                 GridView2.DataSource = GetAllItems();
             }
 
@@ -93,7 +90,6 @@ namespace Expiry_list.Training
                 LoadScheduleTrainees(scheduleId);
                 upTrainees.Update();
 
-                // Initialize DataTable after UpdatePanel refresh
                 ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
             }
         }
@@ -114,7 +110,7 @@ namespace Expiry_list.Training
                     JOIN traineeT tr ON t.traineeId = tr.id
                     LEFT JOIN stores st ON tr.store = st.id
                     LEFT JOIN levelT lv ON tr.position = lv.id
-                    WHERE t.scheduleId = @ScheduleId;
+                    WHERE t.scheduleId = @ScheduleId ;
                     ", conn))
                 {
                     cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
@@ -167,7 +163,6 @@ namespace Expiry_list.Training
             LoadScheduleTrainees(scheduleId);
             upTrainees.Update();
 
-            // Re-initialize DataTables on client
             ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
         }
 
@@ -180,7 +175,6 @@ namespace Expiry_list.Training
                 {
                     cmd.Connection = con;
 
-                    // Build dynamic query based on which value changed
                     if (status != null)
                         cmd.CommandText = "UPDATE traineeTopicT SET status=@status WHERE id=@id";
 
@@ -202,18 +196,17 @@ namespace Expiry_list.Training
                 var trainees = new List<Trainee>();
                 string connectionString = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
 
-                // get current username
                 string username = HttpContext.Current.User.Identity.Name;
 
-                // check if user is admin
                 bool isAdmin = false;
                 var allowedForms = GetAllowedFormsByUser(username);
-                if (allowedForms.Values.Contains("admin") || allowedForms.Values.Contains("super") || username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                if (allowedForms.Values.Contains("admin") ||
+                    allowedForms.Values.Contains("super") ||
+                    username.Equals("admin", StringComparison.OrdinalIgnoreCase))
                 {
                     isAdmin = true;
                 }
 
-                // get logged-in user's store list
                 List<string> storeNos = GetLoggedInUserStoreNames();
 
                 using (var con = new SqlConnection(connectionString))
@@ -221,14 +214,18 @@ namespace Expiry_list.Training
                     con.Open();
 
                     string sql = @"
-                    SELECT t.id, t.name, t.position AS positionId, p.name AS position, st.storeNo as store
-                    FROM traineeT t
-                    LEFT JOIN levelT p ON t.position = p.id
-                    LEFT JOIN stores st ON t.store = st.id
-                    WHERE t.name LIKE @SearchTerm
-                    AND (@PositionId = 0 OR t.position = @PositionId)";
+                        SELECT t.id, 
+                               t.name, 
+                               t.position AS positionId, 
+                               p.name AS position, 
+                               st.storeNo AS store
+                        FROM traineeT t
+                        LEFT JOIN levelT p ON t.position = p.id
+                        LEFT JOIN stores st ON t.store = st.id
+                        WHERE t.IsActive = 1
+                          AND t.name LIKE @SearchTerm
+                          AND (@PositionId = 0 OR t.position = @PositionId)";
 
-                    // apply store restriction if not admin
                     if (!isAdmin && storeNos.Any())
                     {
                         sql += $" AND st.storeNo IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})";
@@ -274,7 +271,7 @@ namespace Expiry_list.Training
             }
         }
 
-        // Trainee class definition
+        // Trainee class
         public class Trainee
         {
             public string Id { get; set; }
@@ -297,7 +294,6 @@ namespace Expiry_list.Training
                     ISNULL(tr.name, '') AS trainerName,  
                     s.position AS positionId,
                     ISNULL(l2.name, '') AS position,   
-                    s.description,
                     lo.name AS room,
                     s.date,
                     s.time
@@ -488,7 +484,6 @@ namespace Expiry_list.Training
             {
                 conn.Open();
 
-                // Collect duplicate trainee NAMES instead of IDs
                 List<string> duplicateTrainees = new List<string>();
 
                 foreach (var trainee in selectedTrainees)
@@ -506,18 +501,23 @@ namespace Expiry_list.Training
 
                     // Check duplicate registration
                     using (SqlCommand checkDup = new SqlCommand(@"
-                SELECT COUNT(1)
-                FROM traineeTopicT
-                WHERE traineeId=@traineeId AND topicId=@topicId AND scheduleId=@scheduleId", conn))
+                        SELECT COUNT(1)
+                        FROM traineeTopicT
+                        WHERE traineeId=@traineeId AND topicId=@topicId AND scheduleId=@scheduleId", conn))
                     {
                         checkDup.Parameters.AddWithValue("@traineeId", traineeId);
                         checkDup.Parameters.AddWithValue("@topicId", topicId);
                         checkDup.Parameters.AddWithValue("@scheduleId", scheduleId);
-
                         if (Convert.ToInt32(checkDup.ExecuteScalar()) > 0)
                         {
-                            // Add trainee NAME instead of ID
-                            duplicateTrainees.Add(trainee.Name ?? traineeId.ToString());
+                            // Get trainee name from DB to ensure we have it
+                            using (SqlCommand getName = new SqlCommand("SELECT name FROM traineeT WHERE id=@traineeId", conn))
+                            {
+                                getName.Parameters.AddWithValue("@traineeId", traineeId);
+                                var nameObj = getName.ExecuteScalar();
+                                string traineeName = nameObj?.ToString() ?? traineeId.ToString();
+                                duplicateTrainees.Add(traineeName);
+                            }
                         }
                     }
                 }
@@ -525,8 +525,13 @@ namespace Expiry_list.Training
                 if (duplicateTrainees.Count > 0)
                 {
                     string dupList = string.Join(", ", duplicateTrainees);
+
+                    string msg = duplicateTrainees.Count == 1
+                        ? $"{dupList} is already registered."
+                        : $"{dupList} are already registered.";
+
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "dupAlert",
-                        $"Swal.fire('Duplicate Registration', 'The following trainee(s) are already registered: {dupList}', 'warning');", true);
+                        $"Swal.fire('Duplicate Registration', '{msg}', 'warning');", true);
                     return;
                 }
 

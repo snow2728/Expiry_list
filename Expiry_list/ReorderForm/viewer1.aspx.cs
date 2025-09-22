@@ -105,7 +105,7 @@ namespace Expiry_list.ReorderForm
             BindGrid();
         }
 
-        private void RespondWithData()
+        protected void RespondWithData()
         {
             try
             {
@@ -120,16 +120,19 @@ namespace Expiry_list.ReorderForm
 
                     if (length == 0) length = 100;
 
+                    // Define column mapping - match exactly with DataTables columns definition
+                    // This array should match the order of columns in your DataTables initialization
                     string[] columns = {
-                        "id", "no","storeNo", "divisionCode","approveDate", "itemNo", "description", "packingInfo", "barcodeNo", "qty", "uom",
-                         "action", "status", "remark", "approver", "note", "vendorNo", "vendorName", "regeDate"
-                    };
+                "id", "no", "storeNo", "divisionCode", "approveDate", "itemNo", "description",
+                "packingInfo", "barcodeNo", "qty", "uom", "action", "status", "remark",
+                "approver", "note", "vendorNo", "vendorName", "regeDate"
+            };
 
                     string[] searchableColumns = {
-                        "no","storeNo", "divisionCode","approveDate", "itemNo", "description", "packingInfo", "barcodeNo", "qty", "uom",
-                         "action", "status", "remark", "approver", "note", "vendorNo", "vendorName", "regeDate"
-                    };
-
+                "no", "storeNo", "divisionCode", "approveDate", "itemNo", "description",
+                "packingInfo", "barcodeNo", "qty", "uom", "action", "status", "remark",
+                "approver", "note", "vendorNo", "vendorName", "regeDate"
+            };
 
                     string searchValue = Request["search[value]"] ?? "";
                     string[] dateColumns = { "regeDate", "approveDate", "completedDate" };
@@ -157,29 +160,31 @@ namespace Expiry_list.ReorderForm
                         whereClause.Append(")");
                     }
 
-                    // Secure ORDER BY clause
-                    string orderByClause = " ORDER BY id ASC";
-                    int serverColumnIndex = orderColumnIndex - 1;
-                    if (serverColumnIndex >= 0 && serverColumnIndex < columns.Length)
+                    // Handle sorting - adjust for checkbox column and hidden columns
+                    string orderByClause = " ORDER BY no ASC"; // Default sorting
+
+                    // Check if the column index is valid (skip checkbox column at index 0 and hidden columns)
+                    if (orderColumnIndex > 0 && orderColumnIndex < columns.Length + 1) // +1 for checkbox column
                     {
-                        string orderColumn = columns[serverColumnIndex];
-                        orderDir = (orderDir == "asc" || orderDir == "desc") ? orderDir : "asc";
-                        orderByClause = $" ORDER BY [{orderColumn}] {orderDir}";
-                    }
-                    else
-                    {
-                        orderByClause = " ORDER BY no ASC";
+                        // Subtract 1 to account for checkbox column, but don't go beyond array bounds
+                        int dataColumnIndex = orderColumnIndex - 1;
+                        if (dataColumnIndex < columns.Length)
+                        {
+                            string orderColumn = columns[dataColumnIndex];
+                            orderDir = (orderDir == "asc" || orderDir == "desc") ? orderDir : "asc";
+                            orderByClause = $" ORDER BY [{orderColumn}] {orderDir}";
+                        }
                     }
 
                     // Get paginated data
                     string query = $@"
-                        SELECT * 
-                        FROM itemListR 
-                        WHERE {whereClause}
-                        {orderByClause}
-                        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
+                SELECT * 
+                FROM itemListR 
+                WHERE {whereClause}
+                {orderByClause}
+                OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
 
-                    System.Data.DataTable dt = new System.Data.DataTable();
+                    DataTable dt = new DataTable();
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Offset", start);
@@ -231,6 +236,7 @@ namespace Expiry_list.ReorderForm
                             action = row["action"],
                             status = row["status"],
                             remark = row["remark"],
+
                             DT_RowAttr = new
                             {
                                 data_search_text = searchText
@@ -546,11 +552,15 @@ namespace Expiry_list.ReorderForm
                 }
 
                 // Trigger DataTable AJAX reload OR rebind editing
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "ReloadTable", @"
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "ReloadTableAndResize", @"
                     if (typeof dataTable !== 'undefined' && $.fn.DataTable.isDataTable('#" + GridView2.ClientID + @"')) { 
-                        dataTable.ajax.reload(); 
+                        // Draw new data and then reinitialize resizable columns
+                        dataTable.draw(false); 
+                        initializeResizableColumns();
                     } else { 
+                        // Fallback for non-DataTable cases
                         enableGridViewInlineEditing(); 
+                        initializeResizableColumns();
                     }", true);
 
             }

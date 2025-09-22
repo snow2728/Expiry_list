@@ -43,14 +43,12 @@
                 return;
             }
 
-            // Destroy existing DataTable if already initialized
             if ($.fn.DataTable.isDataTable(grid)) {
                 grid.DataTable().destroy();
                 grid.removeAttr('style');
             }
 
           if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %> === false) {
-                // Ensure proper table structure
                 if (grid.find('thead').length === 0) {
                     const headerRow = grid.find('tr:first').detach();
                     grid.prepend($('<thead/>').append(headerRow));
@@ -88,19 +86,18 @@
 
                             $('.top-toggle').append(toggleHtml);
 
-                            // Toggle functionality
                             $('#toggleSwitch').on('change', function () {
                                 if (this.checked) {
                                     $('#toggleStatus').text('On').css('color', '#0D330E');
                                     console.log('Toggle is ON');
                                 } else {
-                                    $('#toggleStatus').text('Off').css('color', '#dc3545'); // red for off
+                                    $('#toggleStatus').text('Off').css('color', '#dc3545'); 
                                     console.log('Toggle is OFF');
                                 }
                             });
                         },
                         columnDefs: [
-                            { orderable: false, targets: [4] }
+                            { orderable: false, targets: [5, 6] }
                         ]
                     });
                 } catch (e) {
