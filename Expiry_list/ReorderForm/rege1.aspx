@@ -154,13 +154,12 @@
                 </div>
 
                 <!-- Card Body -->
-                  <div class="card-body">
-                     <%-- style="background-color: #F1B4D1;"--%>
+                  <div class="card-body"> <%--style="background-color: #F1B4D1;"--%>
                     <asp:ScriptManager ID="ScriptManager1" runat="server"></asp:ScriptManager>
                     <asp:UpdatePanel runat="server" ID="UpdatePanel1" UpdateMode="Conditional">
                         <ContentTemplate>
                             <!-- No Field -->
-                            <div class="row g-2 mb-3"> <%--style="color: #BD467F;"--%>
+                            <div class="row g-2 mb-3" style="color: #BD467F;"> 
                                 <label for="<%= no.ClientID %>" class="col-sm-4 col-form-label">No</label>
                                 <div class="col-sm-8">
                                     <asp:TextBox runat="server" CssClass="form-control form-control-sm" ID="no" ReadOnly="true" />
@@ -184,7 +183,7 @@
                     <asp:HiddenField ID="hiddenVendorName" runat="server" />
 
                     <!-- Item No Field -->
-                    <div class="row g-2 mb-3">  <%--style="color: #BD467F;"--%>
+                    <div class="row g-2 mb-3" style="color: #BD467F;">  
                         <label for="<%= itemNo.ClientID %>" class="col-sm-4 col-form-label">Item No</label>
                         <div class="col-sm-8">
                             <asp:DropDownList ID="itemNo" runat="server" CssClass="form-control form-control-sm select2" OnSelectedIndexChanged="itemNo_SelectedIndexChanged1">
@@ -198,7 +197,7 @@
                     </div>
 
                     <!-- Description Field -->
-                    <div class="row g-2 mb-3"> <%-- style="color: #BD467F;"--%>
+                    <div class="row g-2 mb-3" style="color: #BD467F;"> 
                         <label for="<%= desc.ClientID %>" class="col-sm-4 col-form-label">Description</label>
                         <div class="col-sm-8">
                             <asp:TextBox runat="server" CssClass="form-control form-control-sm"
@@ -208,7 +207,7 @@
                     </div>
 
                     <!-- Quantity Field -->
-                    <div class="row g-2 mb-3"> <%-- style="color: #BD467F;"--%>
+                    <div class="row g-2 mb-3" style="color: #BD467F;">
                         <label for="<%= qty.ClientID %>" class="col-sm-4 col-form-label">Quantity</label>
                         <div class="col-sm-8">
                             <asp:TextBox runat="server" CssClass="form-control form-control-sm no-spinners"
@@ -227,7 +226,7 @@
                     </div>
 
                     <!-- UOM Field -->
-                    <div class="row g-2 mb-3"> <%--style="color: #BD467F;"--%>
+                    <div class="row g-2 mb-3" style="color: #BD467F;"> 
                         <label for="<%= uom.ClientID %>" class="col-sm-4 col-form-label">UOM</label>
                         <div class="col-sm-8">
                            <asp:DropDownList runat="server" CssClass="form-select form-select-sm" ID="uom" AppendDataBoundItems="true" />
@@ -235,7 +234,7 @@
                     </div>
 
                     <!-- Packing Info Field -->
-                    <div class="row g-2 mb-3"> <%--style="color: #BD467F;"--%>
+                    <div class="row g-2 mb-3" style="color: #BD467F;"> 
                         <label for="<%= packingInfo.ClientID %>" class="col-sm-4 col-form-label">Packing Info</label>
                         <div class="col-sm-8">
                             <asp:TextBox runat="server" CssClass="form-control form-control-sm" ID="packingInfo"
@@ -244,7 +243,7 @@
                     </div>
 
                     <!-- Barcode No Field -->
-                    <div class="row g-2 mb-3"> <%--style="color: #BD467F;"--%>
+                    <div class="row g-2 mb-3" style="color: #BD467F;"> 
                         <label for="<%= barcodeNo.ClientID %>" class="col-sm-4 col-form-label">Barcode No</label>
                         <div class="col-sm-8">
                             <asp:TextBox runat="server" CssClass="form-control form-control-sm" ID="barcodeNo"
@@ -253,7 +252,7 @@
                     </div>
 
                     <!-- Store No Field -->
-                    <div class="row g-2 mb-3 "> <%--style="color: #BD467F;"--%>
+                    <div class="row g-2 mb-3" style="color: #BD467F;"> 
                         <label for="<%= storeNo.ClientID %>" class="col-sm-4 col-form-label">Location</label>
                         <div class="col-sm-8">
                             <asp:TextBox runat="server" CssClass="form-control form-control-sm"
@@ -263,7 +262,7 @@
                     </div>
 
                     <!-- StaffName Field -->
-                    <div class="row g-2 mb-3"> <%--style="color: #BD467F;"--%>
+                    <div class="row g-2 mb-3" style="color: #BD467F;"> 
                         <label for="<%= staffName.ClientID %>" class="col-sm-4 col-form-label">Staff Name</label>
                         <div class="col-sm-8">
                             <asp:TextBox ID="staffName" runat="server" CssClass="form-control form-control-sm" Enabled="false" ReadOnly="true"></asp:TextBox>
@@ -271,7 +270,7 @@
                     </div>
 
                     <!-- Note Field -->
-                    <div class="row g-2 mb-3"> <%--style="color: #BD467F;"--%>
+                    <div class="row g-2 mb-3" style="color: #BD467F;"> 
                         <label for="<%= note.ClientID %>" class="col-sm-4 col-form-label">Note</label>
                         <div class="col-sm-8">
                             <asp:TextBox runat="server" TextMode="MultiLine"
@@ -301,7 +300,7 @@
                     <h2 class="mb-0">Reorder Quantity List</h2>
                 </div>
 
-                <div class="card-body p-2 overflow-scroll">
+                <div class="card-body p-2 overflow-scroll"> <%--style="background-color: #F1B4D1;"--%>
                     <%--style="background-color: #F1B4D1;"--%>
                     <asp:Button Text="Sent Request" runat="server" ID="btnConfirmAll"
                         CssClass="btn text-white m-1 fw-bold"

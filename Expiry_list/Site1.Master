@@ -399,8 +399,8 @@
             ];
 
             if (reorderPages.includes(path)) {
-                if (nav) nav.style.backgroundColor = "#A10D54";
-                if (profile) profile.style.backgroundColor = "#A10D54";
+                if (nav) nav.style.backgroundColor = "#E04386";
+                if (profile) profile.style.backgroundColor = "#E04386";
             } else if (consignPages.includes(path)) {
                 if (nav) nav.style.backgroundColor = "#0D330E";
                 if (profile) profile.style.backgroundColor = "#0D330E";

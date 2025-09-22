@@ -468,5 +468,17 @@ namespace Expiry_list.Training
 
             ScriptManager.RegisterStartupScript(this, GetType(), "showMessage", script, true);
         }
+
+        //public void toggleSwitch_CheckedChanged(object sender, EventArgs e)
+        //{
+        //    bool showInactive = toggleSwitch.Checked;
+        //    var dt = GridView2.DataSource as DataTable;
+        //    if (dt == null) return;
+
+        //    DataView dv = dt.DefaultView;
+        //    dv.RowFilter = showInactive? "Status = Inactive" : "Status = Active";   // or "Status = 'Inactive'"
+        //    GridView2.DataSource = dv;
+        //    GridView2.DataBind();
+        //}
     }
 }

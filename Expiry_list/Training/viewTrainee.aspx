@@ -63,9 +63,9 @@
                     console.error('Header and body column count mismatch:', headerCols, 'vs', bodyCols);
                     return;
                 }
-
+             /* <span class="toggle-label">Status:</span>*/
                 try {
-                    grid.DataTable({
+                    var table = grid.DataTable({
                         responsive: true,
                         paging: true,
                         searching: true,
@@ -78,26 +78,63 @@
                         initComplete: function () {
                             const toggleHtml = `
                             <div class="toggle-container">
-                                <span class="toggle-label">Status:</span>
+                                
                                 <label class="switch">
                                     <input type="checkbox" id="toggleSwitch">
                                     <span class="slider round"></span>
                                 </label>
-                                <span class="toggle-status" id="toggleStatus">Off</span>
+                                <span class="toggle-status" id="toggleStatus">Active</span>
                             </div>`;
 
                             $('.top-toggle').append(toggleHtml);
 
-                            // Toggle functionality
-                            $('#toggleSwitch').on('change', function () {
-                                if (this.checked) {
-                                    $('#toggleStatus').text('On').css('color', '#0D330E');
-                                    console.log('Toggle is ON');
-                                } else {
-                                    $('#toggleStatus').text('Off').css('color', '#dc3545'); // red for off
-                                    console.log('Toggle is OFF');
+                            var isActiveColIndex = -1;
+                            var api = this.api(); // this is the table instance
+                            api.columns().every(function (index) {
+                                var headerText = $(this.header()).text().trim().toLowerCase();
+                                if (headerText === 'status') {
+                                    isActiveColIndex = index;
+                                    console.log("col ind ", isActiveColIndex);
                                 }
                             });
+                           
+                            //$('#toggleSwitch').on('change', function () {
+                            //    if (this.checked) {
+                            //        $('#toggleStatus').text('Inactive').css('color', '#dc3545');
+                            //        api.column(isActiveColIndex).search("Inactive").draw();
+                            //    } else {
+                            //        $('#toggleStatus').text('Active').css('color', '#000');
+                            //        api.column(isActiveColIndex).search("Active").draw();
+                            //    }
+                            //});
+
+                            //api.column(isActiveColIndex).search("Active").draw();
+                            var hiddenColIndex = 5;
+                            $('#toggleSwitch').on('change', function () {
+                                if (this.checked) {
+                                    $('#toggleStatus').text('Inactive').css('color', '#dc3545');
+                                    api.column(hiddenColIndex).search("False").draw();
+                                } else {
+                                    $('#toggleStatus').text('Active').css('color', '#000');
+                                    api.column(hiddenColIndex).search("True").draw();
+                                }
+                            });
+
+                            // default show only active
+                            api.column(hiddenColIndex).search("True").draw();
+
+                            // Toggle functionality
+                            //$('#toggleSwitch').on('change', function () {
+                            //    if (this.checked) {
+                            //        $('#toggleStatus').text('Inactive').css('color', '#dc3545'); /*'#0D330E'*/
+                            //        var isChecked = this.checked ? "1" : "0";
+                            //        __doPostBack('ToggleSwitch', isChecked);
+                            //        console.log('Toggle is ON');
+                            //    } else {
+                            //        $('#toggleStatus').text('Active').css('color', '#000'); // red for off
+                            //        console.log('Toggle is OFF');
+                            //    }
+                            //});
                         },
                         columnDefs: [
                             { orderable: false, targets: [4] }
@@ -144,6 +181,9 @@
 
 
     </script>
+    <style>
+        .hidden-col { display: none; }
+    </style>
 
 </asp:Content>
 
@@ -235,6 +275,13 @@
                                     </EditItemTemplate>
                                     <HeaderStyle ForeColor="White" BackColor="#488db4" HorizontalAlign="Left" Width="10%" />
                                     <ItemStyle HorizontalAlign="Left" Width="10%" />
+                                </asp:TemplateField>
+                               <asp:TemplateField>
+                                    <ItemTemplate>
+                                        <%# Convert.ToBoolean(Eval("IsActive")) %>
+                                    </ItemTemplate>
+                                   <ItemStyle CssClass="hidden-col" />
+                                   <HeaderStyle CssClass="hidden-col" />
                                 </asp:TemplateField>
 
                                <asp:TemplateField HeaderText="Topics" SortExpression="topics" HeaderStyle-VerticalAlign="Middle" >
