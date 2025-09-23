@@ -64,7 +64,7 @@
                     return;
                 }
                 try {
-                    var table = grid.DataTable({
+                    grid.DataTable({
                         responsive: true,
                         paging: true,
                         searching: true,
@@ -74,7 +74,7 @@
                         stateSave: false,
                         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                         dom: 'f<"top-toggle">ltip',
-                        initComplete: function () {
+                        <%--initComplete: function () {
                             const toggleHtml = `
                             <div class="toggle-container">
                                 
@@ -87,28 +87,38 @@
 
                             $('.top-toggle').append(toggleHtml);
 
-                            var isActiveColIndex = -1;
-                            var api = this.api(); 
-                            api.columns().every(function (index) {
-                                var headerText = $(this.header()).text().trim().toLowerCase();
-                                if (headerText === 'status') {
-                                    isActiveColIndex = index;
-                                    console.log("col ind ", isActiveColIndex);
-                                }
-                            });                           
-                           
+
+                            var api = this.api();  
+
+                            const savedState = $('#<%= hdnToggleStatus.ClientID %>').val();
                             var hiddenColIndex = 5;
+
+                            if (savedState === "Inactive") {
+                                $('#toggleSwitch').prop('checked', true);
+                                $('#toggleStatus').text('Inactive').css('color', '#dc3545');
+                                api.column(hiddenColIndex).search("False").draw();
+                            } else {
+                                $('#toggleSwitch').prop('checked', false);
+                                $('#toggleStatus').text('Active').css('color', '#000');
+                                api.column(hiddenColIndex).search("True").draw();
+                            }                            
+
                             $('#toggleSwitch').on('change', function () {
                                 if (this.checked) {
                                     $('#toggleStatus').text('Inactive').css('color', '#dc3545');
+                                    $('#<%= hdnToggleStatus.ClientID %>').val("Inactive");
                                     api.column(hiddenColIndex).search("False").draw();
                                 } else {
                                     $('#toggleStatus').text('Active').css('color', '#000');
+                                    $('#<%= hdnToggleStatus.ClientID %>').val("Active");
                                     api.column(hiddenColIndex).search("True").draw();
-                                }
-                            });
+
+                               }
+                           });
+
+
                             api.column(hiddenColIndex).search("True").draw();
-                        },
+                        },--%>
                         columnDefs: [
                             { orderable: false, targets: [4] }
                         ]
@@ -174,7 +184,7 @@
                             </button>
                         </div>
                     </div>
-               
+                    <asp:HiddenField ID="hdnToggleStatus" runat="server" />
                     <div class="table-responsive">
                         <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-scroll"
                             DataKeyNames="id,name,storeId,positionId,IsActive"
@@ -255,7 +265,8 @@
                                     </ItemTemplate>
                                    <ItemStyle CssClass="hidden-col" />
                                    <HeaderStyle CssClass="hidden-col" />
-                                </asp:TemplateField>
+                                </asp:TemplateField>                             
+
 
                                <asp:TemplateField HeaderText="Topics" SortExpression="topics" HeaderStyle-VerticalAlign="Middle" >
                                    <ItemTemplate>

@@ -33,6 +33,15 @@ namespace Expiry_list.Training
         protected global::System.Web.UI.UpdatePanel upGrid;
 
         /// <summary>
+        /// hdnToggleStatus control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hdnToggleStatus;
+
+        /// <summary>
         /// GridView2 control.
         /// </summary>
         /// <remarks>
