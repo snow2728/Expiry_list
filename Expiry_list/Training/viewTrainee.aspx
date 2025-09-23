@@ -43,12 +43,14 @@
                 return;
             }
 
+            // Destroy existing DataTable if already initialized
             if ($.fn.DataTable.isDataTable(grid)) {
                 grid.DataTable().destroy();
                 grid.removeAttr('style');
             }
 
           if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %> === false) {
+                // Ensure proper table structure
                 if (grid.find('thead').length === 0) {
                     const headerRow = grid.find('tr:first').detach();
                     grid.prepend($('<thead/>').append(headerRow));
@@ -61,7 +63,6 @@
                     console.error('Header and body column count mismatch:', headerCols, 'vs', bodyCols);
                     return;
                 }
-
                 try {
                     grid.DataTable({
                         responsive: true,
@@ -73,29 +74,51 @@
                         stateSave: false,
                         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                         dom: 'f<"top-toggle">ltip',
-                        initComplete: function () {
+                        <%--initComplete: function () {
                             const toggleHtml = `
                             <div class="toggle-container">
-                                <span class="toggle-label">Status:</span>
+                                
                                 <label class="switch">
                                     <input type="checkbox" id="toggleSwitch">
                                     <span class="slider round"></span>
                                 </label>
-                                <span class="toggle-status" id="toggleStatus">Off</span>
+                                <span class="toggle-status" id="toggleStatus">Active</span>
                             </div>`;
 
                             $('.top-toggle').append(toggleHtml);
 
+
+                            var api = this.api();  
+
+                            const savedState = $('#<%= hdnToggleStatus.ClientID %>').val();
+                            var hiddenColIndex = 5;
+
+                            if (savedState === "Inactive") {
+                                $('#toggleSwitch').prop('checked', true);
+                                $('#toggleStatus').text('Inactive').css('color', '#dc3545');
+                                api.column(hiddenColIndex).search("False").draw();
+                            } else {
+                                $('#toggleSwitch').prop('checked', false);
+                                $('#toggleStatus').text('Active').css('color', '#000');
+                                api.column(hiddenColIndex).search("True").draw();
+                            }                            
+
                             $('#toggleSwitch').on('change', function () {
                                 if (this.checked) {
-                                    $('#toggleStatus').text('On').css('color', '#0D330E');
-                                    console.log('Toggle is ON');
+                                    $('#toggleStatus').text('Inactive').css('color', '#dc3545');
+                                    $('#<%= hdnToggleStatus.ClientID %>').val("Inactive");
+                                    api.column(hiddenColIndex).search("False").draw();
                                 } else {
-                                    $('#toggleStatus').text('Off').css('color', '#dc3545'); 
-                                    console.log('Toggle is OFF');
-                                }
-                            });
-                        },
+                                    $('#toggleStatus').text('Active').css('color', '#000');
+                                    $('#<%= hdnToggleStatus.ClientID %>').val("Active");
+                                    api.column(hiddenColIndex).search("True").draw();
+
+                               }
+                           });
+
+
+                            api.column(hiddenColIndex).search("True").draw();
+                        },--%>
                         columnDefs: [
                             { orderable: false, targets: [5, 6] },
                             { targets: '_all', orderSequence: ["asc", "desc", ""] }
@@ -144,6 +167,9 @@
 
 
     </script>
+    <style>
+        .hidden-col { display: none; }
+    </style>
 
 </asp:Content>
 
@@ -161,7 +187,7 @@
                             </button>
                         </div>
                     </div>
-               
+                    <asp:HiddenField ID="hdnToggleStatus" runat="server" />
                     <div class="table-responsive">
                         <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-scroll"
                             DataKeyNames="id,name,storeId,positionId,IsActive"
@@ -236,6 +262,14 @@
                                     <HeaderStyle ForeColor="White" BackColor="#488db4" HorizontalAlign="Left" Width="10%" />
                                     <ItemStyle HorizontalAlign="Left" Width="10%" />
                                 </asp:TemplateField>
+                               <asp:TemplateField>
+                                    <ItemTemplate>
+                                        <%# Convert.ToBoolean(Eval("IsActive")) %>
+                                    </ItemTemplate>
+                                   <ItemStyle CssClass="hidden-col" />
+                                   <HeaderStyle CssClass="hidden-col" />
+                                </asp:TemplateField>                             
+
 
                                <asp:TemplateField HeaderText="Topics" SortExpression="topics" HeaderStyle-VerticalAlign="Middle" >
                                    <ItemTemplate>

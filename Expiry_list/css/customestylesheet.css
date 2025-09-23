@@ -1214,7 +1214,8 @@ div.dataTables_wrapper div.dataTables_length,
 
 .top-toggle {
     gap: 8px;
-    font-size: 0.9rem;
+    padding: 5px;
+    float: right;
 }
 
 
@@ -1243,7 +1244,6 @@ div.dataTables_wrapper div.dataTables_length,
     position: relative;
     display: inline-block;
     width: 50px;
-    height: 24px;
 }
 
     .switch input {
@@ -1277,7 +1277,7 @@ div.dataTables_wrapper div.dataTables_length,
     }
 
 input:checked + .slider {
-    background-color: #0D330E;
+    background-color: #488db4; /*#0D330E*/
 }
 
     input:checked + .slider:before {
