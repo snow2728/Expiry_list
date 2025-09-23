@@ -338,6 +338,22 @@ namespace Expiry_list.Training
                 ? new List<int>()
                 : newTrainerIdsCsv.Split(',').Select(x => int.Parse(x.Trim())).Distinct().ToList();
 
+            if (selectedTrainerIds.Count == 0)
+            {
+                string script = @"Swal.fire({
+                    icon: 'warning',
+                    title: 'No Trainer Selected',
+                    text: 'Please select at least one trainer before updating.',
+                    confirmButtonText: 'OK'
+                });";
+
+                        ScriptManager.RegisterStartupScript(this, this.GetType(), "noTrainerAlert", script, true);
+
+                        // Cancel the update
+                        e.Cancel = true;
+                        return;
+            }
+
             using (SqlConnection con = new SqlConnection(strcon))
             {
                 con.Open();
@@ -507,11 +523,17 @@ namespace Expiry_list.Training
                 $"swal('{title}', '{HttpUtility.JavaScriptStringEncode(message)}', '{type}');", true);
         }
 
+        protected void btnclose_Click(object sender, EventArgs e)
+        {
+            ClearForm();
+        }
+
         private void ClearForm()
         {
             topicName.Text = "";
             levelDb.SelectedIndex = 0;
-            //trainerDp.Text = "";
+            hfTrainerDp.Value = null;
+            hfTrainerDpNames.Value = null;
         }
 
 

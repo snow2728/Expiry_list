@@ -71,7 +71,7 @@
                         sorting: true,
                         info: true,
                         order: [[0, 'asc']],
-                        stateSave: false,
+                        stateSave: true,
                         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                         dom: 'f<"top-toggle">ltip',
                         <%--initComplete: function () {
@@ -309,14 +309,16 @@
                                 </ItemTemplate>
 
                                 <EditItemTemplate>
-                                    <asp:LinkButton ID="btnUpdate" runat="server" CommandName="Update" CausesValidation="False"
-                                        CssClass="btn btn-sm ms-1 text-white" BackColor="#9ad9fe" ToolTip="Update">
-                                        <i class="fas fa-save"></i>
-                                    </asp:LinkButton>
-                                    <asp:LinkButton ID="btnCancel" runat="server" CommandName="Cancel" CausesValidation="False"
-                                        CssClass="btn btn-sm ms-2 text-white btn-secondary" ToolTip="Cancel">
-                                        <i class="fas fa-times"></i>
-                                    </asp:LinkButton>
+                                   <div style="text-align:center;">
+                                        <asp:LinkButton ID="btnUpdate" runat="server" CommandName="Update" CausesValidation="False"
+                                             CssClass="btn btn-sm ms-1 text-white" BackColor="#9ad9fe" ToolTip="Update">
+                                             <i class="fas fa-save"></i>
+                                         </asp:LinkButton>
+                                         <asp:LinkButton ID="btnCancel" runat="server" CommandName="Cancel" CausesValidation="False"
+                                             CssClass="btn btn-sm ms-2 text-white btn-secondary" ToolTip="Cancel">
+                                             <i class="fas fa-times"></i>
+                                         </asp:LinkButton>
+                                   </div>
                                 </EditItemTemplate>
 
                                 <HeaderStyle ForeColor="White" BackColor="#488db4" CssClass="text-center" />

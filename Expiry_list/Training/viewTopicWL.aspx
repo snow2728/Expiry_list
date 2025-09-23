@@ -59,6 +59,29 @@
 
         document.addEventListener('DOMContentLoaded', function () {
             document.getElementById("link_home").href = "../AdminDashboard.aspx";
+
+            var topicModal = document.getElementById('topicModal');
+            if (!topicModal) return;
+
+            topicModal.addEventListener('hidden.bs.modal', function () {
+                // Clear TextBox
+                var topicTextBox = document.getElementById('<%= topicName.ClientID %>');
+                if (topicTextBox) topicTextBox.value = '';
+
+                // Reset DropDownList
+                var levelDropDown = document.getElementById('<%= levelDb.ClientID %>');
+                if (levelDropDown) levelDropDown.selectedIndex = 0;
+
+                // Clear HiddenFields
+                var hfTrainer = document.getElementById('<%= hfTrainerDp.ClientID %>');
+                var hfTrainerNames = document.getElementById('<%= hfTrainerDpNames.ClientID %>');
+                if (hfTrainer) hfTrainer.value = '';
+                if (hfTrainerNames) hfTrainerNames.value = '';
+
+                // Clear multi-select display
+                var multiSelectInput = document.querySelector('#trainerDpMultiSelect .multi-select-input');
+                if (multiSelectInput) multiSelectInput.innerHTML = '';
+            });
         });
 
         function initializeDataTable() {
@@ -228,15 +251,15 @@
 
             inputBox.off("click", ".remove-pill").on("click", ".remove-pill", function (e) {
                 e.stopPropagation();
-                if (selectedTrainers.length <= 1) {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Cannot remove all trainers',
-                        text: 'At least one trainer must be selected.',
-                        confirmButtonText: 'OK'
-                    });
-                    return;
-                }
+                //if (selectedTrainers.length <= 1) {
+                //    Swal.fire({
+                //        icon: 'warning',
+                //        title: 'Cannot remove all trainers',
+                //        text: 'At least one trainer must be selected.',
+                //        confirmButtonText: 'OK'
+                //    });
+                //    return;
+                //}
                 const id = $(this).data("value");
                 selectedTrainers = selectedTrainers.filter(x => x.id != id);
                 renderSelectedTrainers();

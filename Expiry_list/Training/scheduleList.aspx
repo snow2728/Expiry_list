@@ -420,8 +420,8 @@
                                             OnSelectedIndexChanged="ddlStatus_SelectedIndexChanged"
                                             SelectedValue='<%# Eval("status") %>'>
                                             <asp:ListItem Text="Registered" Value="Registered"></asp:ListItem>
-                                            <asp:ListItem Text="Waitlisted" Value="Waitlisted"></asp:ListItem>
-                                            <asp:ListItem Text="Removed" Value="Removed"></asp:ListItem>
+                                            <asp:ListItem Text="Attend" Value="Attend"></asp:ListItem>
+                                            <asp:ListItem Text="Absent" Value="Absent"></asp:ListItem>
                                         </asp:DropDownList>
                                     </ItemTemplate>
                                 </asp:TemplateField>
