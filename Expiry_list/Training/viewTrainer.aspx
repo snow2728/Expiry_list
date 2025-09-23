@@ -61,7 +61,8 @@
                       stateSave: false,
                       lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                       columnDefs: [
-                          { orderable: false, targets: [3] }
+                          { orderable: false, targets: [3] },
+                          { targets: '_all', orderSequence: ["asc", "desc", ""] }
                       ]
                   });
               } catch (e) {

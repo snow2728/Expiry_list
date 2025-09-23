@@ -69,7 +69,7 @@
                         }
                     },
                     { data: 'no', width: "100px" },
-                    { data: 'itemNo', width: "50px" },
+                    { data: 'itemNo', width: "117px" },
                     { data: 'description', width: "297px" },
                     { data: 'barcodeNo', width: "137px" },
                     { data: 'qty', width: "97px" },
@@ -164,16 +164,20 @@
                              rightColumns: 0,
                              heightMatch: 'none'
                          },
-                         columns: columns,
-                         order: [[1, 'asc'], [2, 'asc']],
-                         select: { style: 'multi', selector: 'td:first-child' },
-                         lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
-                         initComplete: function (settings) {
-                            var api = this.api();
-                            setTimeout(function () {
-                                api.columns.adjust();
-                            }, 50);
-                        }
+                    columns: columns,
+
+                    columnDefs: [
+                        { targets: '_all', orderSequence: ["asc", "desc", ""] }
+                    ],
+                    order: [[1, 'asc'], [2, 'asc']],
+                    select: { style: 'multi', selector: 'td:first-child' },
+                    lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
+                    initComplete: function (settings) {
+                        var api = this.api();
+                        setTimeout(function () {
+                           api.columns.adjust();
+                        }, 50);
+                    }
                 });
 
                     $('.select2-init').select2({

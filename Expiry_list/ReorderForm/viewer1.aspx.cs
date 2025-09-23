@@ -105,7 +105,7 @@ namespace Expiry_list.ReorderForm
             BindGrid();
         }
 
-        protected void RespondWithData()
+        private void RespondWithData()
         {
             try
             {
@@ -120,19 +120,16 @@ namespace Expiry_list.ReorderForm
 
                     if (length == 0) length = 100;
 
-                    // Define column mapping - match exactly with DataTables columns definition
-                    // This array should match the order of columns in your DataTables initialization
                     string[] columns = {
-                "id", "no", "storeNo", "divisionCode", "approveDate", "itemNo", "description",
-                "packingInfo", "barcodeNo", "qty", "uom", "action", "status", "remark",
-                "approver", "note", "vendorNo", "vendorName", "regeDate"
-            };
+                        "id","no","storeNo", "divisionCode","approveDate", "itemNo", "description", "packingInfo", "barcodeNo", "qty", "uom",
+                         "action", "status", "remark", "approver", "note", "vendorNo", "vendorName", "regeDate"
+                    };
 
                     string[] searchableColumns = {
-                "no", "storeNo", "divisionCode", "approveDate", "itemNo", "description",
-                "packingInfo", "barcodeNo", "qty", "uom", "action", "status", "remark",
-                "approver", "note", "vendorNo", "vendorName", "regeDate"
-            };
+                        "no","storeNo", "divisionCode","approveDate", "itemNo", "description", "packingInfo", "barcodeNo", "qty", "uom",
+                         "action", "status", "remark", "approver", "note", "vendorNo", "vendorName", "regeDate"
+                    };
+
 
                     string searchValue = Request["search[value]"] ?? "";
                     string[] dateColumns = { "regeDate", "approveDate", "completedDate" };
@@ -160,31 +157,34 @@ namespace Expiry_list.ReorderForm
                         whereClause.Append(")");
                     }
 
-                    // Handle sorting - adjust for checkbox column and hidden columns
-                    string orderByClause = " ORDER BY no ASC"; // Default sorting
+                    string orderByClause = " ORDER BY id ASC";
 
-                    // Check if the column index is valid (skip checkbox column at index 0 and hidden columns)
-                    if (orderColumnIndex > 0 && orderColumnIndex < columns.Length + 1) // +1 for checkbox column
+                    // Validate the index from DataTables
+                    if (orderColumnIndex >= 0 && orderColumnIndex < columns.Length)
                     {
-                        // Subtract 1 to account for checkbox column, but don't go beyond array bounds
-                        int dataColumnIndex = orderColumnIndex - 1;
-                        if (dataColumnIndex < columns.Length)
+                        string orderColumn = columns[orderColumnIndex];
+
+                        // Do not allow sorting on the checkbox column
+                        if (orderColumn != "id")
                         {
-                            string orderColumn = columns[dataColumnIndex];
                             orderDir = (orderDir == "asc" || orderDir == "desc") ? orderDir : "asc";
                             orderByClause = $" ORDER BY [{orderColumn}] {orderDir}";
                         }
                     }
+                    else
+                    {
+                        orderByClause = " ORDER BY no ASC";
+                    }
 
                     // Get paginated data
                     string query = $@"
-                SELECT * 
-                FROM itemListR 
-                WHERE {whereClause}
-                {orderByClause}
-                OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
+                        SELECT * 
+                        FROM itemListR 
+                        WHERE {whereClause}
+                        {orderByClause}
+                        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
 
-                    DataTable dt = new DataTable();
+                    System.Data.DataTable dt = new System.Data.DataTable();
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Offset", start);
@@ -236,11 +236,6 @@ namespace Expiry_list.ReorderForm
                             action = row["action"],
                             status = row["status"],
                             remark = row["remark"],
-
-                            DT_RowAttr = new
-                            {
-                                data_search_text = searchText
-                            }
                         };
                     }).ToList();
 

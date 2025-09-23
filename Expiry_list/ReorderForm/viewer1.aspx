@@ -323,87 +323,73 @@
                         vendor: $('#<%= vendor.ClientID %>').val(),
                         regDate: $('#<%= txtRegDateFilter.ClientID %>').val(),
                         division: $('#<%= txtDivisionCodeFilter.ClientID %>').val(),
-                        approveDate: $('#<%= txtApproveDateFilter.ClientID %>').val()
-                    };
-                },
-                error: function (xhr) {
-                    console.error('AJAX Error:', xhr.responseText);
-                }
-            },
-            colReorder: true,
-            fixedColumns: {
-                leftColumns: 4,
-                rightColumns: 0,
-                heightMatch: 'none'
-            },
-            columns: [
-                {
-                    data: null,
-                    orderable: false,
-                    width: "50px",
-                    render: function (data, type, row) {
-                        return '<input type="checkbox" class="rowCheckbox" data-id="' + row.id + '" onclick="handleSingleSelection(this)"/>';
-                    }
-                },
-                { data: 'no', width: "100px" },
-                { data: 'storeNo', width: "120px" },
-                { data: 'divisionCode', width: "90px" },
-                {
-                    data: 'approveDate',
-                    width: "120px",
-                    type: 'date',
-                    render: function (data, type) {
-                        if (!data) return '';
-                        if (type === 'sort') return data;
-                        const date = new Date(data);
-                        return date.toLocaleDateString('en-GB');
-                    }
-                },
-                { data: 'itemNo', width: "117px" },
-                { data: 'description', width: "257px" },
-                { data: 'packingInfo', width: "110px" },
-                { data: 'barcodeNo', width: "127px" },
-                { data: 'qty', width: "97px", type: 'num' },
-                { data: 'uom', width: "97px" },
-                { data: 'action', width: "120px" },
-                { data: 'status', width: "120px" },
-                { data: 'remark', width: "125px" },
-                { data: 'approver', width: "120px" },
-                {
-                    data: 'note',
-                    width: "125px",
-                    render: function (data, type, row) {
-                        if (!data) return '';
-                        if (type === 'display') {
-                            var words = data.split(/\s+/);
-                            var truncated = words.slice(0, 5).join(' ');
-                            if (words.length > 5) truncated += ' ...';
-                            return '<span class="truncated-note text-black-50" data-fullnote="' +
-                                $('<div/>').text(data).html() + '">' + truncated + '</span>';
-                        }
-                        return data;
-                    }
-                },
-                { data: 'vendorNo', width: "120px" },
-                { data: 'vendorName', width: "170px" },
-                {
-                    data: 'regeDate',
-                    width: "120px",
-                    type: 'date',
-                    render: function (data, type) {
-                        if (!data) return '';
-                        if (type === 'sort') return data;
-                        const date = new Date(data);
-                        return date.toLocaleDateString('en-GB');
-                    }
-                },
-                { data: null, orderable: false, defaultContent: '', className: 'dt-center', visible: false },
-                { data: null, orderable: false, defaultContent: '', className: 'dt-center', visible: false },
+                         approveDate: $('#<%= txtApproveDateFilter.ClientID %>').val()
+                     };
+                 },
+                 error: function (xhr) {
+                     console.error('AJAX Error:', xhr.responseText);
+                 }
+             },
+             colReorder: true,
+             fixedColumns: {
+                 leftColumns: 4,
+                 rightColumns: 0,
+                 heightMatch: 'none'
+             },
+             columns: [
+                 {
+                     data: 'checkbox', orderable: false, width: "50px", render: function (data, type, row) {
+                         return '<input type="checkbox" class="rowCheckbox" data-id="' + row.id + '" onclick="handleSingleSelection(this)"/>';
+                     }
+                 },
+                 { data: 'no', width: "100px" },
+                 { data: 'storeNo', width: "120px" },
+                 { data: 'divisionCode', width: "90px" },
+                 {
+                     data: 'approveDate', width: "120px", type: 'date', render: function (data, type) {
+                         if (!data) return '';
+                         if (type === 'sort') return data;
+                         const date = new Date(data);
+                         return date.toLocaleDateString('en-GB');
+                     }
+                 },
+                 { data: 'itemNo', width: "117px" },
+                 { data: 'description', width: "257px" },
+                 { data: 'packingInfo', width: "110px" },
+                 { data: 'barcodeNo', width: "127px" },
+                 { data: 'qty', width: "97px", type: 'num' },
+                 { data: 'uom', width: "97px" },
+                 { data: 'action', width: "120px" },
+                 { data: 'status', width: "120px" },
+                 { data: 'remark', width: "125px" },
+                 { data: 'approver', width: "120px" },
+                 {
+                     data: 'note', width: "125px", render: function (data, type, row) {
+                         if (!data) return '';
+                         if (type === 'display') {
+                             var words = data.split(/\s+/);
+                             var truncated = words.slice(0, 5).join(' ');
+                             if (words.length > 5) truncated += ' ...';
+                             return '<span class="truncated-note text-black-50" data-fullnote="' +
+                                 $('<div/>').text(data).html() + '">' + truncated + '</span>';
+                         }
+                         return data;
+                     }
+                 },
+                 { data: 'vendorNo', width: "120px" },
+                 { data: 'vendorName', width: "170px" },
+                 {
+                     data: 'regeDate', width: "120px", type: 'date', render: function (data, type) {
+                         if (!data) return '';
+                         if (type === 'sort') return data;
+                         const date = new Date(data);
+                         return date.toLocaleDateString('en-GB');
+                     }
+                 },
             ],
-            order: [[1, 'asc'], [2, 'asc']],
+            order: [[1, 'asc']],
             columnDefs: [
-                { targets: '_all', orderSequence: ["asc", "desc", ""] },
-                { targets: [20], visible: false, searchable: false }
+                { targets: '_all', orderSequence: ["asc", "desc", ""] }
             ],
             drawCallback: function (settings) {
                 const api = this.api();
@@ -1494,7 +1480,7 @@
                               <div class="alert alert-info">No items to Filter</div>
                         </asp:Panel>
 
-                          <div class="table-responsive gridview-container pt-2 px-2">
+                          <div class="table-responsive gridview-container pt-2 px-1">
                             <asp:GridView ID="GridView2" runat="server"
                                  CssClass="table table-striped ResizableGrid table-hover border-2 shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto display"
                                  AutoGenerateColumns="False"
@@ -1526,20 +1512,20 @@
 
                                  <Columns>
 
-                                       <asp:TemplateField HeaderText="ID" Visible="false">
+                                     <asp:TemplateField HeaderText="ID" Visible="false">
                                          <ItemTemplate>
                                              <asp:Label ID="lblId" runat="server" Text='<%# Eval("id") %>' CssClass="row-id" />
                                          </ItemTemplate>
                                      </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" ItemStyle-CssClass="fixed-column-1">
+                                    <asp:TemplateField HeaderText="" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" ItemStyle-CssClass="fixed-column-1">
                                          <HeaderTemplate>
                                              <asp:CheckBox ID="chkAll1" runat="server" />
                                          </HeaderTemplate>
                                          <ItemTemplate>
                                              <input type="checkbox" class="rowCheckbox" data-id='<%# Eval("id") %>' runat="server" id="CheckBox1" />
                                          </ItemTemplate>
-                                         <ControlStyle Width="50px" />
+                                        <ControlStyle Width="70px" />
                                          <HeaderStyle ForeColor="White" BackColor="#BD467F" />
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
@@ -1561,7 +1547,7 @@
                                           <ItemStyle HorizontalAlign="Justify" />
                                       </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="Division" SortExpression="divisionCode" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header-4" ItemStyle-CssClass="fixed-column-4">
+                                     <asp:TemplateField HeaderText="Division" SortExpression="divisionCode" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header4" ItemStyle-CssClass="fixed-column-4">
                                         <ItemTemplate>
                                             <asp:Label ID="lblDivisionCode" runat="server" Text='<%# Eval("divisionCode") %>' />
                                         </ItemTemplate>
@@ -1574,6 +1560,7 @@
                                      <ItemTemplate>
                                          <asp:Label ID="lblApprove" runat="server" Text='<%# Eval("approveDate", "{0:dd-MM-yyyy}") %>' />
                                      </ItemTemplate>
+                                     <ControlStyle Width="120px" />
                                      <HeaderStyle ForeColor="White" BackColor="#BD467F" />
                                      <ItemStyle HorizontalAlign="Justify" />
                                  </asp:TemplateField>
@@ -1692,6 +1679,21 @@
                                          <HeaderStyle ForeColor="White" BackColor="#BD467F" />
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
+
+                                     <%-- <asp:TemplateField HeaderText="Completed Date" SortExpression="completedDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-61">
+                                         <ItemTemplate>
+                                             <asp:Label ID="lblCompleted" runat="server" Text=' <%# Eval("completedDate", "{0:dd-MM-yyyy}") %>' />
+                                         </ItemTemplate>
+                                         <ControlStyle Width="125px" />
+                                         <HeaderStyle ForeColor="White" BackColor="#BD467F" />
+                                         <ItemStyle HorizontalAlign="Justify" />
+                                     </asp:TemplateField>--%>                       <%--  <asp:Commaeld ShowEditButton="true" ShowCancelButton="true" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-BackColor="white" ControlStyle-CssClass="btn m-1 text-white"
+                                         EditText="-" UpdateText="<i class='fa-solid fa-file-arrow-up'></i>"
+                                         CancelText="<i class='fa-solid fa-xmark'></i>">
+                                         <ControlStyle CssClass="btn m-1 text-white" Width="75px" BackColor="#BD467F" />
+                                         <HeaderStyle ForeColor="White" BackColor="#BD467F" />
+                                         <ItemStyle HorizontalAlign="Justify" />
+                                     </asp:CommandField>--%>
 
                              </Columns>
 

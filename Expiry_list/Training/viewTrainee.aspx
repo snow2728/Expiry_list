@@ -97,13 +97,14 @@
                             });
                         },
                         columnDefs: [
-                            { orderable: false, targets: [5, 6] }
+                            { orderable: false, targets: [5, 6] },
+                            { targets: '_all', orderSequence: ["asc", "desc", ""] }
                         ]
                     });
                 } catch (e) {
                     console.error('DataTable initialization error:', e);
                 }
-            }
+          }
         }
 
         function initializeDataTable2() {
@@ -129,9 +130,11 @@
                 ordering: true,
                 responsive: true,
                 autoWidth: false,
-                //columnDefs: [
-                //    { orderable: false, targets: [-1, -2] }
-                //]
+                columnDefs: [
+                    //{ orderable: false, targets: [-1, -2] }
+                    { targets: '_all', orderSequence: ["asc", "desc", ""] }
+                ]
+              
             });
         }
 

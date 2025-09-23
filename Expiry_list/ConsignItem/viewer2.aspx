@@ -133,6 +133,9 @@
                         visible: false
                     },
                 ],
+                columnDefs: [
+                    { targets: '_all', orderSequence: ["asc", "desc", ""] }
+                ],
                 select: { style: 'multi', selector: 'td:first-child' },
                 lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
                 initComplete: function (settings) {

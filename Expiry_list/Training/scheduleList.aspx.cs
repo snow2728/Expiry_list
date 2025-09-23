@@ -23,28 +23,27 @@ namespace Expiry_list.Training
         {
             if (!IsPostBack)
             {
-                GridView2.DataSource = new List<string>();
-                GridView2.DataBind();
+                // Default current month in yyyy-MM
+                dateTb.Text = DateTime.Now.ToString("yyyy-MM");
 
-                BindGrid();
+                // Bind dropdowns
                 Training.DataBind.BindTrainer(trainerDp);
                 Training.DataBind.BindRoom(locationDp);
                 Training.DataBind.BindLevel(levelDp);
                 Training.DataBind.BindTopic(topicName);
 
-                // Store initial empty filter values
-                ViewState["FilterDate"] = string.Empty;
+                // Store initial filter values
+                ViewState["FilterMonth"] = dateTb.Text;
                 ViewState["FilterLevel"] = "0";
                 ViewState["FilterTopicId"] = "0";
                 ViewState["FilterStoreId"] = "0";
                 ViewState["FilterTrainerId"] = "0";
+                ViewState["HasFilters"] = true;
+
+                BindGrid();
             }
             else
             {
-                // Restore filter values from ViewState on postback
-                if (ViewState["FilterDate"] != null)
-                    dateTb.Text = ViewState["FilterDate"].ToString();
-
                 if (ViewState["FilterLevel"] != null && levelDp.Items.FindByValue(ViewState["FilterLevel"].ToString()) != null)
                     levelDp.SelectedValue = ViewState["FilterLevel"].ToString();
 
@@ -61,25 +60,31 @@ namespace Expiry_list.Training
 
         private void BindGrid()
         {
-            bool hasFilters = ViewState["HasFilters"] != null && (bool)ViewState["HasFilters"];
+            string filterMonth = ViewState["FilterMonth"] != null ? ViewState["FilterMonth"].ToString() : DateTime.Now.ToString("yyyy-MM");
+            int filterLevel = ViewState["FilterLevel"] != null ? Convert.ToInt32(ViewState["FilterLevel"]) : 0;
+            int filterTopicId = ViewState["FilterTopicId"] != null ? Convert.ToInt32(ViewState["FilterTopicId"]) : 0;
+            int filterStoreId = ViewState["FilterStoreId"] != null ? Convert.ToInt32(ViewState["FilterStoreId"]) : 0;
+            int filterTrainerId = ViewState["FilterTrainerId"] != null ? Convert.ToInt32(ViewState["FilterTrainerId"]) : 0;
 
-            if (hasFilters)
+            DataTable dt = GetFilteredData(filterMonth, filterLevel, filterTopicId, filterStoreId, filterTrainerId);
+
+            if (dt.Rows.Count == 0)
             {
-                string filterDate = ViewState["FilterDate"] != null ? ViewState["FilterDate"].ToString() : "";
-                int filterLevel = ViewState["FilterLevel"] != null ? Convert.ToInt32(ViewState["FilterLevel"]) : 0;
-                int filterTopicId = ViewState["FilterTopicId"] != null ? Convert.ToInt32(ViewState["FilterTopicId"]) : 0;
-                int filterStoreId = ViewState["FilterStoreId"] != null ? Convert.ToInt32(ViewState["FilterStoreId"]) : 0;
-                int filterTrainerId = ViewState["FilterTrainerId"] != null ? Convert.ToInt32(ViewState["FilterTrainerId"]) : 0;
+                ScriptManager.RegisterStartupScript(this, this.GetType(),
+                    "NoDataAlert", "Swal.fire({ icon: 'info', title: 'No Data', text: 'No data found for the selected month!' });", true);
 
-                DataTable dt = GetFilteredData(filterDate, filterLevel, filterTopicId, filterStoreId, filterTrainerId);
+                dt.Rows.Add(dt.NewRow());
                 GridView2.DataSource = dt;
+                GridView2.DataBind();
+
+                if (GridView2.Rows.Count > 0)
+                    GridView2.Rows[0].Visible = false;
             }
             else
             {
-                GridView2.DataSource = GetAllItems();
+                GridView2.DataSource = dt;
+                GridView2.DataBind();
             }
-
-            GridView2.DataBind();
         }
 
         protected void btnLoadTrainees_Click(object sender, EventArgs e)
@@ -90,6 +95,7 @@ namespace Expiry_list.Training
                 LoadScheduleTrainees(scheduleId);
                 upTrainees.Update();
 
+                // Initialize DataTable after UpdatePanel refresh
                 ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
             }
         }
@@ -110,7 +116,7 @@ namespace Expiry_list.Training
                     JOIN traineeT tr ON t.traineeId = tr.id
                     LEFT JOIN stores st ON tr.store = st.id
                     LEFT JOIN levelT lv ON tr.position = lv.id
-                    WHERE t.scheduleId = @ScheduleId ;
+                    WHERE t.scheduleId = @ScheduleId;
                     ", conn))
                 {
                     cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
@@ -163,6 +169,7 @@ namespace Expiry_list.Training
             LoadScheduleTrainees(scheduleId);
             upTrainees.Update();
 
+            // Re-initialize DataTables on client
             ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
         }
 
@@ -175,6 +182,7 @@ namespace Expiry_list.Training
                 {
                     cmd.Connection = con;
 
+                    // Build dynamic query based on which value changed
                     if (status != null)
                         cmd.CommandText = "UPDATE traineeTopicT SET status=@status WHERE id=@id";
 
@@ -196,17 +204,18 @@ namespace Expiry_list.Training
                 var trainees = new List<Trainee>();
                 string connectionString = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
 
+                // get current username
                 string username = HttpContext.Current.User.Identity.Name;
 
+                // check if user is admin
                 bool isAdmin = false;
                 var allowedForms = GetAllowedFormsByUser(username);
-                if (allowedForms.Values.Contains("admin") ||
-                    allowedForms.Values.Contains("super") ||
-                    username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                if (allowedForms.Values.Contains("admin") || allowedForms.Values.Contains("super") || username.Equals("admin", StringComparison.OrdinalIgnoreCase))
                 {
                     isAdmin = true;
                 }
 
+                // get logged-in user's store list
                 List<string> storeNos = GetLoggedInUserStoreNames();
 
                 using (var con = new SqlConnection(connectionString))
@@ -214,18 +223,14 @@ namespace Expiry_list.Training
                     con.Open();
 
                     string sql = @"
-                        SELECT t.id, 
-                               t.name, 
-                               t.position AS positionId, 
-                               p.name AS position, 
-                               st.storeNo AS store
-                        FROM traineeT t
-                        LEFT JOIN levelT p ON t.position = p.id
-                        LEFT JOIN stores st ON t.store = st.id
-                        WHERE t.IsActive = 1
-                          AND t.name LIKE @SearchTerm
-                          AND (@PositionId = 0 OR t.position = @PositionId)";
+                    SELECT t.id, t.name, t.position AS positionId, p.name AS position, st.storeNo as store
+                    FROM traineeT t
+                    LEFT JOIN levelT p ON t.position = p.id
+                    LEFT JOIN stores st ON t.store = st.id
+                    WHERE t.name LIKE @SearchTerm
+                    AND (@PositionId = 0 OR t.position = @PositionId)";
 
+                    // apply store restriction if not admin
                     if (!isAdmin && storeNos.Any())
                     {
                         sql += $" AND st.storeNo IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})";
@@ -271,7 +276,7 @@ namespace Expiry_list.Training
             }
         }
 
-        // Trainee class
+        // Trainee class definition
         public class Trainee
         {
             public string Id { get; set; }
@@ -326,19 +331,19 @@ namespace Expiry_list.Training
         }
 
         // Get filtered data
-        private DataTable GetFilteredData(string filterDate, int filterLevel, int filterTopicId, int filterStoreId, int filterTrainerId)
+        private DataTable GetFilteredData(string filterMonth, int filterLevel, int filterTopicId, int filterStoreId, int filterTrainerId)
         {
             DataTable dt = new DataTable();
             var whereClauses = new List<string>();
             var parameters = new List<SqlParameter>();
 
-            if (!string.IsNullOrEmpty(filterDate))
+            // Month filter (using YEAR + MONTH instead of BETWEEN)
+            if (!string.IsNullOrEmpty(filterMonth))
             {
-                DateTime parsedDate;
-                if (DateTime.TryParse(filterDate, out parsedDate))
+                if (DateTime.TryParse(filterMonth + "-01", out DateTime monthStart))
                 {
-                    whereClauses.Add("CAST(s.date AS DATE) = @Date");
-                    parameters.Add(new SqlParameter("@Date", parsedDate.Date));
+                    whereClauses.Add("YEAR(s.date) = YEAR(@MonthDate) AND MONTH(s.date) = MONTH(@MonthDate)");
+                    parameters.Add(new SqlParameter("@MonthDate", monthStart));
                 }
             }
 
@@ -375,7 +380,6 @@ namespace Expiry_list.Training
                     tw.topic AS topicId,      
                     s.position AS positionId,
                     t.topicName AS topicName,
-                    s.description,
                     lo.name AS room,
                     ISNULL(tr.name, '') AS trainerName,
                     ISNULL(l.name, '') AS traineeLevel,
@@ -383,12 +387,12 @@ namespace Expiry_list.Training
                     s.date,
                     s.time
                 FROM scheduleT s
-                INNER JOIN topicWLT tw ON s.topicName = tw.id  
-                INNER JOIN topicT t ON tw.topic = t.id     
+                LEFT JOIN topicWLT tw ON s.topicName = tw.id  
+                LEFT JOIN topicT t ON tw.topic = t.id     
                 LEFT JOIN trainerT tr ON tw.trainerId = tr.id 
                 LEFT JOIN levelT l ON tw.traineeLevel = l.id 
                 LEFT JOIN levelT l2 ON s.position = l2.id    
-                INNER JOIN locationT lo ON s.room = lo.id 
+                LEFT JOIN locationT lo ON s.room = lo.id 
                 {where}
                 ORDER BY s.id ASC";
 
@@ -408,52 +412,38 @@ namespace Expiry_list.Training
 
         protected void showBtn_Click(object sender, EventArgs e)
         {
-            string filterDate = dateTb.Text.Trim();
+            string filterMonth = dateTb.Text.Trim();
             int filterLevel = string.IsNullOrEmpty(levelDp.SelectedValue) ? 0 : Convert.ToInt32(levelDp.SelectedValue);
             int filterTopicId = string.IsNullOrEmpty(topicName.SelectedValue) ? 0 : Convert.ToInt32(topicName.SelectedValue);
             int filterStoreId = string.IsNullOrEmpty(locationDp.SelectedValue) ? 0 : Convert.ToInt32(locationDp.SelectedValue);
             int filterTrainerId = string.IsNullOrEmpty(trainerDp.SelectedValue) ? 0 : Convert.ToInt32(trainerDp.SelectedValue);
 
-            // Save filter values to ViewState
-            ViewState["FilterDate"] = filterDate;
+            // Save filter values
+            ViewState["FilterMonth"] = filterMonth;
             ViewState["FilterLevel"] = filterLevel.ToString();
             ViewState["FilterTopicId"] = filterTopicId.ToString();
             ViewState["FilterStoreId"] = filterStoreId.ToString();
             ViewState["FilterTrainerId"] = filterTrainerId.ToString();
             ViewState["HasFilters"] = true;
 
-            DataTable dt = GetFilteredData(filterDate, filterLevel, filterTopicId, filterStoreId, filterTrainerId);
-
-            if (dt.Rows.Count == 0)
-            {
-                dt.Rows.Add(dt.NewRow());
-                GridView2.DataSource = dt;
-                GridView2.DataBind();
-
-                GridView2.Rows[0].Visible = false;
-            }
-            else
-            {
-                GridView2.DataSource = dt;
-                GridView2.DataBind();
-            }
+            BindGrid();
         }
 
         protected void resetBtn_Click(object sender, EventArgs e)
         {
-            dateTb.Text = string.Empty;
+            // Reset to current month
+            dateTb.Text = DateTime.Now.ToString("yyyy-MM");
             levelDp.SelectedIndex = 0;
             topicName.SelectedIndex = 0;
             locationDp.SelectedIndex = 0;
             trainerDp.SelectedIndex = 0;
 
-            // Clear filter state
-            ViewState["FilterDate"] = string.Empty;
+            ViewState["FilterMonth"] = dateTb.Text;
             ViewState["FilterLevel"] = "0";
             ViewState["FilterTopicId"] = "0";
             ViewState["FilterStoreId"] = "0";
             ViewState["FilterTrainerId"] = "0";
-            ViewState["HasFilters"] = false;
+            ViewState["HasFilters"] = true;
 
             BindGrid();
         }
@@ -484,6 +474,7 @@ namespace Expiry_list.Training
             {
                 conn.Open();
 
+                // Collect duplicate trainee NAMES instead of IDs
                 List<string> duplicateTrainees = new List<string>();
 
                 foreach (var trainee in selectedTrainees)
@@ -501,23 +492,18 @@ namespace Expiry_list.Training
 
                     // Check duplicate registration
                     using (SqlCommand checkDup = new SqlCommand(@"
-                        SELECT COUNT(1)
-                        FROM traineeTopicT
-                        WHERE traineeId=@traineeId AND topicId=@topicId AND scheduleId=@scheduleId", conn))
+                SELECT COUNT(1)
+                FROM traineeTopicT
+                WHERE traineeId=@traineeId AND topicId=@topicId AND scheduleId=@scheduleId", conn))
                     {
                         checkDup.Parameters.AddWithValue("@traineeId", traineeId);
                         checkDup.Parameters.AddWithValue("@topicId", topicId);
                         checkDup.Parameters.AddWithValue("@scheduleId", scheduleId);
+
                         if (Convert.ToInt32(checkDup.ExecuteScalar()) > 0)
                         {
-                            // Get trainee name from DB to ensure we have it
-                            using (SqlCommand getName = new SqlCommand("SELECT name FROM traineeT WHERE id=@traineeId", conn))
-                            {
-                                getName.Parameters.AddWithValue("@traineeId", traineeId);
-                                var nameObj = getName.ExecuteScalar();
-                                string traineeName = nameObj?.ToString() ?? traineeId.ToString();
-                                duplicateTrainees.Add(traineeName);
-                            }
+                            // Add trainee NAME instead of ID
+                            duplicateTrainees.Add(trainee.Name ?? traineeId.ToString());
                         }
                     }
                 }
@@ -525,13 +511,8 @@ namespace Expiry_list.Training
                 if (duplicateTrainees.Count > 0)
                 {
                     string dupList = string.Join(", ", duplicateTrainees);
-
-                    string msg = duplicateTrainees.Count == 1
-                        ? $"{dupList} is already registered."
-                        : $"{dupList} are already registered.";
-
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "dupAlert",
-                        $"Swal.fire('Duplicate Registration', '{msg}', 'warning');", true);
+                        $"Swal.fire('Duplicate Registration', 'The following trainee(s) are already registered: {dupList}', 'warning');", true);
                     return;
                 }
 
