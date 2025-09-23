@@ -249,7 +249,7 @@ namespace Expiry_list.ConsignItem
                 }
                 DataView dv = new DataView(dt);
                 dv.RowFilter = $"StaffName = '{currentStaffName}'";
-                //dv.Sort = "registrationDate DESC";
+                dv.Sort = "registrationDate DESC";
 
                 Session["SortedConsign"] = dv;
 
@@ -318,112 +318,6 @@ namespace Expiry_list.ConsignItem
                 }
             }
         }
-
-        //protected void GridView_RowUpdating(object sender, GridViewUpdateEventArgs e)
-        //{
-        //    DataView dv = Session["SortedConsign"] as DataView;
-        //    DataTable dt = dv.ToTable();
-
-        //    if (dt != null)
-        //    {
-        //        DataRowView rowView = dv[e.RowIndex];
-        //        DataRow row = rowView.Row;
-
-        //        TextBox txtQty = (TextBox)GridView.Rows[e.RowIndex].FindControl("txtQuantity");
-        //        TextBox txtNote = (TextBox)GridView.Rows[e.RowIndex].FindControl("txtNote");
-
-        //        // Validate inputs
-        //        int qtyValue;
-        //        bool isValidQty = int.TryParse(txtQty.Text, out qtyValue);
-
-        //        if (isValidQty)
-        //        {
-        //            row["Qty"] = qtyValue;
-        //            row["Note"] = txtNote.Text.Trim();
-
-        //            // Update the original DataTable
-        //            DataTable originalDt = Session["Consign"] as DataTable;
-        //            originalDt.Rows[row.Table.Rows.IndexOf(row)]
-        //                .ItemArray = row.ItemArray;
-
-        //            Session["Consign"] = originalDt;
-        //            GridView.EditIndex = -1;
-
-        //            List<string> storeList = GetLoggedInUserStoreNames();
-        //            if (storeList == null || storeList.Count == 0)
-        //            {
-        //                ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
-        //                    "swal('Error!', 'No store access assigned for this user!', 'error');", true);
-        //                return;
-        //            }
-        //            var store = storeList[0];
-
-        //            using (SqlConnection conn = new SqlConnection(strcon))
-        //            {
-        //                conn.Open();
-        //                SqlTransaction transaction = conn.BeginTransaction();
-
-        //                try
-        //                {                            
-        //                        string batchNo = GetNextItemNo();
-        //                        string vendorNoVal = row["VendorNo"].ToString();
-        //                        string vendorName = row["VendorName"].ToString();
-        //                        string no = row["No"].ToString();
-        //                        string itemNo = row["ItemNo"].ToString();
-        //                        string description = row["Description"].ToString();
-        //                        string quantity = row["Qty"].ToString();
-        //                        string packing = row["PackingInfo"].ToString();
-        //                        string unit = row["UOM"].ToString();
-        //                        string barcode = row["BarcodeNo"].ToString();
-        //                        string staff = row["StaffName"].ToString();
-        //                        string note = row["Note"].ToString();
-
-        //                        string insertQuery = @"
-        //                                    INSERT INTO itemListC 
-        //                                    (no, ItemNo, Description, BarcodeNo, Qty, UOM, PackingInfo, StoreNo, StaffName, VendorNo, VendorName, Note) 
-        //                                    VALUES 
-        //                                    (@no, @ItemNo, @Description, @BarcodeNo, @Qty, @UOM, @PackingInfo, @storeNo, @StaffName, @VendorNo, @VendorName, @Note)";
-        //                        using (SqlCommand cmd = new SqlCommand(insertQuery, conn, transaction))
-        //                        {
-        //                            cmd.Parameters.AddWithValue("@no", batchNo);
-        //                            cmd.Parameters.AddWithValue("@ItemNo", itemNo);
-        //                            cmd.Parameters.AddWithValue("@Description", description);
-        //                            cmd.Parameters.AddWithValue("@BarcodeNo", barcode);
-        //                            cmd.Parameters.AddWithValue("@Qty", quantity);
-        //                            cmd.Parameters.AddWithValue("@UOM", unit);
-        //                            cmd.Parameters.AddWithValue("@PackingInfo", packing);
-        //                            cmd.Parameters.AddWithValue("@storeNo", store);
-        //                            cmd.Parameters.AddWithValue("@StaffName", staff);
-        //                            cmd.Parameters.AddWithValue("@VendorNo", string.IsNullOrEmpty(vendorNoVal) ? DBNull.Value : (object)vendorNoVal);
-        //                            cmd.Parameters.AddWithValue("@VendorName", string.IsNullOrEmpty(vendorName) ? DBNull.Value : (object)vendorName);
-        //                            cmd.Parameters.AddWithValue("@Note", note);
-
-        //                            cmd.ExecuteNonQuery();
-        //                        }
-
-
-        //                    transaction.Commit();
-        //                }
-        //                catch (Exception ex)
-        //                {
-        //                    try { transaction.Rollback(); } catch { }
-
-        //                    hiddenVendorNo.Value = vendorNo.SelectedValue;
-        //                    string safeMessage = ex.Message.Replace("'", "\\'").Replace("\"", "\\\"").Replace("\n", " ").Replace("\r", " ");
-        //                    ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
-        //                        $"swal('Error!', '{safeMessage}', 'error');", true);
-        //                    return;
-        //                }
-        //            }
-
-        //            BindGridView();
-        //        }
-        //        else
-        //        {
-        //            Response.Write("<script>alert('Invalid Quantity or Expiry Date!');</script>");
-        //        }
-        //    }
-        //}
 
         protected void btnConfirmConsign_Click(object sender, EventArgs e)
         {            
@@ -671,9 +565,9 @@ namespace Expiry_list.ConsignItem
                     using (var cmd = new SqlCommand(@"
                     SELECT i.ItemNo, i.description, i.uom, i.packingInfo, i.barcodeNo 
                     FROM Items i                    
-                    WHERE i.vendorNo = @vendorNo ", con)) //LEFT JOIN ItemBarcode b ON i.ItemNo = b.ItemNo
+                    WHERE trim(i.vendorNo) like @vendorNo", con)) //LEFT JOIN ItemBarcode b ON i.ItemNo = b.ItemNo
                     {
-                        cmd.Parameters.AddWithValue("@vendorNo", vendorNum);
+                        cmd.Parameters.AddWithValue("@vendorNo", "%" + vendorNum + "%");
 
                         using (var reader = cmd.ExecuteReader())
                         {
@@ -757,20 +651,11 @@ namespace Expiry_list.ConsignItem
                     dt.Rows.Add(newRow);
                 }
                 Session["Consign"] = dt;
-                if(dt.Rows.Count > 0)
-                {
-                    BindGridView();
-                } 
+                BindGridView();
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Trace.TraceError($"GetItems error: {ex}");
-                //return new List<ItemDTO> {
-                //    new ItemDTO {
-                //        ItemNo = "ERROR",
-                //        ItemDescription = "An error occurred: " + ex.Message
-                //    }
-                //};
             }
         }
 

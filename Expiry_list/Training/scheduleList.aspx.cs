@@ -288,6 +288,12 @@ namespace Expiry_list.Training
             public string Store { get; set; }
         }
 
+        public class TraineeJson
+        {
+            public string Id { get; set; }
+            public string Text { get; set; }
+        }
+
         // Get all items
         private DataTable GetAllItems()
         {
@@ -476,8 +482,13 @@ namespace Expiry_list.Training
             }
 
             // Deserialize and filter out invalid items
-            var selectedTrainees = JsonConvert.DeserializeObject<List<Trainee>>(selectedJson)
+            var selectedTrainees = JsonConvert.DeserializeObject<List<TraineeJson>>(selectedJson)
                 .Where(t => !string.IsNullOrWhiteSpace(t?.Id?.ToString()))
+                .Select(t => new Trainee
+                {
+                    Id = t.Id,
+                    Name = t.Text
+                })
                 .ToList();
 
             if (selectedTrainees.Count == 0)
@@ -525,7 +536,7 @@ namespace Expiry_list.Training
                 {
                     string dupList = string.Join(", ", duplicateTrainees);
                     ScriptManager.RegisterStartupScript(this, this.GetType(), "dupAlert",
-                        $"Swal.fire('Duplicate Registration', 'The following trainee(s) are already registered: {dupList}', 'warning');", true);
+                        $"Swal.fire('Duplicate Registration', 'The following trainees are already registered: {dupList}', 'warning');", true);
                     return;
                 }
 
