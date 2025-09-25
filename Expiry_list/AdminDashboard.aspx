@@ -128,7 +128,8 @@
                         <div class="card-body text-center p-4">
                             <div class="icon-wrapper rounded-circle shadow d-flex align-items-center justify-content-center mb-3 mx-auto"
                                 style="width: 80px; height: 80px; margin-top: -40px; background-color: #0d330e;">
-                                <i class="fa-solid fa-boxes-stacked fa-2x text-white"></i>
+                                <%--<i class="fa-solid fa-boxes-stacked fa-2x text-white"></i>--%>
+                                <i class="bi bi-boxes" style="color:white;font-size:35px"></i>
                             </div>
                             <h4 class="card-title fw-semibold mb-3">Consignment List</h4>
                             <p class="card-text text-muted mb-4">Manage transactions for consignment items</p>
@@ -148,7 +149,8 @@
                          <div class="card-body text-center p-4">
                              <div class="icon-wrapper rounded-circle shadow d-flex align-items-center justify-content-center mb-3 mx-auto"
                                  style="width: 80px; height: 80px; margin-top: -40px; background-color: #022F56;">
-                                 <i class="fa-solid fa-boxes-stacked fa-2x text-white"></i>
+                                 <%--<i class="fa-solid fa-boxes-stacked fa-2x text-white"></i>--%>
+                                 <i class="bi bi-calendar-week" style="color:white;font-size:30px"></i>
                              </div>
                              <h4 class="card-title fw-semibold mb-3">Training Schedule List</h4>
                              <p class="card-text text-muted mb-4">Manage training meetings for trainer and trainee</p>
