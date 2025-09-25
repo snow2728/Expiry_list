@@ -56,13 +56,6 @@
                     grid.prepend($('<thead/>').append(headerRow));
                 }
 
-                const headerCols = grid.find('thead tr:first th').length;
-                const bodyCols = grid.find('tbody tr:first td').length;
-
-                if (headerCols !== bodyCols) {
-                    console.error('Header and body column count mismatch:', headerCols, 'vs', bodyCols);
-                    return;
-                }
                 try {
                     grid.DataTable({
                         responsive: true,
@@ -74,51 +67,35 @@
                         stateSave: true,
                         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                         dom: 'f<"top-toggle">ltip',
-                        <%--initComplete: function () {
+                        initComplete: function () {
+
                             const toggleHtml = `
-                            <div class="toggle-container">
-                                
-                                <label class="switch">
-                                    <input type="checkbox" id="toggleSwitch">
-                                    <span class="slider round"></span>
-                                </label>
-                                <span class="toggle-status" id="toggleStatus">Active</span>
-                            </div>`;
+                                <div class="toggle-container">
+        
+                                    <label class="switch">
+                                        <input type="checkbox" id="toggleSwitch">
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span class="toggle-status" id="toggleStatus">Active</span>
+                                </div>`;
 
-                            $('.top-toggle').append(toggleHtml);
-
-
-                            var api = this.api();  
-
-                            const savedState = $('#<%= hdnToggleStatus.ClientID %>').val();
-                            var hiddenColIndex = 5;
-
-                            if (savedState === "Inactive") {
-                                $('#toggleSwitch').prop('checked', true);
-                                $('#toggleStatus').text('Inactive').css('color', '#dc3545');
-                                api.column(hiddenColIndex).search("False").draw();
-                            } else {
-                                $('#toggleSwitch').prop('checked', false);
-                                $('#toggleStatus').text('Active').css('color', '#000');
-                                api.column(hiddenColIndex).search("True").draw();
-                            }                            
-
-                            $('#toggleSwitch').on('change', function () {
-                                if (this.checked) {
+                                $('.top-toggle').append(toggleHtml);
+                                //$('.top-toggle').html(toggleHtml);
+                                var savedState = $("#<%= hdnToggleStatus.ClientID %>").val();
+                                if (savedState === "Inactive") {
+                                    $('#toggleSwitch').prop('checked', true);
                                     $('#toggleStatus').text('Inactive').css('color', '#dc3545');
-                                    $('#<%= hdnToggleStatus.ClientID %>').val("Inactive");
-                                    api.column(hiddenColIndex).search("False").draw();
                                 } else {
+                                    $('#toggleSwitch').prop('checked', false);
                                     $('#toggleStatus').text('Active').css('color', '#000');
-                                    $('#<%= hdnToggleStatus.ClientID %>').val("Active");
-                                    api.column(hiddenColIndex).search("True").draw();
+                                }
 
-                               }
-                           });
-
-
-                            api.column(hiddenColIndex).search("True").draw();
-                        },--%>
+                                $('#toggleSwitch').on('change', function () {
+                                    var isChecked = $(this).is(":checked");
+                                    $("#<%= hdnToggleStatus.ClientID %>").val(isChecked ? "Inactive" : "Active");
+                                 __doPostBack('<%= btnTogglePostBack.UniqueID %>', '');
+                            });
+                        },
                         columnDefs: [
                             { orderable: false, targets: [5, 6] },
                             { targets: '_all', orderSequence: ["asc", "desc", ""] }
@@ -188,6 +165,8 @@
                         </div>
                     </div>
                     <asp:HiddenField ID="hdnToggleStatus" runat="server" />
+                    <asp:HiddenField ID="hdnHasInactive" runat="server" />
+                    <asp:Button ID="btnTogglePostBack" runat="server" Style="display:none" OnClick="btnTogglePostBack_Click" />
                     <div class="table-responsive">
                         <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-scroll"
                             DataKeyNames="id,name,storeId,positionId,IsActive"
@@ -249,27 +228,19 @@
                                  <asp:TemplateField HeaderText="Status" SortExpression="IsActive">
                                     <ItemTemplate>
                                         <div style="text-align:left;">
-                                            <%# Convert.ToBoolean(Eval("IsActive")) ? "Active" : "Inactive" %>
+                                            <%# Convert.ToBoolean(Eval("IsActive") == DBNull.Value? 1: Eval("IsActive")) ? "Active" : "Inactive" %>
                                         </div>
                                     </ItemTemplate>
                                     <EditItemTemplate>
                                         <div style="text-align:left;">
-                                            <asp:CheckBox ID="chkTopic_Enable" runat="server" 
-                                                Checked='<%# Convert.ToBoolean(Eval("IsActive")) %>' 
+                                            <asp:CheckBox ID="chkTrainee" runat="server" 
+                                                Checked='<%# Convert.ToBoolean(Eval("IsActive") == DBNull.Value? 1: Eval("IsActive")) %>' 
                                                 Text="Active" CssClass="chk-status" />
                                         </div>
                                     </EditItemTemplate>
                                     <HeaderStyle ForeColor="White" BackColor="#488db4" HorizontalAlign="Left" Width="10%" />
                                     <ItemStyle HorizontalAlign="Left" Width="10%" />
-                                </asp:TemplateField>
-                               <asp:TemplateField>
-                                    <ItemTemplate>
-                                        <%# Convert.ToBoolean(Eval("IsActive")) %>
-                                    </ItemTemplate>
-                                   <ItemStyle CssClass="hidden-col" />
-                                   <HeaderStyle CssClass="hidden-col" />
-                                </asp:TemplateField>                             
-
+                                </asp:TemplateField>        
 
                                <asp:TemplateField HeaderText="Topics" SortExpression="topics" HeaderStyle-VerticalAlign="Middle" >
                                    <ItemTemplate>
@@ -311,11 +282,11 @@
                                 <EditItemTemplate>
                                    <div style="text-align:center;">
                                         <asp:LinkButton ID="btnUpdate" runat="server" CommandName="Update" CausesValidation="False"
-                                             CssClass="btn btn-sm ms-1 text-white" BackColor="#9ad9fe" ToolTip="Update">
+                                             CssClass="btn btn-sm mt-1 ms-1 me-2 " BackColor="#9ad9fe" ToolTip="Update">
                                              <i class="fas fa-save"></i>
                                          </asp:LinkButton>
                                          <asp:LinkButton ID="btnCancel" runat="server" CommandName="Cancel" CausesValidation="False"
-                                             CssClass="btn btn-sm ms-2 text-white btn-secondary" ToolTip="Cancel">
+                                             CssClass="btn btn-sm mt-1 ms-1 me-2 btn-secondary" ToolTip="Cancel">
                                              <i class="fas fa-times"></i>
                                          </asp:LinkButton>
                                    </div>

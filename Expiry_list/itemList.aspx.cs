@@ -30,8 +30,12 @@ namespace Expiry_list
         {
             if (Request.QueryString["action"] == "export")
             {
-                DataTable filteredData = GetFilteredDataForExport();
-                ExportToExcel(filteredData);
+                //DataTable filteredData = GetFilteredDataForExport();
+                if (Session["FilteredData"] != null && (Session["FilteredData"] as DataTable).Rows.Count > 0)
+                {
+                    ExportToExcel(Session["FilteredData"] as DataTable);
+                }
+                //ExportToExcel(filteredData);
                 PopulateItemsDropdown();
                 PopulateVendorDropdown();
                 return;
@@ -206,7 +210,7 @@ namespace Expiry_list
                     orderColumn = orderColumnIndex,
                     orderDir = orderDir
                 };
-
+                Session["FilteredData"] = dt;
                 string jsonResponse = JsonConvert.SerializeObject(response);
                 Response.ContentType = "application/json";
                 Response.Write(jsonResponse);
@@ -421,7 +425,7 @@ namespace Expiry_list
                 DataTable dt = GetFilteredData();
 
                 ViewState["FilteredData"] = dt;
-
+                Session["FilteredData"] = dt;
                 // Bind GridView
                 GridView2.DataSource = dt;
                 GridView2.DataBind();
@@ -1269,6 +1273,7 @@ namespace Expiry_list
                     throw;
                 }
             }
+            Session["FilteredData"] = dt;
 
             return dt;
         }
@@ -1502,16 +1507,16 @@ namespace Expiry_list
         {
             try
             {
-                DataTable dt = GetFilteredData();
-
-                if (dt != null && dt.Rows.Count > 0)
+                //DataTable dt = GetFilteredData();
+                if(Session["FilteredData"]!= null && (Session["FilteredData"] as DataTable).Rows.Count > 0)                
                 {
-                    ExportToExcel(dt);
+                    ExportToExcel(Session["FilteredData"] as DataTable);
                 }
                 else
                 {
-                    ScriptManager.RegisterStartupScript(this, GetType(), "noDataAlert",
-                        "alert('No data to export.');", true);
+                    ScriptManager.RegisterClientScriptBlock(this, GetType(), "alert",
+                    $"swal('Warning!', 'No data to export.', 'warning');", true);
+                    return;
                 }
             }
             catch (Exception ex)

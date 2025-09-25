@@ -42,6 +42,24 @@ namespace Expiry_list.Training
         protected global::System.Web.UI.WebControls.HiddenField hdnToggleStatus;
 
         /// <summary>
+        /// hdnHasInactive control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hdnHasInactive;
+
+        /// <summary>
+        /// btnTogglePostBack control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnTogglePostBack;
+
+        /// <summary>
         /// GridView2 control.
         /// </summary>
         /// <remarks>
