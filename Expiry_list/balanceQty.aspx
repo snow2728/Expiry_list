@@ -7,6 +7,10 @@
     $(document).ready(function () {
 
         initializeComponents();
+        $(document).on('search.dt', function (e, settings) {
+            var searchVal = settings.oPreviousSearch.sSearch || "";
+            $('#<%= hfLastSearch.ClientID %>').val(searchVal);
+        });
     });
 
     let isDataTableInitialized = false;
@@ -109,9 +113,9 @@
 
     function refreshDataTable() {
         const grid = $("#<%= GridView2.ClientID %>");
-         if ($.fn.DataTable.isDataTable(grid)) {
-             grid.DataTable().ajax.reload();
-         }
+        if ($.fn.DataTable.isDataTable(grid)) {
+            grid.DataTable().ajax.reload();
+        }
     }
 
 
@@ -134,6 +138,7 @@
 
                <asp:HiddenField ID="hfSelectedIDs" runat="server" />
                <asp:HiddenField ID="hflength" runat="server" />   
+               <asp:HiddenField ID="hfLastSearch" runat="server" />
 
                <!-- Table -->
                  <div class="col-md-12" id="gridCol">

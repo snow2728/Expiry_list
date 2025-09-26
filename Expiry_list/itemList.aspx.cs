@@ -30,12 +30,12 @@ namespace Expiry_list
         {
             if (Request.QueryString["action"] == "export")
             {
-                //DataTable filteredData = GetFilteredDataForExport();
-                if (Session["FilteredData"] != null && (Session["FilteredData"] as DataTable).Rows.Count > 0)
-                {
-                    ExportToExcel(Session["FilteredData"] as DataTable);
-                }
-                //ExportToExcel(filteredData);
+                DataTable filteredData = GetFilteredDataForExport();
+                //if (Session["FilteredData"] != null && (Session["FilteredData"] as DataTable).Rows.Count > 0)
+                //{
+                //    ExportToExcel(Session["FilteredData"] as DataTable);
+                //}
+                ExportToExcel(filteredData);
                 PopulateItemsDropdown();
                 PopulateVendorDropdown();
                 return;
@@ -57,6 +57,7 @@ namespace Expiry_list
                 BindStores();
                 PopulateItemsDropdown();
                 PopulateVendorDropdown();
+                hfLastSearch.Value = "";
             }
             else
             {
@@ -1328,16 +1329,13 @@ namespace Expiry_list
             if (!permissions.TryGetValue("ExpiryList", out string perm))
             {
                 ShowAlert("Unauthorized", "You do not have permission to access Expiry List", "error");
-                return new DataTable(); // Return empty
+                return new DataTable();
             }
 
-            // Get assigned stores from session or DB
             List<string> userStores = Session["storeListRaw"] as List<string> ?? GetLoggedInUserStoreNames();
-
             bool hasHO = userStores.Any(s => s.Equals("HO", StringComparison.OrdinalIgnoreCase));
 
             List<string> selectedStores = new List<string>();
-
             if (filterStore.Checked)
             {
                 selectedStores = lstStoreFilter.Items.Cast<ListItem>()
@@ -1362,27 +1360,27 @@ namespace Expiry_list
                 DataTable dt = new DataTable();
 
                 StringBuilder query = new StringBuilder(@"
-            SELECT 
-                no, itemNo, description, barcodeNo, qty, uom, packingInfo,
-                CONVERT(DATE, expiryDate) AS expiryDate,
-                storeNo, staffName, batchNo,
-                vendorNo, vendorName,
-                CONVERT(DATE, regeDate) AS regeDate,
-                action, status, note, remark,
-                CONVERT(DATE, completedDate) AS completedDate
-            FROM itemList
-            WHERE 1 = 1
-        ");
+                    SELECT 
+                        no, itemNo, description, barcodeNo, qty, uom, packingInfo,
+                        CONVERT(DATE, expiryDate) AS expiryDate,
+                        storeNo, staffName, batchNo,
+                        vendorNo, vendorName,
+                        CONVERT(DATE, regeDate) AS regeDate,
+                        action, status, note, remark,
+                        CONVERT(DATE, completedDate) AS completedDate
+                    FROM itemList
+                    WHERE 1 = 1
+                ");
 
                 List<SqlParameter> parameters = new List<SqlParameter>();
 
-                // Permission-based status filter
+                // Permission
                 if (perm == "edit" || perm == "view" || perm == "admin" || perm == "super1")
                 {
-                    query.Append(" AND status NOT IN ('Exchange', 'No Exchange', 'No Action') or status is null ");
+                    query.Append(" AND (status NOT IN ('Exchange', 'No Exchange', 'No Action') OR status IS NULL) ");
                 }
 
-                // Store-level restriction
+                // Store restriction
                 if (!hasHO)
                 {
                     if (selectedStores.Count > 0)
@@ -1397,18 +1395,23 @@ namespace Expiry_list
                     }
                     else
                     {
-                        query.Append(" AND 1 = 0"); // No store access
+                        query.Append(" AND 1 = 0");
                     }
                 }
                 else
                 {
-                    // HO users: use selectedStores if any
                     if (selectedStores.Count > 0)
                     {
                         query.Append(" AND storeNo IN (" + string.Join(",", selectedStores.Select((s, i) => $"@Store{i}")) + ")");
                         parameters.AddRange(selectedStores.Select((s, i) => new SqlParameter($"@Store{i}", s)));
                     }
-                    // else no filter needed (all stores)
+                }
+
+                // 🔹 Extra filter from hfLastSearch
+                if (!string.IsNullOrEmpty(hfLastSearch.Value))
+                {
+                    query.Append(" AND (itemNo LIKE @Search OR description LIKE @Search OR barcodeNo LIKE @Search) ");
+                    parameters.Add(new SqlParameter("@Search", "%" + hfLastSearch.Value.Trim() + "%"));
                 }
 
                 query.Append(" ORDER BY id");
@@ -1423,7 +1426,6 @@ namespace Expiry_list
                     }
                 }
 
-                // Ensure column types are preserved
                 if (dt.Columns.Contains("expiryDate"))
                 {
                     dt.Columns["expiryDate"].DateTimeMode = DataSetDateTime.Unspecified;
@@ -1508,7 +1510,7 @@ namespace Expiry_list
             try
             {
                 //DataTable dt = GetFilteredData();
-                if(Session["FilteredData"]!= null && (Session["FilteredData"] as DataTable).Rows.Count > 0)                
+                if (Session["FilteredData"] != null && (Session["FilteredData"] as DataTable).Rows.Count > 0)
                 {
                     ExportToExcel(Session["FilteredData"] as DataTable);
                 }

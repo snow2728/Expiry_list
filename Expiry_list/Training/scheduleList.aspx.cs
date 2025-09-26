@@ -1,4 +1,4 @@
-﻿using System;
+﻿    using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
@@ -150,6 +150,52 @@ namespace Expiry_list.Training
                     {
                         ddlStatus.SelectedIndex = 0; 
                     }
+                }
+            }
+        }
+
+        protected void GridView2_RowDeleting(object sender, GridViewDeleteEventArgs e)
+        {
+            int scheduleId = Convert.ToInt32(GridView2.DataKeys[e.RowIndex].Value);
+
+            using (SqlConnection conn = new SqlConnection(strcon))
+            {
+                conn.Open();
+                SqlTransaction transaction = conn.BeginTransaction();
+
+                try
+                {
+                    // First delete from traineeTopicT (child table)
+                    string deleteTraineeTopics = "DELETE FROM traineeTopicT WHERE scheduleId = @scheduleId";
+                    using (SqlCommand cmd = new SqlCommand(deleteTraineeTopics, conn, transaction))
+                    {
+                        cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // Then delete from scheduleT (parent table)
+                    string deleteSchedule = "DELETE FROM scheduleT WHERE id = @scheduleId";
+                    using (SqlCommand cmd = new SqlCommand(deleteSchedule, conn, transaction))
+                    {
+                        cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // Commit if both succeed
+                    transaction.Commit();
+
+                    // Refresh grid
+                    BindGrid();
+
+                    ScriptManager.RegisterStartupScript(this, GetType(), "DeleteSuccess",
+                        "Swal.fire('Cancelled!', 'The schedule and related trainees have been cancelled successfully.', 'success');", true);
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+
+                    ScriptManager.RegisterStartupScript(this, GetType(), "DeleteError",
+                        $"Swal.fire('Error!', 'Failed to cancel schedule: {ex.Message}', 'error');", true);
                 }
             }
         }

@@ -36,7 +36,8 @@ namespace Expiry_list
 
             if (!IsPostBack)
             {
-                BindGrid();  
+                BindGrid();
+                hfLastSearch.Value = "";
             }
 
         }
@@ -336,6 +337,7 @@ namespace Expiry_list
 
                         Response.Flush();
                         Response.End();
+                        hfLastSearch.Value = "";
                     }
                 }
                 else
@@ -360,33 +362,44 @@ namespace Expiry_list
 
             using (SqlConnection conn = new SqlConnection(strcon))
             {
-                // If "HO" exists in store list, return all data
-                if (storeNos.Any(s => s.Equals("HO", StringComparison.OrdinalIgnoreCase)))
+                bool hasHO = storeNos.Any(s => s.Equals("HO", StringComparison.OrdinalIgnoreCase));
+
+                if (hasHO)
                 {
                     query = @"
-                        SELECT TakenDate, itemNo, Description, LocationCode, BalanceQty, UnitofMeasure, itemFamily
-                        FROM negLocation
-                        WHERE TakenTime = (SELECT MAX(TakenTime) FROM negLocation)";
-                        }
+                SELECT TakenDate, itemNo, Description, LocationCode, BalanceQty, UnitofMeasure, itemFamily
+                FROM negLocation
+                WHERE TakenTime = (SELECT MAX(TakenTime) FROM negLocation)";
+                }
                 else
                 {
-                    // Dynamically build parameterized IN clause
                     var whereIn = string.Join(",", storeNos.Select((s, i) => $"@store{i}"));
                     query = $@"
-                    SELECT TakenDate, itemNo, Description, LocationCode, BalanceQty, UnitofMeasure, itemFamily
-                    FROM negLocation
-                    WHERE TakenTime = (SELECT MAX(TakenTime) FROM negLocation)
-                    AND LocationCode IN ({whereIn})";
+                SELECT TakenDate, itemNo, Description, LocationCode, BalanceQty, UnitofMeasure, itemFamily
+                FROM negLocation
+                WHERE TakenTime = (SELECT MAX(TakenTime) FROM negLocation)
+                AND LocationCode IN ({whereIn})";
+                }
+
+                // 🔹 Apply search filter
+                if (!string.IsNullOrEmpty(hfLastSearch.Value))
+                {
+                    query += " AND (itemNo LIKE @Search OR Description LIKE @Search OR LocationCode LIKE @Search)";
                 }
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    if (!storeNos.Any(s => s.Equals("HO", StringComparison.OrdinalIgnoreCase)))
+                    if (!hasHO)
                     {
                         for (int i = 0; i < storeNos.Count; i++)
                         {
                             cmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
                         }
+                    }
+
+                    if (!string.IsNullOrEmpty(hfLastSearch.Value))
+                    {
+                        cmd.Parameters.AddWithValue("@Search", "%" + hfLastSearch.Value.Trim() + "%");
                     }
 
                     try
@@ -479,4 +492,3 @@ namespace Expiry_list
 
     }
 }
-

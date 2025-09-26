@@ -143,34 +143,34 @@ namespace Expiry_list.Training
         {
             using (SqlConnection conn = new SqlConnection(strcon))
             using (SqlCommand cmd = new SqlCommand(@"
-               WITH tp_unique AS (
-                    SELECT tt.*,
-                           ROW_NUMBER() OVER (
-                               PARTITION BY tt.topicId, tt.traineeId 
-                               ORDER BY tt.updatedAt DESC, tt.id DESC
-                           ) AS rn
-                    FROM traineeTopicT tt
-                )
-                , latest_topic AS (
-                    SELECT topicId, traineeId, Status, Exam
-                    FROM tp_unique
-                    WHERE rn = 1
-                )
-                SELECT t.id AS topicId,
-                       t.topicName,
-                       ISNULL(tp.Status, 'Not Registered') AS Status,
-                       ISNULL(tp.Exam, 'Not Taken') AS Exam
-                FROM TopicT t
-                INNER JOIN topicWLT w
-                        ON w.topic = t.id
-                INNER JOIN traineeT tr
-                        ON tr.id = @traineeId
-                LEFT JOIN latest_topic tp
-                       ON tp.topicId = t.id AND tp.traineeId = tr.id
-                WHERE w.traineeLevel = tr.position
-                  AND w.IsActive = 1
-                GROUP BY t.id, t.topicName, tp.Status, tp.Exam
-                ORDER BY t.topicName;", conn))
+              WITH tp_unique AS (
+                 SELECT tt.*,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY tt.topicId, tt.traineeId 
+                            ORDER BY tt.updatedAt DESC, tt.id DESC
+                        ) AS rn
+                 FROM traineeTopicT tt
+             )
+             , latest_topic AS (
+                 SELECT topicId, traineeId, Status, Exam
+                 FROM tp_unique
+                 WHERE rn = 1
+             )
+             SELECT t.id AS topicId,
+                    t.topicName,
+                    ISNULL(tp.Status, 'Not Registered') AS Status,
+                    ISNULL(tp.Exam, 'Not Taken') AS Exam
+             FROM topicWLT w
+             INNER JOIN TopicT t
+                     ON t.id = w.topic
+             INNER JOIN traineeT tr
+                     ON tr.id = @traineeId
+             LEFT JOIN latest_topic tp
+                    ON tp.topicId = w.id    
+                   AND tp.traineeId = tr.id
+             WHERE w.traineeLevel = tr.position
+               AND w.IsActive = 1
+             ORDER BY t.topicName;", conn))
 
             {
                 cmd.Parameters.AddWithValue("@traineeId", traineeId);
@@ -194,34 +194,34 @@ namespace Expiry_list.Training
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string query = @"
-                    WITH tp_unique AS (
-                        SELECT tt.*,
-                               ROW_NUMBER() OVER (
-                                   PARTITION BY tt.topicId, tt.traineeId 
-                                   ORDER BY tt.updatedAt DESC, tt.id DESC
-                               ) AS rn
-                        FROM traineeTopicT tt
-                    )
-                    , latest_topic AS (
-                        SELECT topicId, traineeId, Status, Exam
-                        FROM tp_unique
-                        WHERE rn = 1
-                    )
-                    SELECT t.id AS topicId,
-                           t.topicName,
-                           ISNULL(tp.Status, 'Not Registered') AS Status,
-                           ISNULL(tp.Exam, 'Not Taken') AS Exam
-                    FROM TopicT t
-                    INNER JOIN topicWLT w
-                            ON w.topic = t.id
-                    INNER JOIN traineeT tr
-                            ON tr.id = @traineeId
-                    LEFT JOIN latest_topic tp
-                           ON tp.topicId = t.id AND tp.traineeId = tr.id
-                    WHERE w.traineeLevel = tr.position
-                      AND w.IsActive = 1
-                    GROUP BY t.id, t.topicName, tp.Status, tp.Exam
-                    ORDER BY t.topicName;";
+                   WITH tp_unique AS (
+                     SELECT tt.*,
+                            ROW_NUMBER() OVER (
+                                PARTITION BY tt.topicId, tt.traineeId 
+                                ORDER BY tt.updatedAt DESC, tt.id DESC
+                            ) AS rn
+                     FROM traineeTopicT tt
+                 )
+                 , latest_topic AS (
+                     SELECT topicId, traineeId, Status, Exam
+                     FROM tp_unique
+                     WHERE rn = 1
+                 )
+                 SELECT t.id AS topicId,
+                        t.topicName,
+                        ISNULL(tp.Status, 'Not Registered') AS Status,
+                        ISNULL(tp.Exam, 'Not Taken') AS Exam
+                 FROM topicWLT w
+                 INNER JOIN TopicT t
+                         ON t.id = w.topic
+                 INNER JOIN traineeT tr
+                         ON tr.id = @traineeId
+                 LEFT JOIN latest_topic tp
+                        ON tp.topicId = w.id    
+                       AND tp.traineeId = tr.id
+                 WHERE w.traineeLevel = tr.position
+                   AND w.IsActive = 1
+                 ORDER BY t.topicName;";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {

@@ -169,7 +169,7 @@
             order: [[8, 'desc']],
             lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
             columnDefs: [
-                { orderable: false, targets: [7] },
+                { orderable: false, targets: [7, 8] },
                 { targets: [1, 2], visible: false },
                 { targets: '_all', orderSequence: ["asc", "desc", ""] },
                 {
@@ -284,6 +284,7 @@
                     CssClass="table table-striped table-hover table-sm table-bordered mb-0"
                     AutoGenerateColumns="False"
                     DataKeyNames="id"
+                    OnRowDeleting="GridView2_RowDeleting"
                     AllowPaging="false"
                     ShowHeaderWhenEmpty="true"
                     HeaderStyle-BackColor="#4486ab"
@@ -360,6 +361,12 @@
                                            onclick='highlightRow(this); openTraineeDetails(<%# Eval("id") %>)'>
                                            <i class="fa fa-eye"></i> Details
                                         </a>
+                                        <asp:LinkButton ID="btnCancel" runat="server" 
+                                            CssClass="btn btn-sm btn-danger text-white" 
+                                            CommandName="Delete" CommandArgument='<%# Eval("id") %>' 
+                                            ToolTip="Cancel Schedule" OnClientClick="return confirm('Are you sure you want to cancel this schedule?');">
+                                            <i class="fa fa-ban"></i>
+                                        </asp:LinkButton>
                                     <% } %>
 
                                     <% if (perm == "admin" || perm=="edit") { %>

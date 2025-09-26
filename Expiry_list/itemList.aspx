@@ -59,6 +59,11 @@
                 });
             }
 
+            $(document).on('search.dt', function (e, settings) {
+                var searchVal = settings.oPreviousSearch.sSearch || "";
+                $('#<%= hfLastSearch.ClientID %>').val(searchVal);
+           });
+
             initializeComponents();
             setupEventDelegation();
             InitializeItemVendorFilter();
@@ -229,48 +234,48 @@
 
         function focusOnEditedRow() {
             const rowId = $('#<%= hfSelectedIDs.ClientID %>').val();
-             if (!rowId) return;
+            if (!rowId) return;
 
-             const grid = $("#<%= GridView2.ClientID %>");
+            const grid = $("#<%= GridView2.ClientID %>");
 
-             if ($.fn.DataTable.isDataTable(grid)) {
-                 const dt = grid.DataTable();
+            if ($.fn.DataTable.isDataTable(grid)) {
+                const dt = grid.DataTable();
 
-                 dt.order([]).search('').draw();
+                dt.order([]).search('').draw();
 
-                 const rowIndex = dt.rows().indexes().find(index =>
-                     dt.row(index).data().id === rowId
-                 );
+                const rowIndex = dt.rows().indexes().find(index =>
+                    dt.row(index).data().id === rowId
+                );
 
-                 if (typeof rowIndex !== 'undefined') {
-                     dt.row(rowIndex).move(0).draw(false);
+                if (typeof rowIndex !== 'undefined') {
+                    dt.row(rowIndex).move(0).draw(false);
 
-                     grid.parent().animate({ scrollTop: 0 }, 500);
-                     dt.row(0).nodes().to$()
-                         .addClass('highlight-row')
-                         .trigger('focus');
-                 }
-             } else {
-                 const $row = grid.find(`tr[data-id='${rowId}']`);
-                 if ($row.length) {
-                     const $tbody = grid.find('tbody');
-                     $row.prependTo($tbody);
+                    grid.parent().animate({ scrollTop: 0 }, 500);
+                    dt.row(0).nodes().to$()
+                        .addClass('highlight-row')
+                        .trigger('focus');
+                }
+            } else {
+                const $row = grid.find(`tr[data-id='${rowId}']`);
+                if ($row.length) {
+                    const $tbody = grid.find('tbody');
+                    $row.prependTo($tbody);
 
-                     $('html, body').animate({
-                         scrollTop: grid.offset().top - 100
-                     }, 500);
-                     $row.addClass('highlight-row');
+                    $('html, body').animate({
+                        scrollTop: grid.offset().top - 100
+                    }, 500);
+                    $row.addClass('highlight-row');
 
-                 }
-             }
+                }
+            }
 
-                 $('#<%= hfSelectedIDs.ClientID %>').val('');
+            $('#<%= hfSelectedIDs.ClientID %>').val('');
         }
 
-            document.addEventListener('DOMContentLoaded', function () {
-                updateLocationPillsDisplay();
+        document.addEventListener('DOMContentLoaded', function () {
+            updateLocationPillsDisplay();
 
-                const listBox = document.getElementById('<%= lstStoreFilter.ClientID %>');
+            const listBox = document.getElementById('<%= lstStoreFilter.ClientID %>');
                 if (listBox) {
                     listBox.addEventListener('change', updateLocationPillsDisplay);
                 }
@@ -691,7 +696,7 @@
                 return false;
             }
 
-            document.getElementById ('gridCol').style.height = "73vh";
+            document.getElementById('gridCol').style.height = "73vh";
 
             return true;
         }
@@ -1006,6 +1011,7 @@
                     <asp:HiddenField ID="hflength" runat="server" />   
                     <asp:HiddenField ID="hfEditId" runat="server" />
                     <asp:HiddenField ID="hfEditedRowId" runat="server" />
+                    <asp:HiddenField ID="hfLastSearch" runat="server" />
 
                     <!-- Table -->
                     <div class="col-md-12 ms-4" id="gridCol">
