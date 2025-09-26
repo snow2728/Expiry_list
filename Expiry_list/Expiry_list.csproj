@@ -136,6 +136,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="balanceQty.aspx" />
+    <Content Include="bootstrap-icons\css\bootstrap-icons.css" />
     <Content Include="bootstrap\css\bootstrap.min.css" />
     <Content Include="bootstrap\js\bootstrap.bundle.min.js" />
     <Content Include="bootstrap\js\bootstrap.min.js" />
@@ -2309,6 +2310,7 @@
     <Compile Include="balanceQty.aspx.designer.cs">
       <DependentUpon>balanceQty.aspx</DependentUpon>
     </Compile>
+    <Content Include="bootstrap-icons\css\bootstrap-icons.min.css" />
     <Compile Include="CarWay\dash2.aspx.cs">
       <DependentUpon>dash2.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -2568,6 +2570,8 @@
     <Content Include="..\.editorconfig">
       <Link>.editorconfig</Link>
     </Content>
+    <Content Include="bootstrap-icons\css\fonts\bootstrap-icons.woff" />
+    <Content Include="bootstrap-icons\css\fonts\bootstrap-icons.woff2" />
     <None Include="packages.config" />
     <Content Include="Site1.Master" />
     <None Include="Web.Debug.config">

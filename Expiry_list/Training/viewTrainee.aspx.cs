@@ -26,7 +26,10 @@ namespace Expiry_list.Training
                 Training.DataBind.BindLevel(levelDb);
             }
         }
-
+        protected void btnTogglePostBack_Click(object sender, EventArgs e)
+        {
+            BindUserGrid();
+        }
         private void BindUserGrid()
         {
             try
@@ -39,7 +42,7 @@ namespace Expiry_list.Training
                                || username.Equals("admin", StringComparison.OrdinalIgnoreCase);
 
                 List<string> storeNos = GetLoggedInUserStoreNames();
-
+                string toggle = hdnToggleStatus.Value;
                 using (var conn = new SqlConnection(strcon))
                 using (var cmd = conn.CreateCommand())
                 {
@@ -70,12 +73,51 @@ namespace Expiry_list.Training
                     cmd.CommandText += " ORDER BY t.id ASC";
 
                     conn.Open();
+                    var filteredDt = new DataTable();
                     using (var da = new SqlDataAdapter(cmd))
                     using (var dt = new DataTable())
                     {
                         da.Fill(dt);
-                        GridView2.DataSource = dt;
-                        GridView2.DataBind();
+                        bool hasInactive = dt.AsEnumerable().Any(r => !Convert.ToBoolean(r["IsActive"]));
+                        hdnHasInactive.Value = hasInactive ? "1" : "0";
+
+                        if (toggle == "Inactive")
+                        {
+                            var inactiveRows = dt.AsEnumerable().Where(r => !Convert.ToBoolean(r["IsActive"]));
+
+                            if (inactiveRows.Any())
+                            {
+                                filteredDt = inactiveRows.CopyToDataTable();
+                            }
+                        }
+                        else // Active
+                        {
+                            var activeRows = dt.AsEnumerable().Where(r => Convert.ToBoolean(r["IsActive"]));
+                            if (activeRows.Any())
+                            {
+                                filteredDt = activeRows.CopyToDataTable();
+                            }
+                        }
+
+                        if (filteredDt.Rows.Count > 0)
+                        {
+                            GridView2.DataSource = filteredDt;
+                            GridView2.DataBind();
+                        }
+                        else
+                        {
+                            filteredDt = dt.Clone();
+                            filteredDt.Rows.Add(filteredDt.NewRow()); // dummy row
+
+                            GridView2.DataSource = filteredDt;
+                            GridView2.DataBind();
+
+                            if (GridView2.Rows.Count > 0)
+                            {
+                                // Hide the dummy row
+                                GridView2.Rows[0].Visible = false;
+                            }
+                        }
                     }
                 }
             }
@@ -338,7 +380,7 @@ namespace Expiry_list.Training
                 TextBox txtName = (TextBox)row.FindControl("txtName");
                 DropDownList storeDb = (DropDownList)row.FindControl("storeDp");
                 DropDownList PositionDb = (DropDownList)row.FindControl("PositionDb");
-                CheckBox chkIsActive = (CheckBox)row.FindControl("chkTopic_Enable");
+                CheckBox chkIsActive = (CheckBox)row.FindControl("chkTrainee");
 
                 // Old values from DataKeys
                 string oldName = GridView2.DataKeys[e.RowIndex].Values["name"].ToString();
