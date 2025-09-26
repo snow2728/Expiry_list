@@ -154,7 +154,6 @@
     <Content Include="datatables\css\colReorder.dataTables.min.css" />
     <Content Include="datatables\css\dataTables.dataTables.min.css" />
     <Content Include="datatables\css\fixedColumns.dataTables.min.css" />
-    <Content Include="datatables\css\jquery.dataTables.colResize.css" />
     <Content Include="datatables\css\jquery.dataTables.min.css" />
     <Content Include="datatables\js\colResizable-1.6.min.js" />
     <Content Include="datatables\js\dataTables.buttons.min.js" />
@@ -164,7 +163,6 @@
     <Content Include="datatables\js\dataTables.min.js" />
     <Content Include="datatables\js\fixedColumns.dataTables.js" />
     <Content Include="datatables\js\jo\dataTables.fixedColumns.min.js" />
-    <Content Include="datatables\js\jquery.dataTables.colResize.js" />
     <Content Include="datatables\js\jquery.dataTables.min.js" />
     <Content Include="final.aspx" />
     <Content Include="final2.aspx" />

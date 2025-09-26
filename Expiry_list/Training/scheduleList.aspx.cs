@@ -23,16 +23,13 @@ namespace Expiry_list.Training
         {
             if (!IsPostBack)
             {
-                // Default current month in yyyy-MM
                 dateTb.Text = DateTime.Now.ToString("yyyy-MM");
 
-                // Bind dropdowns
                 Training.DataBind.BindTrainer(trainerDp);
                 Training.DataBind.BindRoom(locationDp);
                 Training.DataBind.BindLevel(levelDp);
                 Training.DataBind.BindTopic(topicName);
 
-                // Store initial filter values
                 ViewState["FilterMonth"] = dateTb.Text;
                 ViewState["FilterLevel"] = "0";
                 ViewState["FilterTopicId"] = "0";
@@ -172,7 +169,6 @@ namespace Expiry_list.Training
             LoadScheduleTrainees(scheduleId);
             upTrainees.Update();
 
-            // Re-initialize DataTables on client
             ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
         }
 
@@ -185,7 +181,6 @@ namespace Expiry_list.Training
                 {
                     cmd.Connection = con;
 
-                    // Build dynamic query based on which value changed
                     if (status != null)
                         cmd.CommandText = "UPDATE traineeTopicT SET status=@status WHERE id=@id";
 
@@ -207,10 +202,8 @@ namespace Expiry_list.Training
                 var trainees = new List<Trainee>();
                 string connectionString = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
 
-                // get current username
                 string username = HttpContext.Current.User.Identity.Name;
 
-                // check if user is admin
                 bool isAdmin = false;
                 var allowedForms = GetAllowedFormsByUser(username);
                 if (allowedForms.Values.Contains("admin") || allowedForms.Values.Contains("super") || username.Equals("admin", StringComparison.OrdinalIgnoreCase))
@@ -218,7 +211,6 @@ namespace Expiry_list.Training
                     isAdmin = true;
                 }
 
-                // get logged-in user's store list
                 List<string> storeNos = GetLoggedInUserStoreNames();
 
                 using (var con = new SqlConnection(connectionString))
@@ -233,7 +225,6 @@ namespace Expiry_list.Training
                     WHERE t.name LIKE @SearchTerm
                     AND (@PositionId = 0 OR t.position = @PositionId)";
 
-                    // apply store restriction if not admin
                     if (!isAdmin && storeNos.Any())
                     {
                         sql += $" AND st.storeNo IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})";
@@ -279,7 +270,7 @@ namespace Expiry_list.Training
             }
         }
 
-        // Trainee class definition
+        // Trainee class 
         public class Trainee
         {
             public string Id { get; set; }
@@ -302,6 +293,7 @@ namespace Expiry_list.Training
                 SELECT 
                     s.id,
                     s.tranNo,
+                    tw.id as topicWLTId,
                     tw.id AS topicId,
                     t.topicName AS topicName,
                     ISNULL(l.name, '') AS traineeLevel, 
@@ -386,6 +378,7 @@ namespace Expiry_list.Training
                 SELECT 
                     s.id,
                     s.tranNo,
+                    tw.id as topicWLTId,
                     tw.topic AS topicId,      
                     s.position AS positionId,
                     t.topicName AS topicName,
@@ -440,7 +433,6 @@ namespace Expiry_list.Training
 
         protected void resetBtn_Click(object sender, EventArgs e)
         {
-            // Reset to current month
             dateTb.Text = DateTime.Now.ToString("yyyy-MM");
             levelDp.SelectedIndex = 0;
             topicName.SelectedIndex = 0;
@@ -459,6 +451,7 @@ namespace Expiry_list.Training
 
         protected void btnSaveRegister_Click(object sender, EventArgs e)
         {
+            // Validate scheduleId
             if (!int.TryParse(hfScheduleId.Value, out int scheduleId))
             {
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "alert",
@@ -466,6 +459,7 @@ namespace Expiry_list.Training
                 return;
             }
 
+            // Validate topicId
             if (!int.TryParse(hfTopicId.Value, out int topicId))
             {
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "alert",
@@ -474,6 +468,8 @@ namespace Expiry_list.Training
             }
 
             string selectedJson = hfSelectedTrainees.Value;
+
+            // No trainees selected
             if (string.IsNullOrWhiteSpace(selectedJson))
             {
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "noTraineeAlert",
@@ -481,14 +477,9 @@ namespace Expiry_list.Training
                 return;
             }
 
-            // Deserialize and filter out invalid items
             var selectedTrainees = JsonConvert.DeserializeObject<List<TraineeJson>>(selectedJson)
                 .Where(t => !string.IsNullOrWhiteSpace(t?.Id?.ToString()))
-                .Select(t => new Trainee
-                {
-                    Id = t.Id,
-                    Name = t.Text
-                })
+                .Select(t => new Trainee { Id = t.Id, Name = t.Text })
                 .ToList();
 
             if (selectedTrainees.Count == 0)
@@ -502,45 +493,44 @@ namespace Expiry_list.Training
             {
                 conn.Open();
 
-                List<string> duplicateTrainees = new List<string>();
+                List<string> blockedTrainees = new List<string>(); // trainees already registered for topic
+                List<Trainee> validTrainees = new List<Trainee>(); // trainees allowed to register for this schedule
+                int registeredCount = 0;
 
                 foreach (var trainee in selectedTrainees)
                 {
                     if (!int.TryParse(trainee.Id?.ToString(), out int traineeId))
                         continue;
 
-                    using (SqlCommand checkTrainee = new SqlCommand("SELECT COUNT(1) FROM traineeT WHERE id=@traineeId", conn))
+                    // Get trainee name
+                    string actualName = null;
+                    using (SqlCommand cmd = new SqlCommand("SELECT name FROM traineeT WHERE id=@traineeId", conn))
                     {
-                        checkTrainee.Parameters.AddWithValue("@traineeId", traineeId);
-                        if (Convert.ToInt32(checkTrainee.ExecuteScalar()) == 0)
-                            continue;
+                        cmd.Parameters.AddWithValue("@traineeId", traineeId);
+                        actualName = cmd.ExecuteScalar()?.ToString();
                     }
 
+                    if (string.IsNullOrEmpty(actualName))
+                        continue; // skip if trainee doesn't exist
+
+                    // Check if trainee already registered for this topic in any schedule
                     using (SqlCommand checkDup = new SqlCommand(@"
-                    SELECT COUNT(1)
-                    FROM traineeTopicT
-                    WHERE traineeId=@traineeId AND topicId=@topicId AND scheduleId=@scheduleId", conn))
+                SELECT COUNT(1)
+                FROM traineeTopicT
+                WHERE traineeId=@traineeId AND topicId=@topicId", conn))
                     {
                         checkDup.Parameters.AddWithValue("@traineeId", traineeId);
                         checkDup.Parameters.AddWithValue("@topicId", topicId);
-                        checkDup.Parameters.AddWithValue("@scheduleId", scheduleId);
 
                         if (Convert.ToInt32(checkDup.ExecuteScalar()) > 0)
-                        {
-                            duplicateTrainees.Add(trainee.Name ?? traineeId.ToString());
-                        }
+                            blockedTrainees.Add(actualName);
+                        else
+                            validTrainees.Add(new Trainee { Id = traineeId.ToString(), Name = actualName });
                     }
                 }
 
-                if (duplicateTrainees.Count > 0)
-                {
-                    string dupList = string.Join(", ", duplicateTrainees);
-                    ScriptManager.RegisterStartupScript(this, this.GetType(), "dupAlert",
-                        $"Swal.fire('Duplicate Registration', 'The following trainees are already registered: {dupList}', 'warning');", true);
-                    return;
-                }
-
-                foreach (var trainee in selectedTrainees)
+                // Insert only valid trainees into the selected schedule
+                foreach (var trainee in validTrainees)
                 {
                     if (!int.TryParse(trainee.Id?.ToString(), out int traineeId))
                         continue;
@@ -562,10 +552,45 @@ namespace Expiry_list.Training
                         cmd.Parameters.AddWithValue("@updatedBy", User.Identity.Name);
 
                         cmd.ExecuteNonQuery();
+                        registeredCount++;
                     }
                 }
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "successAlert",
-               "Swal.fire('Success!', 'Trainees registered successfully.', 'success');", true);
+
+                // Build result message
+                string message;
+                string messageType = "success";
+
+                if (blockedTrainees.Count > 0 && registeredCount > 0)
+                {
+                    message = $"{registeredCount} trainee(s) registered successfully. The following trainee(s) are already registered for this topic in another schedule: {string.Join(", ", blockedTrainees)}";
+                    messageType = "warning";
+                }
+                else if (blockedTrainees.Count > 0 && registeredCount == 0)
+                {
+                    message = $"No new trainees registered. The following trainee(s) are already registered for this topic in another schedule: {string.Join(", ", blockedTrainees)}";
+                    messageType = "warning";
+                }
+                else if (registeredCount > 0)
+                {
+                    message = $"{registeredCount} trainee(s) registered successfully.";
+                    messageType = "success";
+                }
+                else
+                {
+                    message = "No valid trainees found to register.";
+                    messageType = "warning";
+                }
+
+                // Show SweetAlert
+                string script = $@"
+            Swal.fire({{
+                icon: '{messageType}',
+                title: 'Registration Result',
+                text: '{message.Replace("'", "\\'")}',
+                confirmButtonColor: '#3085d6'
+            }});";
+
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "registrationResult", script, true);
             }
 
             BindGrid();

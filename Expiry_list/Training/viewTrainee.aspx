@@ -427,7 +427,7 @@
 
                         <!-- Topics Grid -->
                         <asp:GridView ID="gvTraineeTopics" runat="server" AutoGenerateColumns="False"
-                            DataKeyNames="id"
+                            DataKeyNames="topicId"
                             OnRowDataBound="gvTraineeTopics_RowDataBound"
                             CssClass="table table-bordered table-striped dataTable w-100"
                             ClientIDMode="Static"

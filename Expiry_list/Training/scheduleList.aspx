@@ -168,7 +168,6 @@
             scrollCollapse: true,
             order: [[8, 'desc']],
             lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-
             columnDefs: [
                 { orderable: false, targets: [7] },
                 { targets: [1, 2], visible: false },
@@ -365,7 +364,7 @@
 
                                     <% if (perm == "admin" || perm=="edit") { %>
                                         <a href="javascript:void(0);" class="btn btn-sm btn-info text-white" 
-                                           onclick='highlightRow(this); openRegisterModal(<%# Eval("id") %>, "<%# Eval("topicId") %>", <%# Eval("positionId") %>)'>
+                                           onclick='highlightRow(this); openRegisterModal(<%# Eval("id") %>, "<%# Eval("topicWLTId") %>", <%# Eval("positionId") %>)'>
                                            <i class="fa fa-user-plus"></i> Register
                                         </a>
                                     <% } %>

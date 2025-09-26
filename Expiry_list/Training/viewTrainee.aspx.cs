@@ -54,7 +54,7 @@ namespace Expiry_list.Training
                         FROM traineeT t
                         LEFT JOIN LevelT l ON t.position = l.id
                         LEFT JOIN stores st ON t.store = st.id
-                        WHERE 1=1"; 
+                        WHERE 1=1";
 
                     if (!isAdmin && storeNos.Any())
                     {
@@ -101,24 +101,35 @@ namespace Expiry_list.Training
         {
             using (SqlConnection conn = new SqlConnection(strcon))
             using (SqlCommand cmd = new SqlCommand(@"
-                WITH tp_unique AS (
-                    SELECT *, 
-                           ROW_NUMBER() OVER (PARTITION BY topicId, traineeId, scheduleId ORDER BY updatedAt DESC, id DESC) AS rn
-                    FROM traineeTopicT
+               WITH tp_unique AS (
+                    SELECT tt.*,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY tt.topicId, tt.traineeId 
+                               ORDER BY tt.updatedAt DESC, tt.id DESC
+                           ) AS rn
+                    FROM traineeTopicT tt
                 )
-                SELECT DISTINCT t.id AS id, 
+                , latest_topic AS (
+                    SELECT topicId, traineeId, Status, Exam
+                    FROM tp_unique
+                    WHERE rn = 1
+                )
+                SELECT t.id AS topicId,
                        t.topicName,
                        ISNULL(tp.Status, 'Not Registered') AS Status,
                        ISNULL(tp.Exam, 'Not Taken') AS Exam
-                FROM topicWLT w
-                INNER JOIN TopicT t ON t.id = w.topic
-                LEFT JOIN tp_unique tp 
-                       ON tp.topicId = w.id 
-                      AND tp.traineeId = @traineeId 
-                      AND tp.rn = 1
-                WHERE w.traineeLevel = (SELECT position FROM traineeT WHERE id=@traineeId)
+                FROM TopicT t
+                INNER JOIN topicWLT w
+                        ON w.topic = t.id
+                INNER JOIN traineeT tr
+                        ON tr.id = @traineeId
+                LEFT JOIN latest_topic tp
+                       ON tp.topicId = t.id AND tp.traineeId = tr.id
+                WHERE w.traineeLevel = tr.position
                   AND w.IsActive = 1
-                ORDER BY t.topicName;", conn))                                                                                      
+                GROUP BY t.id, t.topicName, tp.Status, tp.Exam
+                ORDER BY t.topicName;", conn))
+
             {
                 cmd.Parameters.AddWithValue("@traineeId", traineeId);
                 conn.Open();
@@ -142,23 +153,32 @@ namespace Expiry_list.Training
             {
                 string query = @"
                     WITH tp_unique AS (
-                        SELECT *, 
-                               ROW_NUMBER() OVER (PARTITION BY topicId, traineeId, scheduleId ORDER BY updatedAt DESC, id DESC) AS rn
-                        FROM traineeTopicT
+                        SELECT tt.*,
+                               ROW_NUMBER() OVER (
+                                   PARTITION BY tt.topicId, tt.traineeId 
+                                   ORDER BY tt.updatedAt DESC, tt.id DESC
+                               ) AS rn
+                        FROM traineeTopicT tt
                     )
-                    SELECT t.id AS topicId, 
-                           tp.id AS traineeTopicId,
+                    , latest_topic AS (
+                        SELECT topicId, traineeId, Status, Exam
+                        FROM tp_unique
+                        WHERE rn = 1
+                    )
+                    SELECT t.id AS topicId,
                            t.topicName,
                            ISNULL(tp.Status, 'Not Registered') AS Status,
                            ISNULL(tp.Exam, 'Not Taken') AS Exam
-                    FROM topicWLT w
-                    INNER JOIN TopicT t ON t.id = w.topic
-                    LEFT JOIN tp_unique tp 
-                           ON tp.topicId = w.id 
-                          AND tp.traineeId = @traineeId 
-                          AND tp.rn = 1
-                    WHERE w.traineeLevel = (SELECT position FROM traineeT WHERE id=@traineeId)
+                    FROM TopicT t
+                    INNER JOIN topicWLT w
+                            ON w.topic = t.id
+                    INNER JOIN traineeT tr
+                            ON tr.id = @traineeId
+                    LEFT JOIN latest_topic tp
+                           ON tp.topicId = t.id AND tp.traineeId = tr.id
+                    WHERE w.traineeLevel = tr.position
                       AND w.IsActive = 1
+                    GROUP BY t.id, t.topicName, tp.Status, tp.Exam
                     ORDER BY t.topicName;";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -209,7 +229,7 @@ namespace Expiry_list.Training
                     if (perm == "edit")
                     {
                         ddlExam.Enabled = false;
-                        ddlExam.CssClass += " bg-light"; 
+                        ddlExam.CssClass += " bg-light";
                     }
                     else
                     {
