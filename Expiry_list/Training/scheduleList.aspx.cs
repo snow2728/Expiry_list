@@ -92,7 +92,6 @@ namespace Expiry_list.Training
                 LoadScheduleTrainees(scheduleId);
                 upTrainees.Update();
 
-                // Initialize DataTable after UpdatePanel refresh
                 ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
             }
         }
@@ -104,19 +103,19 @@ namespace Expiry_list.Training
                 using (SqlConnection conn = new SqlConnection(strcon))
                 using (SqlCommand cmd = new SqlCommand(@"
                     SELECT t.id,
-                        tr.name,
-                        st.storeNo   AS store,
-                        lv.name   AS position,
-                        t.status,
-                        t.exam
+                           tr.name,
+                           st.storeNo   AS store,
+                           lv.name      AS position,
+                           t.status,
+                           t.exam,
+                           tr.IsActive  -- 🔹 Include trainee IsActive
                     FROM traineeTopicT t
                     JOIN traineeT tr ON t.traineeId = tr.id
                     LEFT JOIN stores st ON tr.store = st.id
                     LEFT JOIN levelT lv ON tr.position = lv.id
-                    WHERE t.scheduleId = @ScheduleId;
-                    ", conn))
+                    WHERE t.scheduleId = @ScheduleId;", conn))
                 {
-                    cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
+                    cmd.Parameters.AddWithValue("@ScheduleId", scheduleId);
 
                     conn.Open();
                     SqlDataAdapter da = new SqlDataAdapter(cmd);
@@ -151,6 +150,15 @@ namespace Expiry_list.Training
                         ddlStatus.SelectedIndex = 0; 
                     }
                 }
+
+                DataRowView rowView = (DataRowView)e.Row.DataItem;
+                bool isActive = rowView["IsActive"] != DBNull.Value && Convert.ToBoolean(rowView["IsActive"]);
+
+                if (ddlStatus != null && !isActive)
+                {
+                    ddlStatus.Enabled = false; 
+                    ddlStatus.CssClass += " disabled";
+                }
             }
         }
 
@@ -165,7 +173,6 @@ namespace Expiry_list.Training
 
                 try
                 {
-                    // First delete from traineeTopicT (child table)
                     string deleteTraineeTopics = "DELETE FROM traineeTopicT WHERE scheduleId = @scheduleId";
                     using (SqlCommand cmd = new SqlCommand(deleteTraineeTopics, conn, transaction))
                     {
@@ -173,7 +180,6 @@ namespace Expiry_list.Training
                         cmd.ExecuteNonQuery();
                     }
 
-                    // Then delete from scheduleT (parent table)
                     string deleteSchedule = "DELETE FROM scheduleT WHERE id = @scheduleId";
                     using (SqlCommand cmd = new SqlCommand(deleteSchedule, conn, transaction))
                     {
@@ -181,10 +187,7 @@ namespace Expiry_list.Training
                         cmd.ExecuteNonQuery();
                     }
 
-                    // Commit if both succeed
                     transaction.Commit();
-
-                    // Refresh grid
                     BindGrid();
 
                     ScriptManager.RegisterStartupScript(this, GetType(), "DeleteSuccess",
@@ -252,7 +255,8 @@ namespace Expiry_list.Training
 
                 bool isAdmin = false;
                 var allowedForms = GetAllowedFormsByUser(username);
-                if (allowedForms.Values.Contains("admin") || allowedForms.Values.Contains("super") || username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                if (allowedForms.Values.Contains("admin") || allowedForms.Values.Contains("super") ||
+                    username.Equals("admin", StringComparison.OrdinalIgnoreCase))
                 {
                     isAdmin = true;
                 }
@@ -264,13 +268,16 @@ namespace Expiry_list.Training
                     con.Open();
 
                     string sql = @"
-                    SELECT t.id, t.name, t.position AS positionId, p.name AS position, st.storeNo as store
-                    FROM traineeT t
-                    LEFT JOIN levelT p ON t.position = p.id
-                    LEFT JOIN stores st ON t.store = st.id
-                    WHERE t.name LIKE @SearchTerm
-                    AND (@PositionId = 0 OR t.position = @PositionId)";
+                SELECT t.id, t.name, t.position AS positionId, 
+                       p.name AS position, st.storeNo as store
+                FROM traineeT t
+                LEFT JOIN levelT p ON t.position = p.id
+                LEFT JOIN stores st ON t.store = st.id
+                WHERE t.IsActive = 1
+                  AND t.name LIKE @SearchTerm
+                  AND (@PositionId = 0 OR t.position = @PositionId)";
 
+                    // Apply store restriction for non-admin users
                     if (!isAdmin && storeNos.Any())
                     {
                         sql += $" AND st.storeNo IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})";
@@ -295,14 +302,13 @@ namespace Expiry_list.Training
                         {
                             while (reader.Read())
                             {
-                                var trainee = new Trainee
+                                trainees.Add(new Trainee
                                 {
                                     Id = reader["id"].ToString(),
                                     Name = reader["name"]?.ToString(),
                                     Position = reader["position"]?.ToString(),
                                     Store = reader["store"]?.ToString()
-                                };
-                                trainees.Add(trainee);
+                                });
                             }
                         }
                     }
@@ -505,8 +511,8 @@ namespace Expiry_list.Training
                 return;
             }
 
-            // Validate topicId
-            if (!int.TryParse(hfTopicId.Value, out int topicId))
+            // Validate topicWLT Id
+            if (!int.TryParse(hfTopicId.Value, out int topicWltId))
             {
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "alert",
                     "Swal.fire('Invalid Topic Id!', '', 'error');", true);
@@ -539,8 +545,15 @@ namespace Expiry_list.Training
             {
                 conn.Open();
 
-                List<string> blockedTrainees = new List<string>(); // trainees already registered for topic
-                List<Trainee> validTrainees = new List<Trainee>(); // trainees allowed to register for this schedule
+                int masterTopicId;
+                using (SqlCommand getMasterTopic = new SqlCommand("SELECT topic FROM topicWLT WHERE id=@topicWltId", conn))
+                {
+                    getMasterTopic.Parameters.AddWithValue("@topicWltId", topicWltId);
+                    masterTopicId = Convert.ToInt32(getMasterTopic.ExecuteScalar());
+                }
+
+                List<string> blockedTrainees = new List<string>();
+                List<Trainee> validTrainees = new List<Trainee>();
                 int registeredCount = 0;
 
                 foreach (var trainee in selectedTrainees)
@@ -548,49 +561,57 @@ namespace Expiry_list.Training
                     if (!int.TryParse(trainee.Id?.ToString(), out int traineeId))
                         continue;
 
-                    // Get trainee name
                     string actualName = null;
-                    using (SqlCommand cmd = new SqlCommand("SELECT name FROM traineeT WHERE id=@traineeId", conn))
+                    int currentPosition = 0;
+                    using (SqlCommand cmd = new SqlCommand("SELECT name, position FROM traineeT WHERE id=@traineeId", conn))
                     {
                         cmd.Parameters.AddWithValue("@traineeId", traineeId);
-                        actualName = cmd.ExecuteScalar()?.ToString();
+                        using (SqlDataReader dr = cmd.ExecuteReader())
+                        {
+                            if (dr.Read())
+                            {
+                                actualName = dr["name"].ToString();
+                                currentPosition = dr["position"] != DBNull.Value ? Convert.ToInt32(dr["position"]) : 0;
+                            }
+                        }
                     }
 
                     if (string.IsNullOrEmpty(actualName))
-                        continue; // skip if trainee doesn't exist
+                        continue;
 
-                    // Check if trainee already registered for this topic in any schedule
                     using (SqlCommand checkDup = new SqlCommand(@"
-                SELECT COUNT(1)
-                FROM traineeTopicT
-                WHERE traineeId=@traineeId AND topicId=@topicId", conn))
+                        SELECT COUNT(1)
+                        FROM traineeTopicT tt
+                        INNER JOIN topicWLT tw ON tw.id = tt.topicId
+                        WHERE tt.traineeId=@traineeId 
+                          AND tw.topic=@masterTopicId", conn))
                     {
                         checkDup.Parameters.AddWithValue("@traineeId", traineeId);
-                        checkDup.Parameters.AddWithValue("@topicId", topicId);
+                        checkDup.Parameters.AddWithValue("@masterTopicId", masterTopicId);
 
                         if (Convert.ToInt32(checkDup.ExecuteScalar()) > 0)
                             blockedTrainees.Add(actualName);
                         else
-                            validTrainees.Add(new Trainee { Id = traineeId.ToString(), Name = actualName });
+                            validTrainees.Add(new Trainee { Id = traineeId.ToString(), Name = actualName, Position = currentPosition.ToString() });
                     }
                 }
 
-                // Insert only valid trainees into the selected schedule
                 foreach (var trainee in validTrainees)
                 {
                     if (!int.TryParse(trainee.Id?.ToString(), out int traineeId))
                         continue;
 
                     string query = @"
-                INSERT INTO traineeTopicT
-                (traineeId, topicId, scheduleId, status, exam, updatedAt, updatedBy)
-                VALUES
-                (@traineeId, @topicId, @scheduleId, @status, @exam, @updatedAt, @updatedBy)";
+                        INSERT INTO traineeTopicT
+                        (traineeId, level, topicId, scheduleId, status, exam, updatedAt, updatedBy)
+                        VALUES
+                        (@traineeId, @level, @topicId, @scheduleId, @status, @exam, @updatedAt, @updatedBy)";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@traineeId", traineeId);
-                        cmd.Parameters.AddWithValue("@topicId", topicId);
+                        cmd.Parameters.AddWithValue("@level", Convert.ToInt32(trainee.Position)); 
+                        cmd.Parameters.AddWithValue("@topicId", topicWltId);
                         cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
                         cmd.Parameters.AddWithValue("@status", "Registered");
                         cmd.Parameters.AddWithValue("@exam", "Not Taken");
@@ -602,18 +623,17 @@ namespace Expiry_list.Training
                     }
                 }
 
-                // Build result message
                 string message;
                 string messageType = "success";
 
                 if (blockedTrainees.Count > 0 && registeredCount > 0)
                 {
-                    message = $"{registeredCount} trainee(s) registered successfully. The following trainee(s) are already registered for this topic in another schedule: {string.Join(", ", blockedTrainees)}";
+                    message = $"{registeredCount} trainee(s) registered successfully. The following trainee(s) are already registered for this topic (under another trainer): {string.Join(", ", blockedTrainees)}";
                     messageType = "warning";
                 }
                 else if (blockedTrainees.Count > 0 && registeredCount == 0)
                 {
-                    message = $"No new trainees registered. The following trainee(s) are already registered for this topic in another schedule: {string.Join(", ", blockedTrainees)}";
+                    message = $"No new trainees registered. The following trainee(s) are already registered for this topic (under another trainer): {string.Join(", ", blockedTrainees)}";
                     messageType = "warning";
                 }
                 else if (registeredCount > 0)
@@ -627,14 +647,13 @@ namespace Expiry_list.Training
                     messageType = "warning";
                 }
 
-                // Show SweetAlert
                 string script = $@"
-            Swal.fire({{
-                icon: '{messageType}',
-                title: 'Registration Result',
-                text: '{message.Replace("'", "\\'")}',
-                confirmButtonColor: '#3085d6'
-            }});";
+                    Swal.fire({{
+                        icon: '{messageType}',
+                        title: 'Registration Result',
+                        text: '{message.Replace("'", "\\'")}',
+                        confirmButtonColor: '#3085d6'
+                    }});";
 
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "registrationResult", script, true);
             }

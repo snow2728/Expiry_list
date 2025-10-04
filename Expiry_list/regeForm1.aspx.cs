@@ -85,7 +85,7 @@ namespace Expiry_list
 
             try
             {
-                // 1. Retrieve basic user information
+                //Retrieve basic user information
                 string username = ((TextBox)row.FindControl("txtUsername")).Text.Trim();
                 string password = ((TextBox)row.FindControl("txtPassword")).Text.Trim();
                 bool isEnabled = ((CheckBox)row.FindControl("chkEnabled")).Checked;
@@ -97,7 +97,7 @@ namespace Expiry_list
                     .Select(li => (Id: int.Parse(li.Value), No: li.Text))
                     .ToList();
 
-                // 3. Retrieve permission settings
+                //Retrieve permission settings
                 var permissions = new Dictionary<string, string>
                 {
                     {"ExpiryList", GetPermissionLevel(row, "Expiry")},
@@ -109,7 +109,7 @@ namespace Expiry_list
                     {"TrainingList", GetPermissionLevel(row, "TrainingList") }
                 };
 
-                // 4. Update database within transaction
+                // Update database within transaction
                 using (SqlConnection conn = new SqlConnection(strcon))
                 {
                     conn.Open();
@@ -339,7 +339,8 @@ namespace Expiry_list
                 new{ FormId = 3, CtrlPrefix = "ReorderQuantity"    },
                 new{ FormId = 4, CtrlPrefix = "System"             },
                 new{ FormId = 6, CtrlPrefix = "CarWay"             },
-                new{ FormId = 7, CtrlPrefix = "ConsignList"        }
+                new{ FormId = 7, CtrlPrefix = "ConsignList"        },
+                new{ FormId = 8, CtrlPrefix = "TrainingList"        }
             };
 
             foreach (var m in meta)

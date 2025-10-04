@@ -150,6 +150,7 @@
     <Content Include="ConsignItem\viewer3.aspx" />
     <Content Include="css\customestylesheet.css" />
     <Content Include="CarWay\dash2.aspx" />
+    <Content Include="css\daterangepicker.css" />
     <Content Include="css\global.css" />
     <Content Include="datatables\css\buttons.dataTables.min.css" />
     <Content Include="datatables\css\colReorder.dataTables.min.css" />
@@ -2271,10 +2272,12 @@
     <Content Include="imgs\logo1.jpg" />
     <Content Include="imgs\logo2.png" />
     <Content Include="itemList.aspx" />
+    <Content Include="jquery\daterangepicker.min.js" />
     <Content Include="jquery\jquery-3.6.0.min.js" />
     <Content Include="jquery\jquery.js" />
     <Content Include="jquery\jquery.min.js" />
     <Content Include="jquery\jquery.unobtrusive-ajax.min.js" />
+    <Content Include="jquery\moment.min.js" />
     <Content Include="js\customJS.js" />
     <Content Include="js\jquery-3.6.0.min.js" />
     <Content Include="loginPage.aspx" />

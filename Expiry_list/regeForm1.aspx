@@ -446,6 +446,7 @@
                                    <asp:RadioButton ID="rdoReorderQuantity_Edit" runat="server" GroupName="ReorderQuantity" Text="Edit" CssClass="form-check-input bg-transparent me-1" />
                                    <asp:RadioButton ID="rdoReorderQuantity_Admin" runat="server" GroupName="ReorderQuantity" Text="Admin" CssClass="form-check-input bg-transparent me-1" />
                                    <asp:RadioButton ID="rdoReorderQuantity_Super" runat="server" GroupName="ReorderQuantity" Text="Super" CssClass="form-check-input bg-transparent me-1" /> 
+                                   <asp:RadioButton ID="rdoReorderQuantity_Super1" runat="server" GroupName="ReorderQuantity" Text="Super1" CssClass="form-check-input bg-transparent me-1" /> 
                                  </div>
 
                                  <div class="form-check">

@@ -135,7 +135,7 @@
                 new bootstrap.Modal(document.getElementById("traineeDetailsModal")).show();
             }
 
-            $('#traineeDetailsModal, #registerModal').on('hidden.bs.modal', function () {
+           $('#traineeDetailsModal, #registerModal').on('hidden.bs.modal', function () {
                 $('#<%= GridView2.ClientID %> tbody tr').removeClass('selected-row');
            });
 
@@ -216,10 +216,8 @@
     }
 
     function highlightRow(btn) {
-        // clear previous selection
         $('#<%= GridView2.ClientID %> tbody tr').removeClass('selected-row');
 
-        // highlight clicked row
         var row = $(btn).closest('tr');
         row.addClass('selected-row');
     }
@@ -356,25 +354,37 @@
                                         string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList") ? formPermissions["TrainingList"] : null;
                                     %>
 
+                                   <div class="btn-group" role="group">
+
                                     <% if (perm == "admin" || perm == "super") { %>
-                                        <a href="javascript:void(0);" class="btn btn-sm text-white" style="background-color:#022f56;"
+                                        <!-- Details -->
+                                        <a href="javascript:void(0);" 
+                                           class="btn btn-sm me-1 text-white" style="background-color:#022f56;"
                                            onclick='highlightRow(this); openTraineeDetails(<%# Eval("id") %>)'>
-                                           <i class="fa fa-eye"></i> Details
+                                            <i class="fa fa-eye"></i> Details
                                         </a>
+
+                                        <!-- Cancel -->
                                         <asp:LinkButton ID="btnCancel" runat="server" 
-                                            CssClass="btn btn-sm btn-danger text-white" 
+                                            CssClass="btn btn-sm btn-danger me-1" 
                                             CommandName="Delete" CommandArgument='<%# Eval("id") %>' 
-                                            ToolTip="Cancel Schedule" OnClientClick="return confirm('Are you sure you want to cancel this schedule?');">
-                                            <i class="fa fa-ban"></i>
+                                            ToolTip="Cancel Schedule" 
+                                            OnClientClick="return confirm('Are you sure you want to cancel this schedule?');">
+                                            <i class="fa fa-ban"></i> 
                                         </asp:LinkButton>
                                     <% } %>
 
-                                    <% if (perm == "admin" || perm=="edit") { %>
-                                        <a href="javascript:void(0);" class="btn btn-sm btn-info text-white" 
+                                    <% if (perm == "admin" || perm == "edit") { %>
+                                        <!-- Register -->
+                                        <a href="javascript:void(0);" 
+                                           class="btn btn-sm btn-info me-1 text-white"
                                            onclick='highlightRow(this); openRegisterModal(<%# Eval("id") %>, "<%# Eval("topicWLTId") %>", <%# Eval("positionId") %>)'>
-                                           <i class="fa fa-user-plus"></i> Register
+                                            <i class="fa fa-user-plus"></i> Register
                                         </a>
                                     <% } %>
+
+                                </div>
+
                                 </div>
                             </ItemTemplate>
                         </asp:TemplateField>

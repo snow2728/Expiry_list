@@ -11,6 +11,7 @@ using System.Web;
 using System.Web.Script.Services;
 using System.Web.Services;
 using System.Web.UI;
+using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
 using Newtonsoft.Json;
 
@@ -34,7 +35,7 @@ namespace Expiry_list.ReorderForm
             {
                 var permissions = Session["formPermissions"] as Dictionary<string, string>;
                 string expiryPerm = permissions != null && permissions.ContainsKey("ReorderQuantity") ? permissions["ReorderQuantity"] : "";
-                
+
                 GridView2.Columns[0].Visible = false;
                 GridView2.Columns[GridView2.Columns.Count - 1].Visible = expiryPerm == "admin";
 
@@ -42,10 +43,13 @@ namespace Expiry_list.ReorderForm
                 {
                     if (col is TemplateField && col.HeaderText == "Delete")
                     {
-                        col.Visible = expiryPerm == "admin" ; 
+                        col.Visible = expiryPerm == "admin";
                         break;
                     }
                 }
+
+                item.Items.Insert(0, new ListItem("", "")); 
+                vendor.Items.Insert(0, new ListItem("", ""));
 
                 Panel1.Visible = true;
                 BindGrid();
@@ -56,14 +60,13 @@ namespace Expiry_list.ReorderForm
             else
             {
                 // Restore ViewState for filter checkboxes
-                if (ViewState["FilterItemChecked"] != null)
-                {
-                    filterItem.Checked = (bool)ViewState["FilterItemChecked"];
-                }
-
                 if (ViewState["SelectedItem"] != null)
                 {
                     item.SelectedValue = ViewState["SelectedItem"].ToString();
+                }
+                if (ViewState["SelectedVendor"] != null)
+                {
+                    vendor.SelectedValue = ViewState["SelectedVendor"].ToString();
                 }
             }
         }
@@ -287,10 +290,11 @@ namespace Expiry_list.ReorderForm
         {
             try
             {
-                bool hasAnyFilter = filterStore.Checked || filterItem.Checked || filterVendor.Checked ||
-                                   filterStatus.Checked || filterAction.Checked ||
-                                   filterRegistrationDate.Checked || filterStaff.Checked ||
-                                   filterOwner.Checked || filterDivisionCode.Checked || filterApproveDate.Checked; 
+                bool hasAnyFilter =
+                    filterStore.Checked || filterItem.Checked || filterVendor.Checked ||
+                    filterStatus.Checked || filterAction.Checked ||
+                    filterRegistrationDate.Checked || filterStaff.Checked ||
+                    filterOwner.Checked || filterDivisionCode.Checked || filterApproveDate.Checked;
 
                 if (!hasAnyFilter)
                 {
@@ -299,7 +303,7 @@ namespace Expiry_list.ReorderForm
                     return;
                 }
 
-                // Store filter states in ViewState
+                // Store filter state
                 ViewState["FilterStoreChecked"] = filterStore.Checked;
                 ViewState["SelectedStores"] = string.Join(",",
                     lstStoreFilter.Items.Cast<ListItem>()
@@ -307,19 +311,17 @@ namespace Expiry_list.ReorderForm
                         .Select(li => li.Value));
 
                 ViewState["FilterItemChecked"] = filterItem.Checked;
-                ViewState["SelectedItem"] = item.SelectedValue;
-
                 ViewState["FilterVendorChecked"] = filterVendor.Checked;
-                ViewState["SelectedVendor"] = vendor.SelectedValue;
 
                 ViewState["FilterStatusChecked"] = filterStatus.Checked;
-                ViewState["SelectedStatus"] = ddlStatusFilter.SelectedItem.Text;
+                ViewState["SelectedStatus"] = ddlStatusFilter.SelectedValue;
 
                 ViewState["FilterActionChecked"] = filterAction.Checked;
-                ViewState["SelectedAction"] = ddlActionFilter.SelectedItem.Text;
+                ViewState["SelectedAction"] = ddlActionFilter.SelectedValue;
 
                 ViewState["FilterRegDateChecked"] = filterRegistrationDate.Checked;
-                ViewState["SelectedRegDate"] = txtRegDateFilter.Text;
+                ViewState["FilterFromDate"] = hfFrom1.Value;
+                ViewState["FilterToDate"] = hfTo1.Value;
 
                 ViewState["FilterApproveDateChecked"] = filterApproveDate.Checked;
                 ViewState["SelectedApproveDate"] = txtApproveDateFilter.Text;
@@ -334,12 +336,13 @@ namespace Expiry_list.ReorderForm
                 ViewState["SelectedDivisionCode"] = txtDivisionCode.Text;
 
                 DataTable dt = GetFilteredData();
-
                 ViewState["FilteredData"] = dt;
 
-                // Bind GridView
                 GridView2.DataSource = dt;
                 GridView2.DataBind();
+
+                ScriptManager.RegisterStartupScript(this, this.GetType(), "reinitSelect2",
+                    "setTimeout(function() { InitializeItemVendorFilter(); }, 100);", true);
             }
             catch (Exception ex)
             {
@@ -490,21 +493,24 @@ namespace Expiry_list.ReorderForm
 
         protected void ResetFilters_Click(object sender, EventArgs e)
         {
-            // Reset all filter controls
+            // Reset filter
             ddlActionFilter.SelectedIndex = 0;
             ddlStatusFilter.SelectedIndex = 0;
             item.SelectedIndex = 0;
             txtstaffFilter.Text = string.Empty;
             vendor.SelectedIndex = 0;
-            txtRegDateFilter.Text = string.Empty;
-            txtRegDateFilter.Text = string.Empty;
             txtDivisionCode.Text = string.Empty;
             txtOwner.Text = string.Empty;
             txtApproveDateFilter.Text = string.Empty;
 
+            ScriptManager.RegisterStartupScript(this, GetType(), "ResetDateFilters",
+                @"document.getElementById('from1').value = '';
+          document.getElementById('to1').value = '';",
+                true);
+
+            // Reset filter checkboxes
             filterAction.Checked = false;
             filterStatus.Checked = false;
-            //filterStore.Checked = false;
             filterItem.Checked = false;
             filterStaff.Checked = false;
             filterVendor.Checked = false;
@@ -513,37 +519,48 @@ namespace Expiry_list.ReorderForm
             filterDivisionCode.Checked = false;
             filterApproveDate.Checked = false;
 
-            // Clear ViewState filters too
+            // Clear ViewState 
             ViewState["FilterStoreChecked"] = null;
             ViewState["SelectedStores"] = null;
+
             ViewState["FilterItemChecked"] = null;
             ViewState["SelectedItem"] = null;
+
             ViewState["FilterVendorChecked"] = null;
             ViewState["SelectedVendor"] = null;
+
             ViewState["FilterStatusChecked"] = null;
             ViewState["SelectedStatus"] = null;
+
             ViewState["FilterActionChecked"] = null;
             ViewState["SelectedAction"] = null;
+
             ViewState["FilterRegDateChecked"] = null;
-            ViewState["SelectedRegDate"] = null;
+            ViewState["FilterFromDate"] = null; 
+            ViewState["FilterToDate"] = null;   
+
             ViewState["FilterStaffChecked"] = null;
             ViewState["SelectedStaff"] = null;
+
             ViewState["FilterOwnerChecked"] = null;
             ViewState["SelectedOwner"] = null;
+
             ViewState["FilterDivisionCodeChecked"] = null;
             ViewState["SelectedDivisionCode"] = null;
+
             ViewState["FilterApproveDateChecked"] = null;
             ViewState["SelectedApproveDate"] = null;
 
+            // reload page
             ScriptManager.RegisterStartupScript(this, GetType(), "redirect",
                 "window.location.href = 'viewer3.aspx';", true);
 
-            // Optional (if you want to refresh filter UI visibility)
-            ScriptManager.RegisterStartupScript(this, GetType(), "ResetFilters",
+            // Optional: refresh filter UI visibility
+            ScriptManager.RegisterStartupScript(this, GetType(), "ResetFiltersUI",
                 @"if (typeof(updateFilterVisibility) === 'function') { 
-                    updateFilterVisibility(); 
-                    toggleFilter(false); 
-                }", true);
+              updateFilterVisibility(); 
+              toggleFilter(false); 
+          }", true);
         }
 
         private List<string> GetLoggedInUserStoreNames()
@@ -614,7 +631,7 @@ namespace Expiry_list.ReorderForm
                         }
                     }
                 }
-                
+
 
                 queryBuilder.Append($" {orderBy} OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY");
                 parameters.Add(new SqlParameter("@Offset", (pageNumber - 1) * pageSize));
@@ -643,6 +660,7 @@ namespace Expiry_list.ReorderForm
             Session["formPermissions"] = permissions;
             Session["activeModule"] = "ReorderQuantity";
 
+            // Permission check
             if (!permissions.TryGetValue("ReorderQuantity", out string perm))
             {
                 ShowAlert("Unauthorized", "You do not have permission to access Reorder Quantity List", "error");
@@ -658,27 +676,18 @@ namespace Expiry_list.ReorderForm
             // Permission filter
             if (perm == "edit" || perm == "view" || perm == "super" || perm == "admin")
             {
-                query.Append(" AND (status IN ('Reorder Done','No Reordering')) and (approved='approved')");
+                query.Append(" AND status IN ('Reorder Done','No Reordering') AND approved = 'approved'");
             }
 
             // Store filter
-            if (filterStore.Checked)
+            if (ViewState["FilterStoreChecked"] is bool isStoreChecked && isStoreChecked)
             {
-                var selectedStores = lstStoreFilter.Items.Cast<ListItem>()
-                    .Where(li => li.Selected && li.Value != "all")
-                    .Select(li => li.Value)
+                string selectedStoresRaw = ViewState["SelectedStores"] as string ?? "";
+                var selectedStores = selectedStoresRaw
+                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                     .ToList();
 
-                List<string> filteredStores;
-
-                if (hasHO)
-                {
-                    filteredStores = selectedStores;
-                }
-                else
-                {
-                    filteredStores = selectedStores.Intersect(userStores).ToList();
-                }
+                var filteredStores = hasHO ? selectedStores : selectedStores.Intersect(userStores).ToList();
 
                 if (filteredStores.Count > 0)
                 {
@@ -692,101 +701,130 @@ namespace Expiry_list.ReorderForm
                 }
                 else
                 {
-                    query.Append(" AND 1=0");
+                    query.Append(" AND 1=0"); // no match
+                }
+            }
+            else if (!hasHO && userStores.Count > 0)
+            {
+                string storeFilterCondition = string.Join(",", userStores.Select((s, i) => $"@UserStore{i}"));
+                query.Append($" AND storeNo IN ({storeFilterCondition})");
+
+                for (int i = 0; i < userStores.Count; i++)
+                {
+                    parameters.Add(new SqlParameter($"@UserStore{i}", userStores[i]));
                 }
             }
             else if (!hasHO)
             {
-                if (userStores.Count > 0)
-                {
-                    string storeFilterCondition = string.Join(",", userStores.Select((s, i) => $"@UserStore{i}"));
-                    query.Append($" AND storeNo IN ({storeFilterCondition})");
-
-                    for (int i = 0; i < userStores.Count; i++)
-                    {
-                        parameters.Add(new SqlParameter($"@UserStore{i}", userStores[i]));
-                    }
-                }
-                else
-                {
-                    query.Append(" AND 1=0");
-                }
+                query.Append(" AND 1=0");
             }
 
             // Item filter
             if (filterItem.Checked && !string.IsNullOrEmpty(item.SelectedValue))
             {
                 query.Append(" AND itemNo = @ItemNo");
-                parameters.Add(new SqlParameter("@ItemNo", item.SelectedValue));
+                parameters.Add(new SqlParameter("@ItemNo", item.SelectedValue.Trim()));
             }
 
             // Vendor filter
             if (filterVendor.Checked && !string.IsNullOrEmpty(vendor.SelectedValue))
             {
-                query.Append(" AND vendorNo = @VendorNo");
-                parameters.Add(new SqlParameter("@VendorNo", vendor.SelectedValue));
+                query.Append(" AND vendorNo LIKE @VendorNo");
+                parameters.Add(new SqlParameter("@VendorNo", vendor.SelectedValue.Trim() + "%"));
             }
 
             // Status filter
-            if (filterStatus.Checked && !string.IsNullOrEmpty(ddlStatusFilter.SelectedItem.Text))
+            if (ViewState["FilterStatusChecked"] is bool isStatusChecked && isStatusChecked)
             {
-                query.Append(" AND status = @Status");
-                parameters.Add(new SqlParameter("@Status", ddlStatusFilter.SelectedItem.Text));
+                if (!string.IsNullOrEmpty(ViewState["SelectedStatus"] as string))
+                {
+                    query.Append(" AND status = @Status");
+                    parameters.Add(new SqlParameter("@Status", ViewState["SelectedStatus"]));
+                }
             }
 
             // Action filter
-            if (filterAction.Checked && !string.IsNullOrEmpty(ddlActionFilter.SelectedItem.Text))
+            if (ViewState["FilterActionChecked"] is bool isActionChecked && isActionChecked)
             {
-                query.Append(" AND action = @Action");
-                parameters.Add(new SqlParameter("@Action", ddlActionFilter.SelectedItem.Text));
+                if (!string.IsNullOrEmpty(ViewState["SelectedAction"] as string))
+                {
+                    query.Append(" AND action = @Action");
+                    parameters.Add(new SqlParameter("@Action", ViewState["SelectedAction"]));
+                }
             }
 
             // Registration Date filter
-            if (filterRegistrationDate.Checked && !string.IsNullOrWhiteSpace(txtRegDateFilter.Text))
+            if (ViewState["FilterRegDateChecked"] is bool isRegChecked && isRegChecked)
             {
-                if (DateTime.TryParseExact(txtRegDateFilter.Text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime regDate))
+                string fromStr = ViewState["FilterFromDate"] as string;
+                string toStr = ViewState["FilterToDate"] as string;
+
+                bool hasFrom = DateTime.TryParse(fromStr, out DateTime fromDate);
+                bool hasTo = DateTime.TryParse(toStr, out DateTime toDate);
+
+                if (hasFrom && hasTo)
                 {
-                    DateTime nextDay = regDate.AddDays(1);
-                    query.Append(" AND regeDate >= @RegDate AND regeDate < @NextDay");
-                    parameters.Add(new SqlParameter("@RegDate", regDate));
-                    parameters.Add(new SqlParameter("@NextDay", nextDay));
+                    // Between from and to
+                    query.Append(" AND regeDate >= @StartDate AND regeDate < @EndDate");
+                    parameters.Add(new SqlParameter("@StartDate", fromDate.Date));
+                    parameters.Add(new SqlParameter("@EndDate", toDate.Date.AddDays(1)));
+                }
+                else if (hasFrom)
+                {
+                    // From date only → show from this date onwards
+                    query.Append(" AND regeDate >= @StartDate");
+                    parameters.Add(new SqlParameter("@StartDate", fromDate.Date));
+                }
+                else if (hasTo)
+                {
+                    // To date only → show up to this date
+                    query.Append(" AND regeDate < @EndDate");
+                    parameters.Add(new SqlParameter("@EndDate", toDate.Date.AddDays(1)));
                 }
             }
 
             // Approved Date filter
-            if (filterApproveDate.Checked && !string.IsNullOrWhiteSpace(txtApproveDateFilter.Text))
+            if (ViewState["FilterApproveDateChecked"] is bool isAppDateChecked && isAppDateChecked)
             {
-                if (DateTime.TryParseExact(txtApproveDateFilter.Text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime approveDate))
+                string appDateStr = ViewState["SelectedApproveDate"] as string;
+                if (DateTime.TryParseExact(appDateStr, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime approveDate))
                 {
-                    DateTime nextDay = approveDate.AddDays(1);
                     query.Append(" AND approveDate >= @appDate AND approveDate < @NextDay");
                     parameters.Add(new SqlParameter("@appDate", approveDate));
-                    parameters.Add(new SqlParameter("@NextDay", nextDay));
+                    parameters.Add(new SqlParameter("@NextDay", approveDate.AddDays(1)));
                 }
             }
 
             // Staff filter
-            if (filterStaff.Checked && !string.IsNullOrWhiteSpace(txtstaffFilter.Text))
+            if (ViewState["FilterStaffChecked"] is bool isStaffChecked && isStaffChecked)
             {
-                query.Append(" AND staffName = @StaffNo");
-                parameters.Add(new SqlParameter("@StaffNo", txtstaffFilter.Text));
+                if (!string.IsNullOrWhiteSpace(ViewState["SelectedStaff"] as string))
+                {
+                    query.Append(" AND staffName = @StaffNo");
+                    parameters.Add(new SqlParameter("@StaffNo", ViewState["SelectedStaff"]));
+                }
             }
 
             // Owner filter
-            if (filterStaff.Checked && !string.IsNullOrWhiteSpace(txtOwner.Text))
+            if (ViewState["FilterOwnerChecked"] is bool isOwnerChecked && isOwnerChecked)
             {
-                query.Append(" AND owner = @owner");
-                parameters.Add(new SqlParameter("@owner", txtOwner.Text));
+                if (!string.IsNullOrWhiteSpace(ViewState["SelectedOwner"] as string))
+                {
+                    query.Append(" AND owner = @Owner");
+                    parameters.Add(new SqlParameter("@Owner", ViewState["SelectedOwner"]));
+                }
             }
 
             // Division Code filter
-            if (filterDivisionCode.Checked && !string.IsNullOrWhiteSpace(txtDivisionCode.Text))
+            if (ViewState["FilterDivisionCodeChecked"] is bool isDivChecked && isDivChecked)
             {
-                query.Append(" AND divisionCode = @division");
-                parameters.Add(new SqlParameter("@division", txtDivisionCode.Text.Trim()));
+                if (!string.IsNullOrWhiteSpace(ViewState["SelectedDivisionCode"] as string))
+                {
+                    query.Append(" AND divisionCode = @Division");
+                    parameters.Add(new SqlParameter("@Division", ViewState["SelectedDivisionCode"].ToString().Trim()));
+                }
             }
 
-            // Debug
             Debug.WriteLine("Final query: " + query);
 
             DataTable dt = new DataTable();
@@ -794,22 +832,12 @@ namespace Expiry_list.ReorderForm
             using (SqlCommand cmd = new SqlCommand(query.ToString(), conn))
             {
                 cmd.Parameters.AddRange(parameters.ToArray());
-
-                try
+                conn.Open();
+                using (SqlDataAdapter da = new SqlDataAdapter(cmd))
                 {
-                    conn.Open();
-                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                    {
-                        da.Fill(dt);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine("Database error: " + ex.ToString());
-                    throw;
+                    da.Fill(dt);
                 }
             }
-
             return dt;
         }
 

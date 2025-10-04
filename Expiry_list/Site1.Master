@@ -14,6 +14,7 @@
     
     <!-- global CSS --> 
     <link href="css\global.css" rel="stylesheet" />
+    <link href="css\daterangepicker.css" rel="stylesheet" />
     
     <!-- DataTables Core + Extensions --> 
     <link href="datatables\css\jquery.dataTables.min.css" rel="stylesheet" /> 
@@ -57,8 +58,8 @@
 
     <%-- DataTables Button --%>
     <script src='<%= ResolveUrl("~/datatables/js/dataTables.buttons.min.js") %>'></script>
-
-<%--    <script src='<%= ResolveUrl("~datatables/js/dataTables.colReorder.min.js") %>'></script>--%>
+    <script src='<%= ResolveUrl("~/jquery/moment.min.js") %>'></script>
+    <script src='<%= ResolveUrl("~/jquery/daterangepicker.min.js") %>'></script>
     <script src='<%= ResolveUrl("~/js/customJS.js") %>' type="text/javascript" ></script>
     
     <!-- Bootstrap + Popper --> 
@@ -228,7 +229,7 @@
                                         </a>
                                 <% } %>
 
-                                <% if (perm == "admin" || perm == "edit" || perm == "view" || perm == "super")
+                                <% if (perm == "admin" || perm == "edit" || perm == "view" || perm == "super" || perm == "super1") 
                                    { %>
                                         <a href="viewer3.aspx" class="nav-link <%= (currentPage == "viewer3.aspx" ? "active1" : "") %>">
                                             <i class="fa-solid fa-list-check"></i>Completed Qty List

@@ -30,6 +30,7 @@ namespace Expiry_list.Training
         {
             BindUserGrid();
         }
+
         private void BindUserGrid()
         {
             try
@@ -132,6 +133,7 @@ namespace Expiry_list.Training
             int traineeId;
             if (int.TryParse(hiddenTraineeId.Value, out traineeId))
             {
+                BindLevelFilter(traineeId);
                 LoadTraineeTopics(traineeId);
                 upTopics.Update();
 
@@ -141,47 +143,235 @@ namespace Expiry_list.Training
 
         protected void LoadTraineeTopics(int traineeId)
         {
+            DataTable dt = new DataTable();
             using (SqlConnection conn = new SqlConnection(strcon))
             using (SqlCommand cmd = new SqlCommand(@"
-              WITH tp_unique AS (
-                 SELECT tt.*,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY tt.topicId, tt.traineeId 
-                            ORDER BY tt.updatedAt DESC, tt.id DESC
-                        ) AS rn
-                 FROM traineeTopicT tt
-             )
-             , latest_topic AS (
-                 SELECT topicId, traineeId, Status, Exam
-                 FROM tp_unique
-                 WHERE rn = 1
-             )
-             SELECT t.id AS topicId,
+                WITH tp_unique AS (
+                    SELECT tt.*, ROW_NUMBER() OVER (
+                        PARTITION BY tt.topicId, tt.traineeId 
+                        ORDER BY tt.updatedAt DESC, tt.id DESC
+                    ) AS rn
+                    FROM traineeTopicT tt
+                ),
+                latest_topic AS (
+                    SELECT topicId, traineeId, Status, Exam
+                    FROM tp_unique
+                    WHERE rn = 1
+                ),
+                available_topics AS (
+                    SELECT w.id AS topicWltId, w.topic AS topicMasterId,
+                           ROW_NUMBER() OVER (PARTITION BY w.topic ORDER BY w.id) AS rn
+                    FROM topicWLT w
+                    INNER JOIN traineeT tr ON tr.id = @traineeId
+                    WHERE w.traineeLevel = tr.position  -- Only current level
+                      AND w.IsActive = 1
+                )
+                SELECT 
+                    t.id AS topicId,
                     t.topicName,
-                    ISNULL(tp.Status, 'Not Registered') AS Status,
-                    ISNULL(tp.Exam, 'Not Taken') AS Exam
-             FROM topicWLT w
-             INNER JOIN TopicT t
-                     ON t.id = w.topic
-             INNER JOIN traineeT tr
-                     ON tr.id = @traineeId
-             LEFT JOIN latest_topic tp
-                    ON tp.topicId = w.id    
-                   AND tp.traineeId = tr.id
-             WHERE w.traineeLevel = tr.position
-               AND w.IsActive = 1
-             ORDER BY t.topicName;", conn))
-
+                    LTRIM(RTRIM(ISNULL(tp.Status, 'Not Registered'))) AS Status,
+                    LTRIM(RTRIM(ISNULL(tp.Exam, 'Not Taken'))) AS Exam
+                FROM available_topics w
+                INNER JOIN TopicT t ON t.id = w.topicMasterId
+                LEFT JOIN latest_topic tp ON tp.topicId = w.topicWltId
+                                         AND tp.traineeId = @traineeId
+                WHERE w.rn = 1
+                ORDER BY t.topicName;", conn))
             {
                 cmd.Parameters.AddWithValue("@traineeId", traineeId);
                 conn.Open();
 
-                DataTable dt = new DataTable();
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
                 da.Fill(dt);
+            }
 
-                gvTraineeTopics.DataSource = dt;
-                gvTraineeTopics.DataBind();
+            gvTraineeTopics.DataSource = dt;
+            gvTraineeTopics.DataBind();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                string status = row["Status"].ToString();
+                string exam = row["Exam"].ToString();
+                System.Diagnostics.Debug.WriteLine($"Topic: {row["topicName"]}, Status: '{status}', Exam: '{exam}'");
+            }
+
+            bool canUpgrade = dt.Rows.Count > 0 && dt.AsEnumerable().All(r =>
+            {
+                string status = (r.Field<string>("Status") ?? "").Trim();
+                string exam = (r.Field<string>("Exam") ?? "").Trim();
+                return status.Equals("Attend", StringComparison.OrdinalIgnoreCase) &&
+                       exam.Equals("Passed", StringComparison.OrdinalIgnoreCase);
+            });
+
+            System.Diagnostics.Debug.WriteLine($"=== DEBUG: Can Upgrade = {canUpgrade} ===");
+
+            if (canUpgrade)
+            {
+                btnUpgrade.Enabled = true;
+                btnUpgrade.CssClass = "btn btn-primary";
+                btnUpgrade.ToolTip = "Click to upgrade trainee level";
+            }
+            else
+            {
+                btnUpgrade.Enabled = false;
+                btnUpgrade.CssClass = "btn btn-secondary";
+
+                var incompleteTopics = dt.AsEnumerable()
+                    .Where(r =>
+                    {
+                        string status = (r.Field<string>("Status") ?? "").Trim();
+                        string exam = (r.Field<string>("Exam") ?? "").Trim();
+                        return !(status.Equals("Attend", StringComparison.OrdinalIgnoreCase) &&
+                                 exam.Equals("Passed", StringComparison.OrdinalIgnoreCase));
+                    })
+                    .Select(r => r.Field<string>("topicName"))
+                    .ToList();
+
+                if (incompleteTopics.Any())
+                {
+                    btnUpgrade.ToolTip = $"Cannot upgrade - incomplete topics: {string.Join(", ", incompleteTopics)}";
+                }
+                else
+                {
+                    btnUpgrade.ToolTip = "Upgrade not available";
+                }
+            }
+        }
+
+        private void LoadFilteredTopics(int traineeId, string level)
+        {
+            DataTable dt = new DataTable();
+
+            using (SqlConnection conn = new SqlConnection(strcon))
+            using (SqlCommand cmd = new SqlCommand(@"
+                WITH tp_unique AS (
+                    SELECT tt.*, ROW_NUMBER() OVER (
+                        PARTITION BY tt.topicId, tt.traineeId 
+                        ORDER BY tt.updatedAt DESC, tt.id DESC
+                    ) AS rn
+                    FROM traineeTopicT tt
+                    WHERE tt.traineeId = @traineeId
+                ),
+                latest_topic AS (
+                    SELECT topicId, traineeId, Status, Exam
+                    FROM tp_unique
+                    WHERE rn = 1
+                ),
+                available_topics AS (
+                    SELECT w.id AS topicWltId, w.topic AS topicMasterId,
+                           ROW_NUMBER() OVER (PARTITION BY w.topic ORDER BY w.id) AS rn
+                    FROM topicWLT w
+                    WHERE w.traineeLevel = @level
+                      AND w.IsActive = 1
+                )
+                SELECT 
+                    t.id AS topicId,
+                    t.topicName,
+                    LTRIM(RTRIM(ISNULL(tp.Status, 'Not Registered'))) AS Status,
+                    LTRIM(RTRIM(ISNULL(tp.Exam, 'Not Taken'))) AS Exam
+                FROM available_topics w
+                INNER JOIN TopicT t ON t.id = w.topicMasterId
+                LEFT JOIN latest_topic tp ON tp.topicId = w.topicWltId
+                WHERE w.rn = 1
+                ORDER BY t.topicName;
+            ", conn))
+            {
+                cmd.Parameters.AddWithValue("@traineeId", traineeId);
+                cmd.Parameters.AddWithValue("@level", level);
+                conn.Open();
+
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                da.Fill(dt);
+            }
+
+            gvTraineeTopics.DataSource = dt;
+            gvTraineeTopics.DataBind();
+
+            btnUpgrade.Enabled = false;
+            btnUpgrade.CssClass = "btn btn-secondary";
+            btnUpgrade.ToolTip = "Upgrade only available for current level topics";
+        }
+
+        private void BindLevelFilter(int traineeId)
+        {
+            try
+            {
+                DataTable dt = new DataTable();
+
+                using (SqlConnection conn = new SqlConnection(strcon))
+                using (SqlCommand cmd = new SqlCommand(@"
+           SELECT CAST(tr.position AS NVARCHAR) AS LevelValue,
+               'Current Level: ' + ISNULL(l.name, CAST(tr.position AS NVARCHAR)) AS LevelName,
+               tr.position AS LevelNum
+        FROM traineeT tr
+        LEFT JOIN LevelT l ON tr.position = l.id
+        WHERE tr.id = @traineeId
+
+        UNION ALL
+
+        -- Get registered levels excluding current level to avoid duplicates
+        SELECT DISTINCT CAST(w.traineeLevel AS NVARCHAR) AS LevelValue,
+                        ISNULL(l.name, 'Level ' + CAST(w.traineeLevel AS NVARCHAR)) AS LevelName,
+                        w.traineeLevel AS LevelNum
+        FROM traineeTopicT tp
+        INNER JOIN topicWLT w ON tp.topicId = w.id
+        LEFT JOIN LevelT l ON w.traineeLevel = l.id
+        WHERE tp.traineeId = @traineeId
+          AND w.traineeLevel <> (SELECT position FROM traineeT WHERE id = @traineeId)
+
+        ORDER BY LevelNum;
+        ", conn))
+                {
+                    cmd.Parameters.AddWithValue("@traineeId", traineeId);
+                    conn.Open();
+
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                }
+
+                // Bind to dropdown
+                ddlFilterLevle.Items.Clear();
+                ddlFilterLevle.DataSource = dt;
+                ddlFilterLevle.DataTextField = "LevelName";
+                ddlFilterLevle.DataValueField = "LevelValue";
+                ddlFilterLevle.DataBind();
+
+                // Set selected value to current position
+                using (SqlConnection conn = new SqlConnection(strcon))
+                using (SqlCommand cmd = new SqlCommand("SELECT position FROM traineeT WHERE id = @traineeId", conn))
+                {
+                    cmd.Parameters.AddWithValue("@traineeId", traineeId);
+                    conn.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (result != null)
+                    {
+                        string currentPosition = result.ToString();
+                        if (ddlFilterLevle.Items.FindByValue(currentPosition) != null)
+                            ddlFilterLevle.SelectedValue = currentPosition;
+                    }
+                }
+
+                // Add default if empty
+                if (ddlFilterLevle.Items.Count == 0)
+                    ddlFilterLevle.Items.Add(new ListItem("No levels found", "0"));
+            }
+            catch (Exception ex)
+            {
+                ddlFilterLevle.Items.Clear();
+                ddlFilterLevle.Items.Add(new ListItem("Error loading levels", "0"));
+                System.Diagnostics.Debug.WriteLine($"Error in BindLevelFilter: {ex.Message}");
+            }
+        }
+
+        protected void ddlFilterLevle_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (int.TryParse(hiddenTraineeId.Value, out int traineeId))
+            {
+                string selectedLevel = ddlFilterLevle.SelectedValue;
+
+                LoadFilteredTopics(traineeId, selectedLevel);
+                upTopics.Update();
+                ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
             }
         }
 
@@ -194,34 +384,43 @@ namespace Expiry_list.Training
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string query = @"
-                   WITH tp_unique AS (
-                     SELECT tt.*,
-                            ROW_NUMBER() OVER (
-                                PARTITION BY tt.topicId, tt.traineeId 
-                                ORDER BY tt.updatedAt DESC, tt.id DESC
-                            ) AS rn
-                     FROM traineeTopicT tt
-                 )
-                 , latest_topic AS (
-                     SELECT topicId, traineeId, Status, Exam
-                     FROM tp_unique
-                     WHERE rn = 1
-                 )
-                 SELECT t.id AS topicId,
-                        t.topicName,
-                        ISNULL(tp.Status, 'Not Registered') AS Status,
-                        ISNULL(tp.Exam, 'Not Taken') AS Exam
-                 FROM topicWLT w
-                 INNER JOIN TopicT t
-                         ON t.id = w.topic
-                 INNER JOIN traineeT tr
-                         ON tr.id = @traineeId
-                 LEFT JOIN latest_topic tp
-                        ON tp.topicId = w.id    
-                       AND tp.traineeId = tr.id
-                 WHERE w.traineeLevel = tr.position
-                   AND w.IsActive = 1
-                 ORDER BY t.topicName;";
+                 WITH tp_unique AS (
+                    SELECT tt.*,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY tt.topicId, tt.traineeId 
+                               ORDER BY tt.updatedAt DESC, tt.id DESC
+                           ) AS rn
+                    FROM traineeTopicT tt
+                ),
+                latest_topic AS (
+                    SELECT topicId, traineeId, Status, Exam
+                    FROM tp_unique
+                    WHERE rn = 1
+                ),
+                available_topics AS (
+                    SELECT w.id AS topicWltId, w.topic AS topicMasterId,
+                           ROW_NUMBER() OVER (PARTITION BY w.topic ORDER BY w.id) AS rn
+                    FROM topicWLT w
+                    INNER JOIN traineeT tr ON tr.id = @traineeId
+                    WHERE w.traineeLevel = tr.position
+                      AND w.IsActive = 1
+                )
+                SELECT 
+                    t.id AS topicId,
+                    t.topicName,
+                    ISNULL(tp.Status, 'Not Registered') AS Status,
+                    ISNULL(tp.Exam, 'Not Taken') AS Exam,
+                    tr.position AS Level   -- ✅ Added trainee's current level
+                FROM available_topics w
+                INNER JOIN TopicT t 
+                        ON t.id = w.topicMasterId
+                INNER JOIN traineeT tr   -- join traineeT to get the level
+                        ON tr.id = @traineeId
+                LEFT JOIN latest_topic tp 
+                       ON tp.topicId = w.topicWltId
+                      AND tp.traineeId = @traineeId
+                WHERE w.rn = 1  
+                ORDER BY t.topicName;";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
@@ -246,39 +445,27 @@ namespace Expiry_list.Training
 
         protected void gvTraineeTopics_RowDataBound(object sender, GridViewRowEventArgs e)
         {
-            if (e.Row.RowType == DataControlRowType.DataRow)
-            {
-                gvTraineeTopics.UseAccessibleHeader = true;
-                if (gvTraineeTopics.HeaderRow != null)
-                    gvTraineeTopics.HeaderRow.TableSection = TableRowSection.TableHeader;
+            //if (e.Row.RowType == DataControlRowType.DataRow)
+            //{
+            //    DropDownList ddlExam = (DropDownList)e.Row.FindControl("ddlExam");
+            //    DataRowView drv = (DataRowView)e.Row.DataItem;
 
-                DropDownList ddlExam = (DropDownList)e.Row.FindControl("ddlExam");
+            //    string exam = drv["Exam"].ToString().Trim();
 
-                DataRowView drv = (DataRowView)e.Row.DataItem;
+            //    if (ddlExam != null)
+            //    {
+            //        ddlExam.SelectedValue = exam;
 
-                string exam = drv["exam"].ToString();
+            //        bool allPassed = gvTraineeTopics.DataSource is DataTable dt &&
+            //                         dt.AsEnumerable().All(r => string.Equals(r.Field<string>("Exam")?.Trim(), "Passed", StringComparison.OrdinalIgnoreCase));
 
-                if (ddlExam != null)
-                {
-                    if (ddlExam.Items.FindByValue(exam) != null)
-                        ddlExam.SelectedValue = exam;
-
-                    var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
-                    string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList")
-                                  ? formPermissions["TrainingList"]
-                                  : null;
-
-                    if (perm == "edit")
-                    {
-                        ddlExam.Enabled = false;
-                        ddlExam.CssClass += " bg-light";
-                    }
-                    else
-                    {
-                        ddlExam.Enabled = true;
-                    }
-                }
-            }
+            //        if (allPassed)
+            //        {
+            //            ddlExam.Enabled = false;
+            //            ddlExam.Attributes["title"] = "All exams are Passed. Cannot change.";
+            //        }
+            //    }
+            //}
         }
 
         protected void ddlExam_SelectedIndexChanged(object sender, EventArgs e)
@@ -290,8 +477,28 @@ namespace Expiry_list.Training
             int topicId = Convert.ToInt32(gvTraineeTopics.DataKeys[row.RowIndex].Value);
             string newExam = ddl.SelectedValue;
 
+            string status = row.Cells[1].Text;  
+
             try
             {
+                if ((newExam == "Passed" || newExam == "Failed") && 
+                    (status.Equals("Registered", StringComparison.OrdinalIgnoreCase) ||
+                     status.Equals("Not Registered", StringComparison.OrdinalIgnoreCase)))
+                {
+                    LoadTraineeTopics(traineeId);
+                    upTopics.Update();
+
+                    ScriptManager.RegisterStartupScript(
+                        this,
+                        GetType(),
+                        "swalInvalid",
+                        "Swal.fire({ icon: 'warning', title: 'Invalid Action', text: 'Exam cannot be set when trainee is not yet attended!' })" +
+                        ".then(() => { initializeDataTable2(); });",
+                        true
+                    );
+                    return;
+                }
+
                 bool updated = UpdateExamResult(traineeId, topicId, newExam);
 
                 if (updated)
@@ -299,17 +506,27 @@ namespace Expiry_list.Training
                     LoadTraineeTopics(traineeId);
                     upTopics.Update();
 
-                    ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
+                    ScriptManager.RegisterStartupScript(
+                        this,
+                        GetType(),
+                        "swalSuccess",
+                        "Swal.fire({ icon: 'success', title: 'Updated', text: 'Exam updated successfully!' })" +
+                        ".then(() => { initializeDataTable2(); });", 
+                        true
+                    );
+                    return;
                 }
                 else
                 {
                     ScriptManager.RegisterStartupScript(
                         this,
                         GetType(),
-                        "swal",
-                        "Swal.fire({ icon: 'error', title: 'Not Registered', text: 'Please register this topic first before updating exam!' });",
+                        "swalNotRegistered",
+                        "Swal.fire({ icon: 'error', title: 'Not Registered', text: 'Please register this topic first before updating exam!' })" +
+                        ".then(() => { initializeDataTable2(); });", 
                         true
                     );
+                    return;
                 }
             }
             catch (Exception ex)
@@ -318,9 +535,11 @@ namespace Expiry_list.Training
                     this,
                     GetType(),
                     "swalError",
-                    $"Swal.fire({{ icon: 'error', title: 'Error', text: '{ex.Message.Replace("'", "\\'")}' }});",
+                    $"Swal.fire({{ icon: 'error', title: 'Error', text: '{ex.Message.Replace("'", "\\'")}' }})" +
+                    ".then(() => { initializeDataTable2(); });", 
                     true
                 );
+                return;
             }
         }
 
@@ -501,6 +720,68 @@ namespace Expiry_list.Training
         {
             GridView2.EditIndex = -1;
             BindUserGrid();
+        }
+
+        protected void btnUpgrade_Click(object sender, EventArgs e)
+        {
+            int traineeId = int.Parse(hiddenTraineeId.Value);
+
+            using (SqlConnection conn = new SqlConnection(strcon))
+            {
+                conn.Open();
+
+                int currentPosition = 0;
+
+                using (SqlCommand cmdGet = new SqlCommand(
+                    "SELECT position FROM traineeT WHERE id = @traineeId", conn))
+                {
+                    cmdGet.Parameters.AddWithValue("@traineeId", traineeId);
+                    object result = cmdGet.ExecuteScalar();
+                    if (result != null)
+                        currentPosition = Convert.ToInt32(result);
+                }
+
+                int newPosition = 0;
+                if (currentPosition == 3)
+                    newPosition = 1;
+                else if (currentPosition == 1)
+                    newPosition = 2;
+                else if (currentPosition == 2)
+                {
+                    BindLevelFilter(traineeId);
+                    LoadTraineeTopics(traineeId);
+                    upTopics.Update();
+
+                    ScriptManager.RegisterStartupScript(this, GetType(), "swalInfo",
+                        "initializeDataTable2(); Swal.fire({ icon: 'info', title: 'Upgrade Not Allowed', text: 'Trainee is already at Senior Sale level.' });", true);
+                    return;
+                }
+                else
+                {
+                    BindLevelFilter(traineeId);
+                    LoadTraineeTopics(traineeId);
+                    upTopics.Update();
+
+                    ScriptManager.RegisterStartupScript(this, GetType(), "swalError",
+                        "initializeDataTable2(); Swal.fire({ icon: 'error', title: 'Invalid Upgrade', text: 'Unknown current position.' });", true);
+                    return;
+                }
+
+                using (SqlCommand cmdUpdate = new SqlCommand(
+                    "UPDATE traineeT SET position = @newPosition WHERE id = @traineeId", conn))
+                {
+                    cmdUpdate.Parameters.AddWithValue("@newPosition", newPosition);
+                    cmdUpdate.Parameters.AddWithValue("@traineeId", traineeId);
+                    cmdUpdate.ExecuteNonQuery();
+                }
+            }
+
+            BindLevelFilter(traineeId);
+            LoadTraineeTopics(traineeId);
+            upTopics.Update();
+
+            ScriptManager.RegisterStartupScript(this, GetType(), "swalSuccess",
+                "initializeDataTable2(); Swal.fire({ icon: 'success', title: 'Success', text: 'Trainee upgraded successfully!' });", true);
         }
 
         protected void btnaddTrainee_Click(object sender, EventArgs e)

@@ -6,8 +6,8 @@
             line-height: 15px !important;
         }
         table.dataTable thead tr th {
-             border-bottom: none;
-         }
+             border: none;
+        }
 
          table td{
              border-bottom: none;
@@ -199,7 +199,8 @@
             $(tableSelector).prepend(colgroup);
         }
     }
-
+    
+    //GridView Resizable 
     let dragIndicator = null;
     function initializeResizableColumns() {
         if ($.fn.colResizable) {
@@ -229,6 +230,7 @@
         }
     }
 
+    //DataTable Resizable
     function makeColumnsResizable(tableSelector) {
         let pressed = false, startX, startWidth, $th, index;
 
@@ -297,7 +299,7 @@
             paging: true,
             filter: true,
             scrollX: true,
-            scrollY: "62vh",
+            scrollY: "63vh",
             scrollCollapse: true,
             autoWidth: false,
             stateSave: true,
@@ -356,7 +358,7 @@
                  { data: 'itemNo', width: "117px" },
                  { data: 'description', width: "257px" },
                  { data: 'packingInfo', width: "110px" },
-                 { data: 'barcodeNo', width: "127px" },
+                /* { data: 'barcodeNo', width: "127px" },*/
                  { data: 'qty', width: "97px", type: 'num' },
                  { data: 'uom', width: "97px" },
                  { data: 'action', width: "120px" },
@@ -487,7 +489,6 @@
 
         $('.select2-init').select2({ placeholder: "Search or Select", allowClear: true, minimumResultsForSearch: 5 });
     }
-
 
     $(document).on('input', '#<%= searchValue.ClientID %>', function () {
         const searchTerm = $(this).val();
@@ -902,7 +903,7 @@
                 minimumResultsForSearch: 1
             });
 
-            console.log("Select2 initialized for item and vendor filters.");
+            //console.log("Select2 initialized for item and vendor filters.");
         } catch (err) {
             Swal.fire({
                 icon: 'error',
@@ -1054,6 +1055,7 @@
             return false;
         }
 
+        document.getElementById('gridCol').style.height = "73vh";
         return true;
     }
 
@@ -1276,7 +1278,7 @@
                </div>
              </div>
 
-             <div class="d-flex ps-2 pe-2 pt-1 col-lg-12 col-md-12 overflow-x-auto overflow-y-auto">
+             <div class="d-flex pe-2 pt-1 col-lg-12 col-md-12 overflow-x-auto overflow-y-auto">
                  <div class="row">
                      <!-- Filter Panel (Hidden by default) -->
                      <div class="col" id="filterPane" style="display: none;">
@@ -1480,9 +1482,9 @@
                               <div class="alert alert-info">No items to Filter</div>
                         </asp:Panel>
 
-                          <div class="table-responsive gridview-container pt-2 px-1">
+                          <div class="gridview-container p-2">
                             <asp:GridView ID="GridView2" runat="server"
-                                 CssClass="table table-striped ResizableGrid table-hover border-2 shadow-lg sticky-grid mt-1 overflow-x-auto overflow-y-auto display"
+                                 CssClass="table table-striped ResizableGrid table-hover border-2 shadow-lg sticky-grid overflow-x-auto overflow-y-auto display"
                                  AutoGenerateColumns="False"
                                  DataKeyNames="id"  ClientIDMode="Static"
                                  UseAccessibleHeader="true"
@@ -1534,7 +1536,8 @@
                                          <ItemTemplate>
                                              <asp:Label ID="lblNo" runat="server" Text='<%# Eval("no") %>' />
                                              <ControlStyle Width="150px" />
-                                         </ItemTemplate><HeaderStyle ForeColor="White" BackColor="#BD467F" />
+                                         </ItemTemplate>
+                                         <HeaderStyle ForeColor="White" BackColor="#BD467F" />
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
 
@@ -1547,7 +1550,7 @@
                                           <ItemStyle HorizontalAlign="Justify" />
                                       </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="Division" SortExpression="divisionCode" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header4" ItemStyle-CssClass="fixed-column-4">
+                                     <asp:TemplateField HeaderText="Division" SortExpression="divisionCode" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header4" ItemStyle-CssClass="fixed-column-4">
                                         <ItemTemplate>
                                             <asp:Label ID="lblDivisionCode" runat="server" Text='<%# Eval("divisionCode") %>' />
                                         </ItemTemplate>
@@ -1556,7 +1559,7 @@
                                         <ItemStyle HorizontalAlign="Justify" />
                                     </asp:TemplateField>
 
-                                   <asp:TemplateField HeaderText="Approved Date" SortExpression="approveDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-6">
+                                   <asp:TemplateField HeaderText="Approved Date" SortExpression="approveDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-6 border-1">
                                      <ItemTemplate>
                                          <asp:Label ID="lblApprove" runat="server" Text='<%# Eval("approveDate", "{0:dd-MM-yyyy}") %>' />
                                      </ItemTemplate>
@@ -1565,7 +1568,7 @@
                                      <ItemStyle HorizontalAlign="Justify" />
                                  </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="Item No" SortExpression="itemNo" HeaderStyle-ForeColor="White" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-8">
+                                     <asp:TemplateField HeaderText="Item No" SortExpression="itemNo" HeaderStyle-ForeColor="White" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-8 border-1">
                                          <ItemTemplate>
                                              <asp:Label ID="lblItemNo" runat="server" Text='<%# Eval("itemNo") %>' />
                                          </ItemTemplate>
@@ -1573,7 +1576,7 @@
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="Description" SortExpression="description" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-8">
+                                     <asp:TemplateField HeaderText="Description" SortExpression="description" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-8 border-1">
                                          <ItemTemplate>
                                              <asp:Label ID="lblDesc" runat="server" Text='<%# Eval("description") %>' />
                                          </ItemTemplate>
@@ -1581,7 +1584,7 @@
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
 
-                                  <asp:TemplateField HeaderText="Packing Info" SortExpression="packingInfo" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-9">
+                                  <asp:TemplateField HeaderText="Packing Info" SortExpression="packingInfo" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-9 border-1">
                                      <ItemTemplate>
                                          <asp:Label ID="lblPacking" runat="server" Text='<%# Eval("packingInfo") %>' />
                                      </ItemTemplate>
@@ -1589,15 +1592,15 @@
                                      <ItemStyle HorizontalAlign="Justify" />
                                  </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="Barcode" SortExpression="barcodeNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-51">
+                                <%--     <asp:TemplateField HeaderText="Barcode" SortExpression="barcodeNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-51">
                                        <ItemTemplate>
                                            <asp:Label ID="lblBarcode" runat="server" Text='<%# Eval("barcodeNo") %>' />
                                        </ItemTemplate>
                                        <HeaderStyle ForeColor="White" BackColor="#bd467f" />
                                        <ItemStyle HorizontalAlign="Justify" />
-                                   </asp:TemplateField>
+                                   </asp:TemplateField>--%>
 
-                                     <asp:TemplateField HeaderText="Qty" SortExpression="qty" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-52">
+                                     <asp:TemplateField HeaderText="Qty" SortExpression="qty" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-52 border-1">
                                          <ItemTemplate>
                                              <asp:Label ID="lblQty" runat="server" Text='<%# Eval("qty") %>' />
                                          </ItemTemplate>
@@ -1605,7 +1608,7 @@
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="UOM" SortExpression="uom" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-53">
+                                     <asp:TemplateField HeaderText="UOM" SortExpression="uom" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-53 border-1">
                                          <ItemTemplate>
                                              <asp:Label ID="lblUom" runat="server" Text='<%# Eval("uom") %>' />
                                          </ItemTemplate>
@@ -1613,7 +1616,7 @@
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
 
-                                   <asp:TemplateField HeaderText="Reason" SortExpression="action" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-54">
+                                   <asp:TemplateField HeaderText="Reason" SortExpression="action" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-54 border-1">
                                         <ItemTemplate>
                                             <asp:Label ID="lblAction" runat="server" Text='<%# Eval("action") %>'></asp:Label>
                                         </ItemTemplate>
@@ -1621,7 +1624,7 @@
                                         <ItemStyle HorizontalAlign="Justify" />
                                     </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="Action" SortExpression="status" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-55">
+                                    <asp:TemplateField HeaderText="Action" SortExpression="status" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-55 border-1">
                                         <ItemTemplate>
                                             <asp:Label ID="lblStatus" runat="server" Text='<%# Eval("status") %>'></asp:Label>
                                         </ItemTemplate>
@@ -1629,7 +1632,7 @@
                                         <ItemStyle HorizontalAlign="Justify" />
                                     </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="Remark" SortExpression="remark" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-56">
+                                    <asp:TemplateField HeaderText="Remark" SortExpression="remark" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-56 border-1">
                                         <ItemTemplate>
                                             <asp:Label ID="lblRemark" runat="server" Text='<%# Eval("Remark") %>'></asp:Label>
                                         </ItemTemplate>
@@ -1637,7 +1640,7 @@
                                         <ItemStyle HorizontalAlign="Justify" />
                                     </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="Approver" SortExpression="approver" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-58">
+                                    <asp:TemplateField HeaderText="Approver" SortExpression="approver" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-58 border-1">
                                         <ItemTemplate>
                                             <asp:Label ID="lblStaff" runat="server" Text='<%# Eval("approver") %>' />
                                         </ItemTemplate>
@@ -1645,7 +1648,7 @@
                                         <ItemStyle HorizontalAlign="Justify" />
                                     </asp:TemplateField>
 
-                                   <asp:TemplateField HeaderText="Note" SortExpression="note" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-59">
+                                   <asp:TemplateField HeaderText="Note" SortExpression="note" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-59 border-1">
                                         <ItemTemplate>
                                             <asp:Label ID="lblNote" runat="server" 
                                                 Text='<%# TruncateWords(Eval("note").ToString(), 5) %>'
@@ -1656,7 +1659,7 @@
                                         <ItemStyle HorizontalAlign="Justify" />
                                     </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="Vendor No" SortExpression="vendorNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-61">
+                                     <asp:TemplateField HeaderText="Vendor No" SortExpression="vendorNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-61 border-1">
                                          <ItemTemplate>
                                              <asp:Label ID="lblVendorNo" runat="server" Text='<%# Eval("vendorNo") %>' />
                                          </ItemTemplate>
@@ -1664,7 +1667,7 @@
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="Vendor Name" ItemStyle-Width="170px" SortExpression="vendorName" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-55">
+                                     <asp:TemplateField HeaderText="Vendor Name" ItemStyle-Width="170px" SortExpression="vendorName" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-55 border-1">
                                          <ItemTemplate>
                                              <asp:Label ID="lblVendorName" runat="server" Text=' <%# Eval("vendorName") %>' />
                                          </ItemTemplate>
@@ -1672,7 +1675,7 @@
                                          <ItemStyle HorizontalAlign="Justify" />
                                      </asp:TemplateField>
 
-                                     <asp:TemplateField HeaderText="Regi Date" SortExpression="regeDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-56">
+                                     <asp:TemplateField HeaderText="Regi Date" SortExpression="regeDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-56 border-1">
                                          <ItemTemplate>
                                              <asp:Label ID="lblRege" runat="server" Text='<%# Eval("regeDate", "{0:dd-MM-yyyy}") %>' />
                                          </ItemTemplate>

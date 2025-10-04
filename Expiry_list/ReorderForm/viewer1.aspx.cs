@@ -33,7 +33,6 @@ namespace Expiry_list.ReorderForm
 
             if (!IsPostBack && !string.IsNullOrEmpty(hfLastSearch.Value))
             {
-                // Apply manual highlighting for searched rows
                 ScriptManager.RegisterStartupScript(this, GetType(), "HighlightSearched",
                     $"applyManualSearchHighlighting('{hfLastSearch.Value}');", true);
             }
@@ -79,22 +78,49 @@ namespace Expiry_list.ReorderForm
         [System.Web.Services.WebMethod]
         public static string UpdateCell(int id, string column, string value)
         {
+            var allowedColumns = new HashSet<string> { "action", "status", "remark" };
+            if (!allowedColumns.Contains(column))
+                throw new Exception("Invalid column name");
+
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["con"].ConnectionString))
             {
                 conn.Open();
 
-                var allowedColumns = new HashSet<string> { "action", "status", "remark" };
-                if (!allowedColumns.Contains(column))
-                    throw new Exception("Invalid column name");
+                string sql;
+                SqlCommand cmd;
 
-                string sql = $"UPDATE itemListR SET {column} = @value WHERE ID = @id";
-                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                if (column == "action" || column == "status")
                 {
+                    sql = $"UPDATE itemListR SET {column} = @value, completedDate = @completedDate, owner = @owner WHERE ID = @id";
+                    cmd = new SqlCommand(sql, conn);
+
                     cmd.Parameters.AddWithValue("@value", string.IsNullOrEmpty(value) ? (object)DBNull.Value : value);
                     cmd.Parameters.AddWithValue("@id", id);
-                    cmd.ExecuteNonQuery();
+
+                    string username = HttpContext.Current.User.Identity.Name;
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        cmd.Parameters.AddWithValue("@completedDate", DateTime.Now.Date);
+                        cmd.Parameters.AddWithValue("@owner", username);
+                    }
+                    else
+                    {
+                        cmd.Parameters.AddWithValue("@completedDate", DBNull.Value);
+                        cmd.Parameters.AddWithValue("@owner", DBNull.Value);
+                    }
                 }
+                else
+                {
+                    sql = $"UPDATE itemListR SET {column} = @value WHERE ID = @id";
+                    cmd = new SqlCommand(sql, conn);
+
+                    cmd.Parameters.AddWithValue("@value", string.IsNullOrEmpty(value) ? (object)DBNull.Value : value);
+                    cmd.Parameters.AddWithValue("@id", id);
+                }
+
+                cmd.ExecuteNonQuery();
             }
+
             return "OK";
         }
 
@@ -120,12 +146,12 @@ namespace Expiry_list.ReorderForm
                     if (length == 0) length = 100;
 
                     string[] columns = {
-                        "id","no","storeNo", "divisionCode","approveDate", "itemNo", "description", "packingInfo", "barcodeNo", "qty", "uom",
+                        "id","no","storeNo", "divisionCode","approveDate", "itemNo", "description", "packingInfo", "qty", "uom",
                          "action", "status", "remark", "approver", "note", "vendorNo", "vendorName", "regeDate"
                     };
 
                     string[] searchableColumns = {
-                        "no","storeNo", "divisionCode","approveDate", "itemNo", "description", "packingInfo", "barcodeNo", "qty", "uom",
+                        "no","storeNo", "divisionCode","approveDate", "itemNo", "description", "packingInfo", "qty", "uom",
                          "action", "status", "remark", "approver", "note", "vendorNo", "vendorName", "regeDate"
                     };
 
@@ -1198,8 +1224,8 @@ namespace Expiry_list.ReorderForm
             if (filterVendor.Checked && !string.IsNullOrEmpty(vendor.SelectedValue))
             {
                 Debug.WriteLine($"Selected vendor: {vendor.SelectedValue}");
-                query += " AND vendorNo = @VendorNo";
-                parameters.Add(new SqlParameter("@VendorNo", vendor.SelectedValue));
+                query += " AND vendorNo LIKE @VendorNo";
+                parameters.Add(new SqlParameter("@VendorNo", vendor.SelectedValue.Trim() + "%"));
             }
 
             // STATUS filter

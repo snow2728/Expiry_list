@@ -132,6 +132,15 @@ namespace Expiry_list.Training
         protected global::System.Web.UI.UpdatePanel upTopics;
 
         /// <summary>
+        /// ddlFilterLevle control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlFilterLevle;
+
+        /// <summary>
         /// btnLoadTopics control.
         /// </summary>
         /// <remarks>
@@ -157,5 +166,14 @@ namespace Expiry_list.Training
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.GridView gvTraineeTopics;
+
+        /// <summary>
+        /// btnUpgrade control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnUpgrade;
     }
 }

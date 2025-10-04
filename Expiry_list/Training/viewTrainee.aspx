@@ -131,11 +131,18 @@
                 responsive: true,
                 autoWidth: false,
                 columnDefs: [
-                    //{ orderable: false, targets: [-1, -2] }
+                    { orderable: false, targets: [2] },
                     { targets: '_all', orderSequence: ["asc", "desc", ""] }
                 ]
               
             });
+        }
+
+        function highlightRow(btn) {
+            $('#<%= GridView2.ClientID %> tbody tr').removeClass('selected-row');
+
+            var row = $(btn).closest('tr');
+            row.addClass('selected-row');
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -145,7 +152,17 @@
 
     </script>
     <style>
+        .selected-row {
+            background-color: #dfebf1 !important;
+        }
+
         .hidden-col { display: none; }
+
+        table.dataTable tbody td:first-child,
+        table.dataTable thead th:first-child {
+            text-align: left !important;
+            vertical-align: middle !important; 
+        }
     </style>
 
 </asp:Content>
@@ -166,6 +183,7 @@
                     </div>
                     <asp:HiddenField ID="hdnToggleStatus" runat="server" />
                     <asp:HiddenField ID="hdnHasInactive" runat="server" />
+
                     <asp:Button ID="btnTogglePostBack" runat="server" Style="display:none" OnClick="btnTogglePostBack_Click" />
                     <div class="table-responsive">
                         <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-scroll"
@@ -213,17 +231,29 @@
                                      <HeaderStyle ForeColor="White" BackColor="#488db4" />
                                  </asp:TemplateField>
 
-                                 <asp:TemplateField HeaderText="Level" SortExpression="level" HeaderStyle-VerticalAlign="Middle" >
-                                     <ItemTemplate>
-                                         <asp:Label ID="lblPosition" runat="server" Text='<%# Eval("positionName") %>'></asp:Label>
-                                     </ItemTemplate>
-                                     <EditItemTemplate>
-                                         <asp:DropDownList ID="PositionDb" runat="server" CssClass="form-control form-control-sm dropdown-icon" DataTextField="name" DataValueField="id" >
-                                         </asp:DropDownList>
-                                     </EditItemTemplate>
-                                     <HeaderStyle ForeColor="White" BackColor="#488db4" />
-                                     <ItemStyle HorizontalAlign="Justify" />
-                                 </asp:TemplateField>
+                                 <asp:TemplateField HeaderText="Level" SortExpression="level" HeaderStyle-VerticalAlign="Middle">
+                                    <ItemTemplate>
+                                        <asp:Label ID="lblPosition" runat="server" Text='<%# Eval("positionName") %>'></asp:Label>
+                                    </ItemTemplate>
+
+                                    <EditItemTemplate>
+                                        <%
+                                            var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
+                                            string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList") ? formPermissions["TrainingList"] : null;
+                                        %>
+
+                                        <% if (perm == "admin") { %>
+                                            <asp:DropDownList ID="PositionDb" runat="server" CssClass="form-control form-control-sm dropdown-icon"
+                                                DataTextField="name" DataValueField="id">
+                                            </asp:DropDownList>
+                                        <% } else { %>
+                                            <asp:Label ID="lblPositionEdit" runat="server" Text='<%# Eval("positionName") %>'></asp:Label>
+                                        <% } %>
+                                    </EditItemTemplate>
+                                    <HeaderStyle ForeColor="White" BackColor="#488db4" />
+                                    <ItemStyle HorizontalAlign="Justify" />
+                                </asp:TemplateField>
+
 
                                  <asp:TemplateField HeaderText="Status" SortExpression="IsActive">
                                     <ItemTemplate>
@@ -245,7 +275,7 @@
                                <asp:TemplateField HeaderText="Topics" SortExpression="topics" HeaderStyle-VerticalAlign="Middle" >
                                    <ItemTemplate>
                                      <button type="button" class="btn btn-sm btn-outline-info fw-bold"
-                                         onclick="openTraineeDetails(<%# Eval("id") %>)">
+                                         onclick="highlightRow(this); openTraineeDetails(<%# Eval("id") %>)">
                                        Details
                                      </button>
                                    </ItemTemplate>
@@ -374,7 +404,7 @@
 
 
 <!-- View / Edit Topics Modal -->
-<div class="modal fade" id="topicsModal" tabindex="-1" aria-labelledby="topicsModalLabel" aria-hidden="true">
+<div class="modal fade h-75 mt-5" id="topicsModal" tabindex="-1" aria-labelledby="topicsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
         <div class="modal-content rounded-3 shadow-lg h-100">
 
@@ -392,7 +422,16 @@
                 <asp:UpdatePanel ID="upTopics" runat="server" UpdateMode="Conditional">
                     <ContentTemplate>
 
-                        <!-- Hidden trigger for async load -->
+                        <div class="mb-3 mt-2 col-6 d-flex align-items-center">
+                            <label for="ddlFilterLevle" class="form-label fw-semibold me-3 mb-0" style="color:#4486ab">
+                                Employee level:
+                            </label>
+                            <asp:DropDownList ID="ddlFilterLevle" runat="server" CssClass="form-select form-select-sm shadow-sm border border-1 border-dark w-auto" 
+                                AutoPostBack="true" OnSelectedIndexChanged="ddlFilterLevle_SelectedIndexChanged">
+                            </asp:DropDownList>
+                        </div>
+
+                        <!-- Hidden -->
                         <asp:Button ID="btnLoadTopics" runat="server" OnClick="btnLoadTopics_Click" Style="display:none;" />
                         <asp:HiddenField ID="hiddenTraineeId" runat="server" />
 
@@ -407,7 +446,7 @@
                             UseAccessibleHeader="true">
 
                             <Columns>
-                                <asp:BoundField DataField="topicName" HeaderText="Topic Name" />
+                                <asp:BoundField DataField="topicName" HeaderText="Topic Name" ItemStyle-CssClass="text-left align-left" />
                                 <asp:BoundField DataField="status" HeaderText="Status" />
 
                                 <asp:TemplateField HeaderText="Exam">
@@ -415,7 +454,7 @@
                                          <asp:DropDownList ID="ddlExam" runat="server" CssClass="form-select form-select-sm"
                                              AutoPostBack="true"
                                              OnSelectedIndexChanged="ddlExam_SelectedIndexChanged"
-                                             SelectedValue='<%# Eval("exam") %>'>
+                                             SelectedValue='<%# Eval("exam") %>' Enabled="true">
                                              <asp:ListItem Text="Not Taken" Value="Not Taken"></asp:ListItem>
                                              <asp:ListItem Text="Passed" Value="Passed"></asp:ListItem>
                                              <asp:ListItem Text="Failed" Value="Failed"></asp:ListItem>
@@ -426,18 +465,19 @@
 
                         </asp:GridView>
 
+                        <!-- Modal Footer inside UpdatePanel -->
+                        <div class="modal-footer d-flex justify-content-between">
+                            <asp:Button ID="btnUpgrade" runat="server" CssClass="btn btn-primary" 
+                                        Text="Upgrade" OnClick="btnUpgrade_Click" Enabled="false" />
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+
                     </ContentTemplate>
                 </asp:UpdatePanel>
-
+                
             </div>
-
-            <!-- Modal Footer -->
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
-
         </div>
     </div>
-</div>
 
 </asp:Content>
