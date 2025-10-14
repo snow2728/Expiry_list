@@ -2289,6 +2289,7 @@
     <Content Include="select2\select2.css" />
     <Content Include="select2\select2.min.css" />
     <Content Include="select2\select2.min.js" />
+    <Content Include="StoreDailyStatement\dailyRegistration.aspx" />
     <Content Include="sweetAlert\moment.min.js" />
     <Content Include="sweetAlert\sweet-alert.min.js" />
     <Content Include="sweetAlert\sweetalert.min.js" />
@@ -2468,6 +2469,13 @@
     </Compile>
     <Compile Include="AdminDashboard.aspx.designer.cs">
       <DependentUpon>AdminDashboard.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="StoreDailyStatement\dailyRegistration.aspx.cs">
+      <DependentUpon>dailyRegistration.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="StoreDailyStatement\dailyRegistration.aspx.designer.cs">
+      <DependentUpon>dailyRegistration.aspx</DependentUpon>
     </Compile>
     <Compile Include="Training\DataBind.cs" />
     <Compile Include="Training\rege1.aspx.cs">
