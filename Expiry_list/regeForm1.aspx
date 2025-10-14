@@ -582,8 +582,17 @@
                                        <asp:RadioButton ID="rdoTrainingList_Approver" runat="server" GroupName="TrainingList" Text="Approver" CssClass="form-check-input me-1" />
                                      </div>
                                    </div>
-
+                                   <div class="form-check" style="text-align: left !important; display: block !important;">
+                                      <asp:CheckBox ID="chkDailyStatement_Enable" runat="server" CssClass="form-check-input perm-toggle" style="float: left !important; margin-right: 8px !important;" />
+                                      <label class="form-check-label" for="chkDailyState_Enable" style="display: block !important; text-align: left !important; margin-left: 20px !important;">Daily Statement</label>
                                     </div>
+                                    <div runat="server" id="permDailyStatement" class="permission-options ms-4 mb-2 d-inline">
+                                      <asp:RadioButton ID="rdoDailyStatement_View" runat="server" GroupName="DailyStatement" Text="View" CssClass="form-check-input me-1" /> 
+                                      <asp:RadioButton ID="rdoDailyStatement_Edit" runat="server" GroupName="DailyStatement" Text="Edit" CssClass="form-check-input me-1" />
+                                      <asp:RadioButton ID="rdoDailyStatement_Admin" runat="server" GroupName="DailyStatement" Text="Admin" CssClass="form-check-input me-1" />
+                                      <asp:RadioButton ID="rdoDailyStatement_Super" runat="server" GroupName="DailyStatement" Text="Super" CssClass="form-check-input me-1" /> 
+                                    </div>
+                                   </div>
                                   </EditItemTemplate>
                                     <HeaderStyle ForeColor="White" BackColor="Gray" />
                                     <ItemStyle HorizontalAlign="Left" VerticalAlign="Top" />

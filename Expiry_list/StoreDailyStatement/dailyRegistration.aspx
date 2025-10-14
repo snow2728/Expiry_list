@@ -33,10 +33,10 @@
 
         function allowOnlyNumbers(evt) {
             const allowedKeys = [
-                    "Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"
-                    ];
+                "Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"
+            ];
 
-                    if (allowedKeys.includes(evt.key)) {
+            if (allowedKeys.includes(evt.key)) {
                 return; // allow control keys
             }
 
@@ -45,51 +45,114 @@
                 evt.preventDefault();
             }
         }
+        // Prevent typing "-" except in specific inputs
+        document.addEventListener("keydown", function (e) {
+            const extraAmtElem = document.getElementById('<%= extraAmt.ClientID %>');
+            const deliPayElem = document.getElementById('<%= deliPayAmt.ClientID %>');
+            const deliCodElem = document.getElementById('<%= deliCodAmt.ClientID %>');
+            const target = e.target;
+
+            // If pressed key is "-", check if it's allowed
+            if (e.key === "-") {
+                if (target !== extraAmtElem && target !== deliPayElem && target !== deliCodElem) {
+                    e.preventDefault(); // block typing "-"
+                }
+            }
+        });
 
         function sanitizeInput(input) {
+            const extraAmtElem = document.getElementById('<%= extraAmt.ClientID %>');
+            const deliPayElem = document.getElementById('<%= deliPayAmt.ClientID %>');
+            const deliCodElem = document.getElementById('<%= deliCodAmt.ClientID %>');
             let value = input.value;
 
-            // Only one minus at the start
-            value = value.replace(/(?!^)-/g, "");
+            if (input === extraAmtElem || input === deliPayElem || input === deliCodElem) {
+                // Only one minus at the start
+                value = value.replace(/(?!^)-/g, "");
+            } else {
+                value = value.replace(/-/g, "");
+            }
 
             // Only one decimal point
             value = value.replace(/(\..*)\./g, "$1");
 
-            // Trim leading zeros (except before decimal)
-            value = value.replace(/^(-?)0+(?=\d)/, "$1");
+            // Trim leading zeros
+            if (input === extraAmtElem || input === deliPayElem || input === deliCodElem) {
+                value = value.replace(/^(-?)0+(?=\d)/, "$1");
+            } else {
+                value = value.replace(/^0+(?=\d)/, "$1");
+            }
 
             input.value = value;
         }
+
 
         document.addEventListener("DOMContentLoaded", () => {
             document.querySelectorAll(".amount").forEach(input => {
                 input.addEventListener("keydown", allowOnlyNumbers);
                 input.addEventListener("input", () => {
                     sanitizeInput(input);
-                    calculateTotal();
                 });
-                    
+
             });
         });
+
+        document.addEventListener("blur", function (e) {
+            if (e.target.classList.contains("minusAmt")) {
+                let value = e.target.value.replace(/[()]/g, "").trim();
+                if (value) {
+                    e.target.value = "(" + value + ")";
+                }
+                calculateTotal();
+            }
+            if (e.target.classList.contains("amount")) {
+                calculateTotal();
+            }
+        }, true);
+
+        function getNumericValue(inputElem) {
+            let value = inputElem.value.trim();
+
+            // Convert "(100)" → "-100"
+            if (/^\(.*\)$/.test(value)) {
+                value = "-" + value.replace(/[()]/g, "");
+            }
+
+            // Remove commas
+            value = value.replace(/,/g, "");
+
+            const num = parseFloat(value);
+            return isNaN(num) ? 0 : num;
+        }
+
 
         function calculateTotal() {
             let total = 0;
             const submitElem = document.getElementById('<%= submitAmt.ClientID %>');
             const netElem = document.getElementById('<%= netAmt.ClientID %>');
+            const advPayShweElem = document.getElementById('<%= advPayShweAmt.ClientID %>');
+            const advPayABankElem = document.getElementById('<%= advPayABankAmt.ClientID %>');
+            const advPayKbzElem = document.getElementById('<%= advPayKbzAmt.ClientID %>');
+            const advPayUabElem = document.getElementById('<%= advPayUabAmt.ClientID %>');
+            const deliPayElem = document.getElementById('<%= deliPayAmt.ClientID %>');
+            const deliCodElem = document.getElementById('<%= deliCodAmt.ClientID %>');
             document.querySelectorAll(".amount").forEach(input => {
-                const cleaned = input.value.replace(/,/g, "");  // strip commas
-                const val = parseFloat(cleaned);
-                if (!isNaN(val) && input !== submitElem && input !== netElem) {
+                const val = getNumericValue(input); 
+                console.log("val ", val);
+                //const cleaned = input.value.replace(/,/g, "");  // strip commas
+                //const val = parseFloat(cleaned);
+                if (!isNaN(val) && input !== submitElem && input !== netElem && input !== advPayShweElem && input !== advPayABankElem
+                    && input !== advPayKbzElem && input !== advPayUabElem && input !== deliPayElem && input !== deliCodElem) {
                     total += val;
                 }
             });
-            //document.getElementById('<%= netAmt.ClientID %>').value = total.toFixed(2);
             document.getElementById('<%= netAmt.ClientID %>').value = total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('<%= submitAmt.ClientID %>').value = total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         document.addEventListener("input", function (e) {
             if (e.target.classList.contains("amount")) {
-                let value = e.target.value.replace(/,/g, ""); // remove old commas
+                let value = e.target.value.replace(/,/g, "");
                 if (!isNaN(value) && value.length > 0) {
                     e.target.value = Number(value).toLocaleString();
                 }
@@ -130,7 +193,6 @@
                         </asp:ScriptManager>
                         <asp:UpdatePanel class="col-12 d-block" runat="server" ID="UpdatePanel2" UpdateMode="Conditional">
                             <ContentTemplate>
-                                <!-- No Field -->
                                 <div class="row mb-3">
                                     <div class="row col-6 align-items-center">
                                         <label for="<%= no.ClientID %>"class="col-3 col-form-label ps-0 px-0 text-end fw-bold">Store No.</label>
@@ -155,7 +217,7 @@
                                     <div class="row col-6 align-items-center">
                                         <label for="<%= submitAmt.ClientID %>" class="col-3 col-form-label ps-0 px-0 text-end fw-bold">အပ်ငွေ</label>
                                         <div class="col-sm-9"> 
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="submitAmt" />
+                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="submitAmt" ReadOnly="true"/>
                                         </div>
                                     </div>
                                 </div>
@@ -179,57 +241,57 @@
                                     <div id="div_advpay1" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= advPayShweAmt.ClientID %>" class="col-sm-6 col-form-label">ယခင်နေ့လက်ကျန်ငွေ - ဦးရွှေမြင့်</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="advPayShweAmt" />
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="advPayShweAmt" />
                                         </div>
                                     </div>
                                     <div id="div_advpay2" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= advPayABankAmt.ClientID %>" class="col-sm-6 col-form-label">ယခင်နေ့လက်ကျန်ငွေ - A Bank</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="advPayABankAmt" />
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="advPayABankAmt" />
                                         </div>
                                     </div>
                                     <div id="div_advpay3" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= advPayKbzAmt.ClientID %>" class="col-sm-6 col-form-label">ယခင်နေ့လက်ကျန်ငွေ - KBZ</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="advPayKbzAmt" />
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="advPayKbzAmt" />
                                         </div>
                                     </div>
                                     <div id="div_advpay4" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= advPayUabAmt.ClientID %>" class="col-sm-6 col-form-label">ယခင်နေ့လက်ကျန်ငွေ - UAB</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="advPayUabAmt" />
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="advPayUabAmt" />
                                         </div>
                                     </div>
                                 
                                     <div id="div_dailysales1" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= dailySalesShweAmt.ClientID %>" class="col-sm-6 col-form-label">Daily Sales အပ်ငွေ - ဦးရွှေမြင့်</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="dailySalesShweAmt"/>
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="dailySalesShweAmt"/>
                                         </div>
                                     </div>
                                     <div id="div_dailysales2" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= dailySalesABankAmt.ClientID %>" class="col-sm-6 col-form-label">Daily Sales အပ်ငွေ - A Bank</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="dailySalesABankAmt"/>
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="dailySalesABankAmt"/>
                                         </div>
                                     </div>
                                     <div id="div_dailysales3" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= dailySalesKbzAmt.ClientID %>" class="col-sm-6 col-form-label">Daily Sales အပ်ငွေ - KBZ</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="dailySalesKbzAmt"/>
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="dailySalesKbzAmt"/>
                                         </div>
                                     </div>
                                     <div id="div_dailysales4" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= dailySalesUabAmt.ClientID %>" class="col-sm-6 col-form-label">Daily Sales အပ်ငွေ - UAB</label>
                                         <div class="col-sm-6" runat="server">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="dailySalesUabAmt"/>
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="dailySalesUabAmt"/>
                                         </div>
                                     </div>
 
                                     <div class="row g-2 mb-3">
                                         <label for="<%= pettyCash.ClientID %>" class="col-sm-6 col-form-label">Petty Cash</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="pettyCash"/>
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="pettyCash"/>
                                         </div>
                                     </div>
 
@@ -243,55 +305,49 @@
                                     <div id="div_mmqr1" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= mmqr1Amt.ClientID %>" class="col-sm-6 col-form-label">Pay Total MMQR</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="mmqr1Amt"/>
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="mmqr1Amt"/>
                                         </div>
                                     </div>
                                     <div id="div_mmqr2" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= mmqr2Amt.ClientID %>" class="col-sm-6 col-form-label">Pay Total MMQR</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="mmqr2Amt"/>
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="mmqr2Amt"/>
                                         </div>
                                     </div>
                                     <div id="div_mmqr3" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= mmqr3Amt.ClientID %>" class="col-sm-6 col-form-label">Pay Total MMQR</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="mmqr3Amt"/>
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="mmqr3Amt"/>
                                         </div>
                                     </div>
                                     <div id="div1" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= mmqr4Amt.ClientID %>" class="col-sm-6 col-form-label">Pay Total MMQR4</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="mmqr4Amt"/>
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="mmqr4Amt"/>
                                         </div>
                                     </div>
-                                   <%-- <div class="row g-2 mb-3">
-                                        <label for="<%= mmqr4Amt.ClientID %>" class="col-sm-4 col-form-label">Pay Total MMQR 4</label>
-                                        <div class="col-sm-8">
-                                            <asp:TextBox runat="server" CssClass="form-control form-control-sm" ID="mmqr4Amt"/>
-                                        </div>
-                                    </div>--%>
-                                    <div class="row g-2 mb-3">
+                                   <div class="row g-2 mb-3">
                                         <label for="<%= payTotalAmt.ClientID %>" class="col-sm-6 col-form-label">Pay Total Kpay</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="payTotalAmt"/>
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="payTotalAmt"/>
                                         </div>
                                     </div>
                                     <div id="div_cardpay1" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= cardABankAmt.ClientID %>" class="col-sm-6 col-form-label">Card Payment(A Bank)</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="cardABankAmt"/>
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="cardABankAmt"/>
                                         </div>
                                     </div>
                                     <div id="div_cardpay2" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= cardAyaAmt.ClientID %>" class="col-sm-6 col-form-label">Card Payment(AYA)</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="cardAyaAmt"/>
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="cardAyaAmt"/>
                                         </div>
                                     </div>
                                     <div id="div_cardpay3" class="row g-2 mb-3 hidden" runat="server">
                                         <label for="<%= cardUabAmt.ClientID %>" class="col-sm-6 col-form-label">Card Payment(UAB)</label>
                                         <div class="col-sm-6">
-                                            <asp:TextBox runat="server" CssClass="form-control amount" ID="cardUabAmt"/>
+                                            <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="cardUabAmt"/>
                                         </div>
                                     </div>
                                     <div class="row g-2 mb-3">

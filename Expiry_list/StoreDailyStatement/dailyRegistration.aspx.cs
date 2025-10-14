@@ -72,7 +72,6 @@ namespace Expiry_list.StoreDailyStatement
                 cmd.Parameters.AddWithValue("@pattern", storeName + "-%");
                 object result = cmd.ExecuteScalar();
                 return result == DBNull.Value ? 0 : Convert.ToInt32(result);
-
             }
         }
 
@@ -161,7 +160,6 @@ namespace Expiry_list.StoreDailyStatement
                     }
                 }
             }
-
             return storeNames;
         }
 
@@ -198,7 +196,6 @@ namespace Expiry_list.StoreDailyStatement
             public decimal deliCodAmt { get; set; }
             public decimal netAmt { get; set; }
         }
-
         private void showPayments(List<PayType> paytype)
         {
             var collectors = paytype.Where(x => x.Type == "Collector");
@@ -231,47 +228,56 @@ namespace Expiry_list.StoreDailyStatement
 
         }
 
+        private decimal ParseAmount(TextBox textBox)
+        {
+            string raw = textBox.Text.Trim();
+            if (raw.StartsWith("(") && raw.EndsWith(")"))
+                raw = "-" + raw.Trim('(', ')');
+
+            return string.IsNullOrWhiteSpace(raw) ? 0 : Convert.ToDecimal(raw);
+        }
+
         protected void btnSave_Click(object sender, EventArgs e)
         {
             var payment = new PaymentModel();
 
-            payment.totalSalesAmt = string.IsNullOrWhiteSpace(totalSalesAmt.Text) ? 0 : Convert.ToDecimal(totalSalesAmt.Text);
-            payment.submitAmt = string.IsNullOrWhiteSpace(submitAmt.Text) ? 0 : Convert.ToDecimal(submitAmt.Text);
-            payment.advPayShweAmt = string.IsNullOrWhiteSpace(advPayShweAmt.Text) ? 0 : Convert.ToDecimal(advPayShweAmt.Text);
-            payment.advPayABankAmt = string.IsNullOrWhiteSpace(advPayABankAmt.Text) ? 0 : Convert.ToDecimal(advPayABankAmt.Text);
-            payment.advPayKbzAmt = string.IsNullOrWhiteSpace(advPayKbzAmt.Text) ? 0 : Convert.ToDecimal(advPayKbzAmt.Text);
-            payment.advPayUabAmt = string.IsNullOrWhiteSpace(advPayUabAmt.Text) ? 0 : Convert.ToDecimal(advPayUabAmt.Text);
-            payment.dailySalesShweAmt = string.IsNullOrWhiteSpace(dailySalesShweAmt.Text) ? 0 : Convert.ToDecimal(dailySalesShweAmt.Text);
-            payment.dailySalesABankAmt = string.IsNullOrWhiteSpace(dailySalesABankAmt.Text) ? 0 : Convert.ToDecimal(dailySalesABankAmt.Text);
-            payment.dailySalesKbzAmt = string.IsNullOrWhiteSpace(dailySalesKbzAmt.Text) ? 0 : Convert.ToDecimal(dailySalesKbzAmt.Text);
-            payment.dailySalesUabAmt = string.IsNullOrWhiteSpace(dailySalesUabAmt.Text) ? 0 : Convert.ToDecimal(dailySalesUabAmt.Text);
-            payment.pettyCash = string.IsNullOrWhiteSpace(pettyCash.Text) ? 0 : Convert.ToDecimal(pettyCash.Text);
-            payment.extraAmt = string.IsNullOrWhiteSpace(extraAmt.Text) ? 0 : Convert.ToDecimal(extraAmt.Text);
-            payment.mmqr1Amt = string.IsNullOrWhiteSpace(mmqr1Amt.Text) ? 0 : Convert.ToDecimal(mmqr1Amt.Text);
-            payment.mmqr2Amt = string.IsNullOrWhiteSpace(mmqr2Amt.Text) ? 0 : Convert.ToDecimal(mmqr2Amt.Text);
-            payment.mmqr3Amt = string.IsNullOrWhiteSpace(mmqr3Amt.Text) ? 0 : Convert.ToDecimal(mmqr3Amt.Text);
-            payment.mmqr4Amt = string.IsNullOrWhiteSpace(mmqr4Amt.Text) ? 0 : Convert.ToDecimal(mmqr4Amt.Text);
-            payment.payTotalAmt = string.IsNullOrWhiteSpace(payTotalAmt.Text) ? 0 : Convert.ToDecimal(payTotalAmt.Text);
-            payment.cardABankAmt = string.IsNullOrWhiteSpace(cardABankAmt.Text) ? 0 : Convert.ToDecimal(cardABankAmt.Text);
-            payment.cardAyaAmt = string.IsNullOrWhiteSpace(cardAyaAmt.Text) ? 0 : Convert.ToDecimal(cardAyaAmt.Text);
-            payment.cardUabAmt = string.IsNullOrWhiteSpace(cardUabAmt.Text) ? 0 : Convert.ToDecimal(cardUabAmt.Text);
-            payment.deliPayAmt = string.IsNullOrWhiteSpace(deliPayAmt.Text) ? 0 : Convert.ToDecimal(deliPayAmt.Text);
-            payment.deliCodAmt = string.IsNullOrWhiteSpace(deliCodAmt.Text) ? 0 : Convert.ToDecimal(deliCodAmt.Text);
+            payment.totalSalesAmt = string.IsNullOrWhiteSpace(totalSalesAmt.Text) ? 0 : ParseAmount(totalSalesAmt);
+            //payment.submitAmt = string.IsNullOrWhiteSpace(submitAmt.Text) ? 0 : Convert.ToDecimal(submitAmt.Text);            
+            payment.advPayShweAmt = string.IsNullOrWhiteSpace(advPayShweAmt.Text) ? 0 : ParseAmount(advPayShweAmt);
+            payment.advPayABankAmt = string.IsNullOrWhiteSpace(advPayABankAmt.Text) ? 0 : ParseAmount(advPayABankAmt);
+            payment.advPayKbzAmt = string.IsNullOrWhiteSpace(advPayKbzAmt.Text) ? 0 : ParseAmount(advPayKbzAmt);
+            payment.advPayUabAmt = string.IsNullOrWhiteSpace(advPayUabAmt.Text) ? 0 : ParseAmount(advPayUabAmt);
+            payment.dailySalesShweAmt = string.IsNullOrWhiteSpace(dailySalesShweAmt.Text) ? 0 : ParseAmount(dailySalesShweAmt);
+            payment.dailySalesABankAmt = string.IsNullOrWhiteSpace(dailySalesABankAmt.Text) ? 0 : ParseAmount(dailySalesABankAmt);
+            payment.dailySalesKbzAmt = string.IsNullOrWhiteSpace(dailySalesKbzAmt.Text) ? 0 : ParseAmount(dailySalesKbzAmt);
+            payment.dailySalesUabAmt = string.IsNullOrWhiteSpace(dailySalesUabAmt.Text) ? 0 : ParseAmount(dailySalesUabAmt);
+            payment.pettyCash = string.IsNullOrWhiteSpace(pettyCash.Text) ? 0 : ParseAmount(pettyCash);
+            payment.extraAmt = string.IsNullOrWhiteSpace(extraAmt.Text) ? 0 : ParseAmount(extraAmt);
+            payment.mmqr1Amt = string.IsNullOrWhiteSpace(mmqr1Amt.Text) ? 0 : ParseAmount(mmqr1Amt);
+            payment.mmqr2Amt = string.IsNullOrWhiteSpace(mmqr2Amt.Text) ? 0 : ParseAmount(mmqr2Amt);
+            payment.mmqr3Amt = string.IsNullOrWhiteSpace(mmqr3Amt.Text) ? 0 : ParseAmount(mmqr3Amt);
+            payment.mmqr4Amt = string.IsNullOrWhiteSpace(mmqr4Amt.Text) ? 0 : ParseAmount(mmqr4Amt);
+            payment.payTotalAmt = string.IsNullOrWhiteSpace(payTotalAmt.Text) ? 0 : ParseAmount(payTotalAmt);
+            payment.cardABankAmt = string.IsNullOrWhiteSpace(cardABankAmt.Text) ? 0 : ParseAmount(cardABankAmt);
+            payment.cardAyaAmt = string.IsNullOrWhiteSpace(cardAyaAmt.Text) ? 0 : ParseAmount(cardAyaAmt);
+            payment.cardUabAmt = string.IsNullOrWhiteSpace(cardUabAmt.Text) ? 0 : ParseAmount(cardUabAmt);
+            payment.deliPayAmt = string.IsNullOrWhiteSpace(deliPayAmt.Text) ? 0 : ParseAmount(deliPayAmt);
+            payment.deliCodAmt = string.IsNullOrWhiteSpace(deliCodAmt.Text) ? 0 : ParseAmount(deliCodAmt);
+            payment.submitAmt = typeof(PaymentModel)
+                            .GetProperties()
+                            .Where(p => p.PropertyType == typeof(decimal) && p.Name != nameof(PaymentModel.submitAmt) && p.Name != nameof(PaymentModel.netAmt) && p.Name != nameof(PaymentModel.advPayShweAmt)
+                                        && p.Name != nameof(PaymentModel.advPayABankAmt) && p.Name != nameof(PaymentModel.advPayKbzAmt) && p.Name != nameof(PaymentModel.advPayUabAmt)
+                                        && p.Name != nameof(PaymentModel.deliPayAmt) && p.Name != nameof(PaymentModel.deliCodAmt))
+                            .Sum(p => (decimal)p.GetValue(payment));
             payment.netAmt = typeof(PaymentModel)
                             .GetProperties()
-                            .Where(p => p.PropertyType == typeof(decimal) && p.Name != nameof(PaymentModel.submitAmt) && p.Name != nameof(PaymentModel.netAmt))
+                            .Where(p => p.PropertyType == typeof(decimal) && p.Name != nameof(PaymentModel.submitAmt) && p.Name != nameof(PaymentModel.netAmt) && p.Name != nameof(PaymentModel.advPayShweAmt)
+                                        && p.Name != nameof(PaymentModel.advPayABankAmt) && p.Name != nameof(PaymentModel.advPayKbzAmt) && p.Name != nameof(PaymentModel.advPayUabAmt)
+                                        && p.Name != nameof(PaymentModel.deliPayAmt) && p.Name != nameof(PaymentModel.deliCodAmt))
                             .Sum(p => (decimal)p.GetValue(payment));
 
             try
             {
-
-                if (payment.netAmt != payment.submitAmt)
-                {
-                    ShowMessage("အပ်ငွေနှင့် Net Amount သည်မတူပါ။ ကျေးဇူးပြု၍ ပြန်စစ်ဆေးပါ။", "error");
-                    netAmt.Text = payment.netAmt.ToString();
-                    return;
-                }
-
                 var sdsId = GetNextItemNo();
 
                 using (SqlConnection con = new SqlConnection(strcon))

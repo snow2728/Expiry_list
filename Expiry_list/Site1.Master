@@ -330,7 +330,39 @@
                                          <% } %>
                                         <%
                                     } // end TrainingList
-                               }
+                                     //Daily Statement
+                                     else if (activeModule == "DailyStatement" && permissions.ContainsKey("DailyStatement"))
+                                     {
+                                         string perm = permissions["DailyStatement"];
+                                         if (perm == "admin")
+                                         {
+                                     %>
+                                             <a href="dailyRegistration.aspx" class="nav-link <%= (currentPage == "dailyRegistration.aspx" ? "active4" : "") %>">
+                                                 <i class="fa-solid fa-file-invoice"></i>Daily Statement Registration
+                                             </a>
+                                             <a href="dailyStatementList.aspx" class="nav-link <%= (currentPage == "dailyStatementList.aspx" ? "active4" : "") %>">
+                                                 <i class="fa-solid fa-file-invoice-dollar"></i>Daily Statement List
+                                             </a>
+                                     <%
+                                         }
+                                         else if (perm == "edit")
+                                         {
+                                     %>
+                                             <a href="dailyRegistration.aspx" class="nav-link <%= (currentPage == "dailyRegistration.aspx" ? "active4" : "") %>">
+                                                 <i class="fa-solid fa-file-invoice"></i>Daily Statement Registration
+                                             </a>                                       
+                                     <%
+                                         }
+                                         else if (perm == "view")
+                                         {
+                                     %>
+                                             <a href="dailyStatementList.aspx" class="nav-link <%= (currentPage == "dailyStatementList.aspx" ? "active4" : "") %>">
+                                                 <i class="fa-solid fa-file-invoice-dollar"></i>Daily Statement List
+                                             </a>                                      
+                                     <%
+                                         }
+                                     }// end Daily Statement
+                                    }
                             %>
                        </asp:Panel>
                        <% } %>
@@ -409,7 +441,8 @@
             ];
 
             const storeStatePages = [
-                "/storedailystatement/dailyregistration.aspx"
+                "/storedailystatement/dailyregistration.aspx",
+                "/storedailystatement/dailystatementlist.aspx"
             ];
 
 
@@ -427,49 +460,9 @@
                 if (nav) nav.style.backgroundColor = "#4682B4";
                 if (profile) profile.style.backgroundColor = "#4682B4";
             }
-
-            //var currentPage = window.location.href;
-            //if (currentPage.endsWith("AdminDashboard.aspx")) {
-            //    var navbarbtn = document.getElementsByClassName("navbar-toggle");
-            //    console.log('length ', navbarbtn.length);
-            //    if (navbarbtn.length > 0) {
-            //        navbarbtn[0].style.display = "none";
-            //    }
-            //console.log("display ", div_content_container.style.display);                
-            //}
-
-            //var currentPage = window.location.href;
-            //if (currentPage.endsWith("loginPage.aspx")) {
-            //    var div_content_container = document.getElementById("div_content_container");
-            //    div_content_container.style.marginTop = 0;
-            //    div_content_container.style.marginBottom = 0;
-            //    div_content_container.classList.remove('pt-5');
-            //}
+           
         });
     </script>
 
-    <%-- ှ့Showing Errors when Jquery is not work properly 
-       <script type="text/javascript">    A4133C
-        window.addEventListener("pageshow", function (event) {
-            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-                location.reload();
-            }
-
-            setTimeout(function () {
-                if (typeof jQuery === 'undefined' || typeof jQuery.fn.select2 === 'undefined') {
-                    // Show Bootstrap alert
-                    var errorBox = document.getElementById("scriptError");
-                    if (errorBox) {
-                        errorBox.classList.remove("d-none");
-                    }
-
-                    setTimeout(function () {
-                        const basePath = '<%= ResolveUrl("~/") %>';
-                        window.location.href = basePath + 'loginPage.aspx';
-                    }, 3000);
-                }
-            }, 500);
-        });
-    </script>--%>
 </body>
 </html>

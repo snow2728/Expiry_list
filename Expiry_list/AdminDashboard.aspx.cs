@@ -355,7 +355,6 @@ namespace Expiry_list
                     "swal('Access Denied!', 'You do not have permission to access any valid page.', 'error');", true);
             }
         }
-
         protected void ds_Click1(object sender, EventArgs e)
         {
             if (!User.Identity.IsAuthenticated)
@@ -381,11 +380,7 @@ namespace Expiry_list
             }
             else if (allowedForms.ContainsKey("DailyStatement") && perm == "view")
             {
-                redirectUrl = "~/ReorderForm/viewer1.aspx";
-            }
-            else if (allowedForms.ContainsKey("DailyStatement") && (perm == "admin" || perm == "super"))
-            {
-                redirectUrl = "~/ReorderForm/approval.aspx";
+                redirectUrl = "~/StoreDailyStatement/dailyStatementList.aspx";
             }
             else
             {
