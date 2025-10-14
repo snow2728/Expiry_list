@@ -162,6 +162,25 @@
                      </div>
                 </div>
               </asp:Panel>
+            <!--Store Daily Statement Card -->
+            <asp:Panel ID="pnlStoreDailyStatement" runat="server" style="display:none;">
+                <div class="col">
+                    <div class="card h-100 border-0 shadow-sm rounded-4 transition">
+                        <div class="card-body text-center p-4">
+                            <div class="icon-wrapper rounded-circle shadow d-flex align-items-center justify-content-center mb-3 mx-auto"
+                                style="width: 80px; height: 80px; margin-top: -40px; background-color: #4682B4">
+                                <i class="bi bi-wallet-fill text-white" style="font-size:30px"></i>
+                            </div>
+                            <h4 class="card-title fw-semibold mb-3">Store Daily Statement</h4>
+                            <p class="card-text text-muted mb-4">Manage daily statements </p>
+                            <asp:Button runat="server"
+                                CssClass="btn text-white rounded-pill px-4" BackColor="#4682B4"
+                                OnClick="ds_Click1"
+                                Text="View More →" />
+                        </div>
+                    </div>
+                </div>
+            </asp:Panel>
         </div>
     </div>
 </asp:Content>

@@ -106,7 +106,8 @@ namespace Expiry_list
                     {"CarWay", GetPermissionLevel(row, "CarWay")},
                     {"ReorderQuantity", GetPermissionLevel(row, "ReorderQuantity")},
                     {"ConsignmentList", GetPermissionLevel(row, "ConsignList") },
-                    {"TrainingList", GetPermissionLevel(row, "TrainingList") }
+                    {"TrainingList", GetPermissionLevel(row, "TrainingList") },
+                    {"DailyStatement", GetPermissionLevel(row, "DailyStatement") }
                 };
 
                 // 4. Update database within transaction
@@ -339,7 +340,9 @@ namespace Expiry_list
                 new{ FormId = 3, CtrlPrefix = "ReorderQuantity"    },
                 new{ FormId = 4, CtrlPrefix = "System"             },
                 new{ FormId = 6, CtrlPrefix = "CarWay"             },
-                new{ FormId = 7, CtrlPrefix = "ConsignList"        }
+                new{ FormId = 7, CtrlPrefix = "ConsignList"        },
+                new{ FormId = 8, CtrlPrefix = "TrainingList"        },
+                new{ FormId = 9, CtrlPrefix = "DailyStatement"        }
             };
 
             foreach (var m in meta)

@@ -401,6 +401,11 @@
                 "/training/schedulelist.aspx"
             ];
 
+            const storeStatePages = [
+                "/storedailystatement/dailyregistration.aspx"
+            ];
+
+
             if (reorderPages.includes(path)) {
                 if (nav) nav.style.backgroundColor = "#E04386";
                 if (profile) profile.style.backgroundColor = "#E04386";
@@ -411,6 +416,9 @@
                 if (nav) nav.style.backgroundColor = "#022F56";
                 if (profile) profile.style.backgroundColor = "#022F56";
                 if (profile2) profile.style.backgroundColor = "#022F56";
+            } else if (storeStatePages.includes(path)) {
+                if (nav) nav.style.backgroundColor = "#4682B4";
+                if (profile) profile.style.backgroundColor = "#4682B4";
             }
 
             //var currentPage = window.location.href;

@@ -469,7 +469,16 @@
                                   <asp:RadioButton ID="rdoTrainingList_Admin" runat="server" GroupName="TrainingList" Text="Admin" CssClass="form-check-input bg-transparent me-1" />
                                   <asp:RadioButton ID="rdoTrainingList_Super" runat="server" GroupName="TrainingList" Text="Super" CssClass="form-check-input bg-transparent me-1" /> 
                                 </div>
-
+                                <div class="form-check">
+                                  <asp:CheckBox ID="chkDailyStatement_Enable" runat="server" CssClass="form-check-input perm-toggle bg-transparent" />
+                                  <label class="form-check-label" for="chkDailyState_Enable">Daily Statement</label>
+                                </div>
+                                <div runat="server" id="permDailyStatement" class="permission-options ms-4 mb-2 d-inline">
+                                  <asp:RadioButton ID="rdoDailyStatement_View" runat="server" GroupName="DailyStatement" Text="View" CssClass="form-check-input bg-transparent me-1" /> 
+                                  <asp:RadioButton ID="rdoDailyStatement_Edit" runat="server" GroupName="DailyStatement" Text="Edit" CssClass="form-check-input bg-transparent me-1" />
+                                  <asp:RadioButton ID="rdoDailyStatement_Admin" runat="server" GroupName="DailyStatement" Text="Admin" CssClass="form-check-input bg-transparent me-1" />
+                                  <asp:RadioButton ID="rdoDailyStatement_Super" runat="server" GroupName="DailyStatement" Text="Super" CssClass="form-check-input bg-transparent me-1" /> 
+                                </div>
                                  </div>
                                </EditItemTemplate>
                                  <HeaderStyle ForeColor="White" BackColor="Gray" />
