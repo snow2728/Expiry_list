@@ -9,14 +9,14 @@
             }
             @media (max-width: 1870px) {
                 .div-btn-rp {
-                    width: 30%;
+                    width: 33%;
                 }
-                .div-btn-rp .btn-font {
+                .btn-font {
                     font-size: 14px;
                 }
             }
              @media (max-width: 1250px) {
-                 .div-btn-rp .btn-font {
+                 .btn-font {
                      font-size: 10px;
                  }
              }
@@ -251,52 +251,59 @@
                                 <asp:ScriptReference Name="MicrosoftAjaxWebForms.js" />
                             </Scripts>
                             </asp:ScriptManager>
-                            <asp:UpdatePanel class="col-2" runat="server" ID="UpdatePanel1" UpdateMode="Conditional">
-                                <ContentTemplate>
                                     <!-- No Field -->
-                                    <div class="row justify-content-center p-0">
-                                        <label for="<%= no.ClientID %>" class="col-sm-2 col-form-label ps-0 px-0 text-end fw-bold">No</label>
-                                        <div class="col-sm-6">
+                            <div class="row">
+                                <div class="col-2 justify-content-center">
+                                    <div class="row">
+                                        <label for="<%= no.ClientID %>" class="col-sm-5 col-form-label ps-0 px-0 text-end fw-bold">No</label>
+                                        <div class="col-4 col-sm-7">
                                             <asp:TextBox runat="server" CssClass="form-control text-center" ID="no" ReadOnly="true" />
                                         </div>
                                     </div>
-                                </ContentTemplate>
-                             </asp:UpdatePanel>
-
-                             <!-- Hidden Fields -->
-                             <asp:HiddenField ID="hiddenVendorNo" runat="server" />
-                             <asp:HiddenField ID="hiddenVendorText" runat="server" />
-                             <!-- Vendor No Field -->
-                             <div class="row col-6">
-                                <label for="<%= vendorNo.ClientID %>" class="col-sm-2 col-form-label px-0 text-end fw-bold">Vendor</label>
-                                <div class="col-sm-9">
-                                     <asp:DropDownList ID="vendorNo" runat="server" 
-                                        CssClass="form-control select2 ps-0 pe-0"
-                                        AppendDataBoundItems="true">
-                                        <asp:ListItem Text="" Value="" />
-                                    </asp:DropDownList>
-                                    <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server"
-                                        ErrorMessage="Vendor must be selected!"
-                                        ControlToValidate="vendorNo" Display="Dynamic"
-                                        CssClass="text-danger" SetFocusOnError="True" />
-                                </div>
-                            </div>
-                            <div class="row col-4 justify-content-center">
-                                <div class="text-center col-lg-3 col-md-4 col-sm-3 col-lg-3 px-0 div-btn-rp">
-                                    <asp:Button Text="Show Items" runat="server" CssClass="btn fw-bold text-white btn-font"
-                                        Style="background-color: #0D330E; border-radius: 10px;"
-                                        ID="getItemBtn" onClick="btnGetItems_Click"/>
                                 </div>
 
-                                <div class="text-center col-lg-3 col-md-4 col-sm-3 col-lg-3 px-0 me-lg-1 div-btn-rp">
-                                    <asp:Button Text="Export Excel" runat="server" CssClass="btn fw-bold text-white btn-font"
-                                        Style="background-color: #0D330E; border-radius: 10px;"
-                                        ID="Button1" onClick="btnExportExcel_Click"/>
+                                    <!-- Hidden Fields -->
+                                    <asp:HiddenField ID="hiddenVendorNo" runat="server" />
+                                    <asp:HiddenField ID="hiddenVendorText" runat="server" />
+                                <!-- Vendor No Field -->
+                                <div class="col-5 col-sm-5">
+                                    <div class="row">
+                                        <label for="<%= vendorNo.ClientID %>" class="col-sm-2 col-form-label px-0 text-end fw-bold">Vendor</label>
+                                        <div class="col-sm-9">
+                                                <asp:DropDownList ID="vendorNo" runat="server" 
+                                                CssClass="form-control select2 ps-0 pe-0"
+                                                AppendDataBoundItems="true">
+                                                <asp:ListItem Text="" Value="" />
+                                            </asp:DropDownList>
+                                            <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server"
+                                                ErrorMessage="Vendor must be selected!"
+                                                ControlToValidate="vendorNo" Display="Dynamic"
+                                                CssClass="text-danger" SetFocusOnError="True" />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="text-center col-lg-3 col-md-4 col-sm-3 col-lg-3 px-0 div-btn-rp">
-                                    <asp:Button Text="Clear Vendor" runat="server" CssClass="btn fw-bold text-white btn-font"
-                                        Style="background-color: #0D330E; border-radius: 10px;"
-                                        ID="Button2" onClick="btnClearVendor_Click"/>
+                                <div class="col-4 col-sm-4 align-item-center">
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="text-center me-1">  
+                                            <%--col-4 col-lg-4 col-md-4 col-sm-3  div-btn-rp--%>
+                                            <asp:Button Text="Show Items" runat="server" CssClass="btn fw-bold text-white btn-font"
+                                                Style="background-color: #0D330E; border-radius: 10px;"
+                                                ID="getItemBtn" onClick="btnGetItems_Click"/>
+                                        </div>
+
+                                        <div class="text-center me-lg-1">
+                                           <%-- col-4 col-lg-4 col-md-4 col-sm-3 --%>
+                                            <asp:Button Text="Export Excel" runat="server" CssClass="btn fw-bold text-white btn-font"
+                                                Style="background-color: #0D330E; border-radius: 10px;"
+                                                ID="Button1" onClick="btnExportExcel_Click"/>
+                                        </div>
+                                        <div class="text-center">
+                                             <%--col-4 col-lg-3 col-md-4 col-sm-3 --%>
+                                            <asp:Button Text="Clear Vendor" runat="server" CssClass="btn fw-bold text-white btn-font"
+                                                Style="background-color: #0D330E; border-radius: 10px;"
+                                                ID="Button2" onClick="btnClearVendor_Click"/>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -315,9 +322,6 @@
                     </div>
 
                     <div class="card-body p-2">
-                       <%-- <asp:Button Text="Confirm" runat="server" ID="btnConfirmAll"
-                            CssClass="btn btn-whitw m-1 fa-1x text-white fw-bold"
-                            CausesValidation="false" Style="background-color: #0D330E;" OnClick="btnConfirmAll_Click1" />--%>
 
                         <div class="col-md-12" id="gridCol">
                             <asp:UpdatePanel ID="UpdatePanel2" runat="server" UpdateMode="Conditional">
@@ -390,18 +394,9 @@
                                                     <asp:Label ID="lblNote" runat="server" Text='<%# Eval("Note") %>'></asp:Label>
                                                 </ItemTemplate>
                                                 <EditItemTemplate>
-                                                    <asp:TextBox ID="txtNote" runat="server" Text='<%# Bind("Note") %>' Width="157px"></asp:TextBox>
+                                                    <asp:TextBox ID="txtNote" runat="server" Text='<%# Bind("Note") %>' Width="99%"></asp:TextBox>
                                                 </EditItemTemplate>
                                             </asp:TemplateField>
-
-                                           <%-- <asp:TemplateField Visible="false">
-                                                <ItemTemplate>
-                                                    <asp:HiddenField ID="hfBarcodeNo" runat="server" Value='<%# Eval("BarcodeNo") %>' />
-                                                   </ItemTemplate>
-                                                <EditItemTemplate>
-                                                    <asp:HiddenField ID="hfBarcodeNo" runat="server" Value='<%# Bind("BarcodeNo") %>' />
-                                                   </EditItemTemplate>
-                                            </asp:TemplateField>--%>
 
                                             <asp:CommandField ShowEditButton="True"
                                                 CausesValidation="false" EditText="<i class='fa-solid fa-pen-to-square'></i>"
@@ -410,42 +405,6 @@
                                                 ControlStyle-CssClass="btn m-1 text-white" ControlStyle-BackColor="#477023" HeaderStyle-BackColor="#6A7D4F" HeaderStyle-CssClass="position-sticky top-0 z-3">
                                             <ItemStyle HorizontalAlign="Center" CssClass="text-center" />
                                             </asp:CommandField>
-                                           <%-- <asp:TemplateField HeaderText="Actions" >
-                                                <ItemTemplate>
-                                                    <asp:LinkButton ID="btnEdit" runat="server" CommandName="Edit" CausesValidation="False"
-                                                        CssClass="btn btn-sm text-white ms-2 me-2" BackColor="#0a61ae" ToolTip="Edit">
-                                                        <i class="fas fa-pencil-alt"></i>
-                                                    </asp:LinkButton>
-                                                    <asp:LinkButton ID="btnDelete" runat="server" CommandName="Delete" CausesValidation="False"
-                                                        CssClass="btn btn-sm me-2 text-white" BackColor="#453b3b" ToolTip="Delete" >
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </asp:LinkButton>
-                                                </ItemTemplate>
-                                                <EditItemTemplate>
-                                                    <asp:LinkButton ID="btnUpdate" runat="server" CommandName="Update" CausesValidation="False"
-                                                        CssClass="btn btn-sm text-white" BackColor="#9ad9fe" ToolTip="Update">
-                                                        <i class="fas fa-save"></i>
-                                                    </asp:LinkButton>
-                                                    <asp:LinkButton ID="btnCancel" runat="server" CommandName="Cancel" CausesValidation="False"
-                                                        CssClass="btn btn-sm ms-2 text-white btn-secondary" ToolTip="Cancel">
-                                                        <i class="fas fa-times"></i>
-                                                    </asp:LinkButton>
-                                                </EditItemTemplate>
-                                                <HeaderStyle CssClass="text-white text-center" BackColor="#B1C095" HorizontalAlign="Center" />
-                                                <ItemStyle HorizontalAlign="Center" CssClass="text-center" />
-                                            </asp:TemplateField>--%>
-
-                                           <%-- <asp:TemplateField HeaderText="Actions" ItemStyle-Width="10%">
-                                                <ItemTemplate>
-                                                    <a href="javascript:void(0);" class="btn btn-sm text-white" style="background-color:#022f56;">
-                                                       <i class="fa fa-eye"></i> Details
-                                                    </a>
-                                                    <a href="javascript:void(0);" class="btn btn-sm btn-info text-white">
-                                                       <i class="fa fa-user-plus"></i> Register
-                                                    </a>
-                                                </ItemTemplate>
-                                            </asp:TemplateField>--%>
-
                                         </Columns>
 
                                             <SelectedRowStyle BackColor="#E2DED6" Font-Bold="True" ForeColor="#333333" />
@@ -467,8 +426,7 @@
                        
                     </div>
                 </div>
-            </div>
-        <%--</div>--%>
+          </div>
     </div>
     <asp:Button ID="btnHiddenOk" runat="server" Text="HiddenPostback" 
     OnClick="btnOk_Click" Style="display:none;" />
