@@ -117,9 +117,12 @@
                          paging: true,
                          searching: true,
                          sorting: true,
+                         scrollX: true,
+                         scrollY: "63vh",
+                         scrollCollapse: true,
                          info: true,
                          order: [[0, 'asc']],
-                         stateSave: false,
+                         stateSave: true,
                          lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                          columnDefs: [
                              { orderable: false, targets: [4] },
@@ -311,15 +314,16 @@
                         </div>
                     </div>
                   
-                     <div class="table-responsive">
-                         <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-hover table-bordered"
+                      <div class=" table-responsive gridview-container pt-2 pe-2 rounded-1">
+                       <asp:GridView ID="GridView2" runat="server"
+                           CssClass="table table-striped ResizableGrid table-hover border-2 shadow-lg sticky-grid overflow-x-auto overflow-y-auto display" AutoGenerateColumns="False"
                             DataKeyNames="id,topic,traineeLevel" AllowPaging="false" PagerSettings-Visible="false" OnRowEditing="GridView2_RowEditing"
                             OnRowUpdating="GridView2_RowUpdating" OnRowDeleting="GridView2_RowDeleting" 
                             OnRowCancelingEdit="GridView2_RowCancelingEdit" OnRowDataBound="GridView2_RowDataBound" HeaderStyle-BackColor="#4486ab" HeaderStyle-ForeColor="White"
                             EmptyDataText="No records found." ShowHeaderWhenEmpty="true" >
 
                             <Columns>
-                                <asp:TemplateField ItemStyle-HorizontalAlign="Left" HeaderText="No" >
+                                <asp:TemplateField ItemStyle-HorizontalAlign="Left" HeaderText="No" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1"  >
                                     <ItemTemplate>
                                         <asp:Label ID="lblLinesNo" runat="server" Text='<%# Container.DataItemIndex + 1 %>' />
                                     </ItemTemplate>
@@ -327,7 +331,7 @@
                                     <ItemStyle Width="5%" HorizontalAlign="Left" />
                                 </asp:TemplateField>
 
-                                <asp:TemplateField HeaderText="Topic Name" SortExpression="topic" >
+                                <asp:TemplateField HeaderText="Topic Name" SortExpression="topic" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1"  >
                                     <ItemTemplate>
                                         <asp:Label ID="lblTopicName" runat="server" Text='<%# Eval("topic") %>'></asp:Label>
                                     </ItemTemplate>
@@ -338,7 +342,7 @@
                                     <ItemStyle Width="45%" HorizontalAlign="Left" />
                                 </asp:TemplateField>
 
-                                <asp:TemplateField HeaderText="Trainee Level" SortExpression="traineeLevel" >
+                                <asp:TemplateField HeaderText="Trainee Level" SortExpression="traineeLevel" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1"  >
                                     <ItemTemplate>
                                         <asp:Label ID="lblTrainee" runat="server" Text='<%# Eval("traineeLevel") %>'></asp:Label>
                                     </ItemTemplate>
@@ -350,7 +354,7 @@
                                     <ItemStyle Width="15%" HorizontalAlign="Left" />
                                 </asp:TemplateField>
 
-                                <asp:TemplateField HeaderText="Trainer Name" SortExpression="trainerName">
+                                <asp:TemplateField HeaderText="Trainer Name" SortExpression="trainerName" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" >
                                     <ItemTemplate>
                                         <asp:Label ID="lblTrainer" runat="server" Text='<%# Eval("trainerNamesCsv") %>'></asp:Label>
                                     </ItemTemplate>
@@ -368,7 +372,7 @@
                                     <ItemStyle Width="20%" HorizontalAlign="Left" />
                                 </asp:TemplateField>
 
-                                  <asp:TemplateField HeaderText="Status" SortExpression="IsActive">
+                                  <asp:TemplateField HeaderText="Status" SortExpression="IsActive" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" >
                                     <ItemTemplate>
                                         <div style="text-align:left;">
                                             <%# Convert.ToBoolean(Eval("IsActive")) ? "Active" : "Inactive" %>
@@ -385,7 +389,7 @@
                                     <ItemStyle HorizontalAlign="Left" Width="10%" />
                                 </asp:TemplateField>
        
-                               <asp:TemplateField HeaderText="Actions" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center">
+                               <asp:TemplateField HeaderText="Actions" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" >
                                     <ItemTemplate>
                                         <div style="text-align:center;">
                                             <%

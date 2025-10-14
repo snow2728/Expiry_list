@@ -44,21 +44,22 @@ namespace Expiry_list.Training
 
                 List<string> storeNos = GetLoggedInUserStoreNames();
                 string toggle = hdnToggleStatus.Value;
+
                 using (var conn = new SqlConnection(strcon))
                 using (var cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
-                        SELECT t.id,
-                               t.name,
-                               st.id AS storeId,
-                               st.storeNo AS storeName,
-                               l.id AS positionId,
-                               l.name AS positionName,
-                               t.IsActive
-                        FROM traineeT t
-                        LEFT JOIN LevelT l ON t.position = l.id
-                        LEFT JOIN stores st ON t.store = st.id
-                        WHERE 1=1";
+                SELECT t.id,
+                       t.name,
+                       st.id AS storeId,
+                       st.storeNo AS storeName,
+                       l.id AS positionId,
+                       l.name AS positionName,
+                       t.IsActive
+                FROM traineeT t
+                LEFT JOIN LevelT l ON t.position = l.id
+                LEFT JOIN stores st ON t.store = st.id
+                WHERE 1=1";
 
                     if (!isAdmin && storeNos.Any())
                     {
@@ -85,19 +86,14 @@ namespace Expiry_list.Training
                         if (toggle == "Inactive")
                         {
                             var inactiveRows = dt.AsEnumerable().Where(r => !Convert.ToBoolean(r["IsActive"]));
-
                             if (inactiveRows.Any())
-                            {
                                 filteredDt = inactiveRows.CopyToDataTable();
-                            }
                         }
-                        else // Active
+                        else
                         {
                             var activeRows = dt.AsEnumerable().Where(r => Convert.ToBoolean(r["IsActive"]));
                             if (activeRows.Any())
-                            {
                                 filteredDt = activeRows.CopyToDataTable();
-                            }
                         }
 
                         if (filteredDt.Rows.Count > 0)
@@ -108,18 +104,25 @@ namespace Expiry_list.Training
                         else
                         {
                             filteredDt = dt.Clone();
-                            filteredDt.Rows.Add(filteredDt.NewRow()); // dummy row
-
+                            filteredDt.Rows.Add(filteredDt.NewRow());
                             GridView2.DataSource = filteredDt;
                             GridView2.DataBind();
 
                             if (GridView2.Rows.Count > 0)
-                            {
-                                // Hide the dummy row
                                 GridView2.Rows[0].Visible = false;
-                            }
                         }
                     }
+                }
+
+                // Hide "Actions" column
+                var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
+                string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList")
+                              ? formPermissions["TrainingList"]
+                              : null;
+
+                if (perm == "super")
+                {
+                    GridView2.Columns[GridView2.Columns.Count - 1].Visible = false;
                 }
             }
             catch (Exception ex)
@@ -163,7 +166,7 @@ namespace Expiry_list.Training
                            ROW_NUMBER() OVER (PARTITION BY w.topic ORDER BY w.id) AS rn
                     FROM topicWLT w
                     INNER JOIN traineeT tr ON tr.id = @traineeId
-                    WHERE w.traineeLevel = tr.position  -- Only current level
+                    WHERE w.traineeLevel = tr.position 
                       AND w.IsActive = 1
                 )
                 SELECT 
@@ -173,8 +176,8 @@ namespace Expiry_list.Training
                     LTRIM(RTRIM(ISNULL(tp.Exam, 'Not Taken'))) AS Exam
                 FROM available_topics w
                 INNER JOIN TopicT t ON t.id = w.topicMasterId
-                LEFT JOIN latest_topic tp ON tp.topicId = w.topicWltId
-                                         AND tp.traineeId = @traineeId
+                LEFT JOIN latest_topic tp ON tp.topicId = w.topicWltId 
+                AND tp.traineeId = @traineeId
                 WHERE w.rn = 1
                 ORDER BY t.topicName;", conn))
             {

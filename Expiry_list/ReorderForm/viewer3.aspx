@@ -23,12 +23,12 @@
                     updateFilterVisibility();
                     InitializeItemVendorFilter();
 
-                    var hfFrom1 = document.getElementById('<%= hfFrom1.ClientID %>');
+                   <%-- var hfFrom1 = document.getElementById('<%= hfFrom1.ClientID %>');
                     var hfTo1 = document.getElementById('<%= hfTo1.ClientID %>');
                     var from1 = document.getElementById('from1');
                     var to1 = document.getElementById('to1');
                     if (hfFrom1 && from1 && hfFrom1.value) from1.value = hfFrom1.value;
-                    if (hfTo1 && to1 && hfTo1.value) to1.value = hfTo1.value;
+                    if (hfTo1 && to1 && hfTo1.value) to1.value = hfTo1.value;--%>
 
                     if (canViewOnly) {
                         InitializeStoreFilter();
@@ -46,7 +46,6 @@
             initializeComponents();
             setupEventDelegation();
             InitializeItemVendorFilter();
-            focusOnEditedRow();
             setupFilterToggle();
 
         });
@@ -62,23 +61,6 @@
 
             modal.show();
         });
-
-        const btnApplyFilter = document.getElementById('btnApplyFilter');
-        if (btnApplyFilter) {
-            btnApplyFilter.addEventListener('click', function () {
-                syncDateFiltersToHiddenFields();
-            });
-        }
-
-        function syncDateFiltersToHiddenFields() {
-            const hfFrom1 = document.getElementById('<%= hfFrom1.ClientID %>');
-            const hfTo1 = document.getElementById('<%= hfTo1.ClientID %>');
-            const from1 = document.getElementById('from1');
-            const to1 = document.getElementById('to1');
-
-            if (hfFrom1 && from1) hfFrom1.value = from1.value;
-            if (hfTo1 && to1) hfTo1.value = to1.value;
-        }
 
         function InitializeItemVendorFilter() {
             try {
@@ -105,7 +87,7 @@
 
                         templateSelection: function (data) {
                             if (!data.id) return data.text;
-                            return data.id; 
+                            return data.id;
                         }
                     });
                 });
@@ -122,107 +104,108 @@
         function initializeComponents() {
             const grid = $("#<%= GridView2.ClientID %>");
 
-              if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %>) {
-                  if ($.fn.DataTable.isDataTable(grid)) {
-                      grid.DataTable().destroy();
-                      grid.removeAttr('style');
-                  }
-                  return;
-              }
+            if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %>) {
+                if ($.fn.DataTable.isDataTable(grid)) {
+                    grid.DataTable().destroy();
+                    grid.removeAttr('style');
+                }
+                return;
+            }
 
-              if (!$.fn.DataTable.isDataTable(grid)) {
-                  if (grid.find('thead').length === 0) {
-                      grid.prepend($('<thead/>').append(grid.find('tr:first').detach()));
-                  }
+            if (!$.fn.DataTable.isDataTable(grid)) {
+                if (grid.find('thead').length === 0) {
+                    grid.prepend($('<thead/>').append(grid.find('tr:first').detach()));
+                }
 
-                  var columns = [
-                      { data: null, width: "100px", orderable: false, render: function (data, type, row, meta) { return meta.settings._iDisplayStart + meta.row + 1; } },
-                      { data: 'no', width: "100px" },
-                      { data: 'itemNo', width: "120px" },
-                      { data: 'description', width: "297px" },
-                      { data: 'qty', width: "97px" },
-                      { data: 'uom', width: "97px" },
-                      { data: 'packingInfo', width: "120px" },
-                      { data: 'divisionCode', width: "120px" },
-                      { data: 'storeNo', width: "120px" },
-                      { data: 'vendorNo', width: "120px" },
-                      { data: 'vendorName', width: "170px" },
-                      { data: 'regeDate', width: "120px", render: function (data) { return data ? new Date(data).toLocaleDateString('en-GB') : ''; } },
-                      { data: 'approveDate', width: "120px", render: function (data) { return data ? new Date(data).toLocaleDateString('en-GB') : ''; } },
-                      { data: 'approver', width: "125px" },
-                      { data: 'note', width: "125px", render: truncateText },
-                      { data: 'action', width: "120px" },
-                      { data: 'status', width: "120px" },
-                      { data: 'remark', width: "125px", render: truncateText },
-                      { data: 'completedDate', width: "125px", render: formatDate },
-                      { data: 'owner', width: "125px" }
-                  ];
+                var columns = [
+                    { data: null, width: "100px", orderable: false, render: function (data, type, row, meta) { return meta.settings._iDisplayStart + meta.row + 1; } },
+                    { data: 'no', width: "100px" },
+                    { data: 'itemNo', width: "120px" },
+                    { data: 'description', width: "297px" },
+                    { data: 'qty', width: "97px" },
+                    { data: 'uom', width: "97px" },
+                    { data: 'packingInfo', width: "120px" },
+                    { data: 'divisionCode', width: "120px" },
+                    { data: 'storeNo', width: "120px" },
+                    { data: 'vendorNo', width: "120px" },
+                    { data: 'vendorName', width: "170px" },
+                    { data: 'regeDate', width: "120px", render: function (data) { return data ? new Date(data).toLocaleDateString('en-GB') : ''; } },
+                    { data: 'approveDate', width: "120px", render: function (data) { return data ? new Date(data).toLocaleDateString('en-GB') : ''; } },
+                    { data: 'approver', width: "125px" },
+                    { data: 'note', width: "125px", render: truncateText },
+                    { data: 'action', width: "120px" },
+                    { data: 'status', width: "120px" },
+                    { data: 'remark', width: "125px", render: truncateText },
+                    { data: 'completedDate', width: "125px", render: formatDate },
+                    { data: 'owner', width: "125px" }
+                ];
 
-                  if (expiryPermission === "admin") {
-                      columns.push({
-                          data: null,
-                          width: "107px",
-                          orderable: false,
-                          render: function (data, type, row) {
-                              return '<button type="button" class="btn btn-danger btn-sm" onclick="deleteRecord(' + row.id + ')" title="Delete">' +
-                                  '<i class="fa-solid fa-trash"></i></button>';
-                          }
-                      });
-                  }
-
-                  grid.DataTable({
-                      responsive: true,
-                      ordering: true,
-                      serverSide: true,
-                      paging: true,
-                      filter: true,
-                      scrollX: true,
-                      scrollY: "63vh",
-                      scrollCollapse: true,
-                      autoWidth: false,
-                      stateSave: true,
-                      processing: true,
-                      searching: true,
-                      ajax: {
-                          url: 'viewer3.aspx',
-                          type: 'POST',
-                          data: function (d) {
-                              return {
-                                  draw: d.draw,
-                                  start: d.start,
-                                  length: d.length,
-                                  order: d.order,
-                                  search: d.search.value,
-                                  month: $('#monthFilter').val(),
-
-                                  action: $('#<%= ddlActionFilter.ClientID %>').val(),
-                                status: $('#<%= ddlStatusFilter.ClientID %>').val(),
-                                item: $('#<%= item.ClientID %>').val(),
-                                staff: $('#<%= txtstaffFilter.ClientID %>').val(),
-                                vendor: $('#<%= vendor.ClientID %>').val(),
-                                fromDate: $('#from1').val(),
-                                toDate: $('#to1').val(),
-                                 <%--regDate: $('#<%= txtRegDateFilter.ClientID %>').val(),--%>
-                                owner: $('#<%= txtOwner.ClientID %>').val()
-                            };
+                if (expiryPermission === "admin") {
+                    columns.push({
+                        data: null,
+                        width: "107px",
+                        orderable: false,
+                        render: function (data, type, row) {
+                            return '<button type="button" class="btn btn-danger btn-sm" onclick="deleteRecord(' + row.id + ')" title="Delete">' +
+                                '<i class="fa-solid fa-trash"></i></button>';
                         }
-                    },
-                    fixedColumns: { leftColumns: 4, rightColumns: 0, heightMatch: 'none' },
-                    columns: columns,
-                    order: [[1, 'asc'], [2, 'asc']],
-                    columnDefs: [
-                        { targets: '_all', orderSequence: ["asc", "desc", ""] }
-                    ],
-                    select: { style: 'multi', selector: 'td:first-child' },
-                    lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
-                    initComplete: function () {
-                        var api = this.api();
-                        setTimeout(function () {
-                            api.columns.adjust();
-                            $(window).trigger('resize');
-                        }, 100);
-                    }
-                });
+                    });
+                }
+
+                grid.DataTable({
+                    responsive: true,
+                    ordering: true,
+                    serverSide: true,
+                    paging: true,
+                    filter: true,
+                    scrollX: true,
+                    scrollY: "63vh",
+                    scrollCollapse: true,
+                    autoWidth: false,
+                    stateSave: true,
+                    processing: true,
+                    searching: true,
+                    ajax: {
+                        url: 'viewer3.aspx',
+                        type: 'POST',
+                        data: function (d) {
+                            return {
+                                draw: d.draw,
+                                start: d.start,
+                                length: d.length,
+                                order: d.order,
+                                search: d.search.value,
+                                month: $('#monthFilter').val(),
+
+                                action: $('#<%= ddlActionFilter.ClientID %>').val() || "",
+                                status: $('#<%= ddlStatusFilter.ClientID %>').val() || "",
+                                item: $('#<%= item.ClientID %>').val() || "",
+                                staff: $('#<%= txtstaffFilter.ClientID %>').val() || "",
+                                vendor: $('#<%= vendor.ClientID %>').val() || "",
+                                fromDate: $('#<%= from1.ClientID %>').val() || "",
+                                toDate: $('#<%= to1.ClientID %>').val() || "",
+                                storeNO: $('#<%= lstStoreFilter.ClientID %>').val()?.join(",") || "",
+                                owner: $('#<%= txtOwner.ClientID %>').val() || "",
+                                divisionCode: $('#<%= txtDivisionCode.ClientID %>').val() || "",
+                              };
+                          }
+                      },
+                      fixedColumns: { leftColumns: 4, rightColumns: 0, heightMatch: 'none' },
+                      columns: columns,
+                      order: [[1, 'asc'], [2, 'asc']],
+                      columnDefs: [
+                          { targets: '_all', orderSequence: ["asc", "desc", ""] }
+                      ],
+                      select: { style: 'multi', selector: 'td:first-child' },
+                      lengthMenu: [[100, 500, 1000], [100, 500, 1000]],
+                      initComplete: function () {
+                          var api = this.api();
+                          setTimeout(function () {
+                              api.columns.adjust();
+                              $(window).trigger('resize');
+                          }, 100);
+                      }
+                  });
 
                 function truncateText(data) {
                     if (!data) return '';
@@ -242,50 +225,10 @@
 
         $(window).on('resize', function () {
             const grid = $("#<%= GridView2.ClientID %>");
-              if ($.fn.DataTable.isDataTable(grid)) {
-                  grid.DataTable().columns.adjust();
-              }
-          });
-
-        function focusOnEditedRow() {
-            const rowId = $('#<%= hfSelectedIDs.ClientID %>').val();
-              if (!rowId) return;
-
-              const grid = $("#<%= GridView2.ClientID %>");
-
-              if ($.fn.DataTable.isDataTable(grid)) {
-                  const dt = grid.DataTable();
-
-                  dt.order([]).search('').draw();
-
-                  const rowIndex = dt.rows().indexes().find(index =>
-                      dt.row(index).data().id === rowId
-                  );
-
-                  if (typeof rowIndex !== 'undefined') {
-                      dt.row(rowIndex).move(0).draw(false);
-
-                      grid.parent().animate({ scrollTop: 0 }, 500);
-                      dt.row(0).nodes().to$()
-                          .addClass('highlight-row')
-                          .trigger('focus');
-                  }
-              } else {
-                  const $row = grid.find(`tr[data-id='${rowId}']`);
-                  if ($row.length) {
-                      const $tbody = grid.find('tbody');
-                      $row.prependTo($tbody);
-
-                      $('html, body').animate({
-                          scrollTop: grid.offset().top - 100
-                      }, 500);
-                      $row.addClass('highlight-row');
-
-                  }
-              }
-
-              $('#<%= hfSelectedIDs.ClientID %>').val('');
-        }
+            if ($.fn.DataTable.isDataTable(grid)) {
+                grid.DataTable().columns.adjust();
+            }
+        });
 
         document.addEventListener("DOMContentLoaded", function () {
 
@@ -302,46 +245,45 @@
                 filterPane.style.display = "<%= ViewState["FilterPanelVisible"] != null ? (bool)ViewState["FilterPanelVisible"] ? "block" : "none" : "none" %>";
             }
 
-              updateLocationPillsDisplay();
+            updateLocationPillsDisplay();
 
-              const listBox = document.getElementById('<%= lstStoreFilter.ClientID %>');
-              if (listBox) {
-                  listBox.addEventListener('change', updateLocationPillsDisplay);
-              }
+            const listBox = document.getElementById('<%= lstStoreFilter.ClientID %>');
+            if (listBox) {
+                listBox.addEventListener('change', updateLocationPillsDisplay);
+            }
 
-                const linkHome = document.getElementById("link_home");
-                if (linkHome) linkHome.href = "../AdminDashboard.aspx";
+            const checkbox = document.getElementById('<%= filterRegistrationDate.ClientID %>');
+            const controlIds = ['<%= from1.ClientID %>', '<%= to1.ClientID %>'];
 
-                var hfFrom1 = document.getElementById('<%= hfFrom1.ClientID %>');
-                var hfTo1 = document.getElementById('<%= hfTo1.ClientID %>');
-                var from1 = document.getElementById('from1');
-                var to1 = document.getElementById('to1');
-                if (hfFrom1 && from1 && hfFrom1.value) from1.value = hfFrom1.value;
-                if (hfTo1 && to1 && hfTo1.value) to1.value = hfTo1.value;
-          });
+            if (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    if (!checkbox.checked) {
+                        clearFilterGroup(controlIds);
+                    }
+                });
+            }
+
+            const linkHome = document.getElementById("link_home");
+            if (linkHome) linkHome.href = "../AdminDashboard.aspx";
+
+        });
 
         function setupFilterToggle() {
-            const filterMappings = {
-                    '<%= filterAction.ClientID %>': '<%= actionFilterGroup.ClientID %>',
-                    '<%= filterStatus.ClientID %>': '<%= statusFilterGroup.ClientID %>',
-                    '<%= filterStore.ClientID %>': '<%= storeFilterGroup.ClientID %>',
-                    '<%= filterItem.ClientID %>': '<%= itemFilterGroup.ClientID %>',
-                    '<%= filterStaff.ClientID %>': '<%= staffFilterGroup.ClientID %>',
-                    '<%= filterVendor.ClientID %>': '<%= vendorFilterGroup.ClientID %>',
-                    '<%= filterRegistrationDate.ClientID %>': '<%= regeDateFilterGroup.ClientID %>',
-                    '<%= filterApproveDate.ClientID %>': '<%= approveDateFilterGroup.ClientID %>',
-                    '<%= filterOwner.ClientID %>': '<%= ownerFilterGroup.ClientID %>',
-                  '<%= filterDivisionCode.ClientID %>': '<%= divisionCodeFilterGroup.ClientID %>'
-            };
-
-            Object.entries(filterMappings).forEach(([checkboxId, filterGroupId]) => {
-                const checkbox = document.getElementById(checkboxId);
-                const filterGroup = document.getElementById(filterGroupId);
+            Object.entries(filterMap).forEach(([key, mapping]) => {
+                const checkbox = document.getElementById(mapping.checkboxId);
+                const filterGroup = document.getElementById(mapping.groupId);
 
                 if (checkbox && filterGroup) {
                     filterGroup.style.display = checkbox.checked ? "block" : "none";
+
                     checkbox.addEventListener("change", function () {
-                        filterGroup.style.display = this.checked ? "block" : "none";
+                        const isChecked = this.checked;
+                        filterGroup.style.display = isChecked ? "block" : "none";
+
+                        // Clear filter value when unchecked
+                        if (!isChecked) {
+                            clearFilterControl(mapping.controlId);
+                        }
                     });
                 }
             });
@@ -415,6 +357,28 @@
             }
 
         };
+
+        //Clear the previous filter values
+        function clearFilterControl(controlId) {
+            const control = document.getElementById(controlId);
+            if (!control) return;
+
+            if (control.type === 'select-one') {
+                control.selectedIndex = 0;
+            } else if (control.type === 'text' || control.type === 'date') {
+                control.value = '';
+            } else if (control.tagName === 'SELECT' && control.multiple) {
+                $(control).val(null).trigger('change');
+            }
+
+            if ($(control).hasClass('select2-hidden-accessible')) {
+                $(control).val(null).trigger('change');
+            }
+        }
+
+        function clearFilterGroup(controlIds) {
+            controlIds.forEach(id => clearFilterControl(id));
+        }
 
         function updateFilterVisibility() {
             Object.keys(filterMap).forEach(key => {
@@ -704,82 +668,31 @@
         }
 
         function handleApplyFilters() {
-            let anyFilterActive = false;
+            const grid = $('#<%= GridView2.ClientID %>');
 
-            for (const [key, mapping] of Object.entries(filterMap)) {
-                const checkbox = document.getElementById(mapping.checkboxId);
-                if (!checkbox || !checkbox.checked) continue;
+           // Check if at least one filter has a value
+           let hasAnyFilter =
+             ($('#<%= filterStore.ClientID %>').is(':checked') && $('#<%= lstStoreFilter.ClientID %>').val()?.length > 0) ||
+             ($('#<%= filterItem.ClientID %>').is(':checked') && $('#<%= item.ClientID %>').val()) ||
+             ($('#<%= filterVendor.ClientID %>').is(':checked') && $('#<%= vendor.ClientID %>').val()) ||
+             ($('#<%= filterStatus.ClientID %>').is(':checked') && $('#<%= ddlStatusFilter.ClientID %>').val()) ||
+             ($('#<%= filterAction.ClientID %>').is(':checked') && $('#<%= ddlActionFilter.ClientID %>').val()) ||
+             ($('#<%= filterRegistrationDate.ClientID %>').is(':checked') && ( $('#<%= from1.ClientID %>').val() || $('#<%= to1.ClientID %>').val())) ||
+             ($('#<%= filterStaff.ClientID %>').is(':checked') && $('#<%= txtstaffFilter.ClientID %>').val()) ||
+             ($('#<%= filterDivisionCode.ClientID %>').is(':checked') && $('#<%= txtDivisionCode.ClientID %>').val()) ||
+             ($('#<%= filterApproveDate.ClientID %>').is(':checked') && $('#<%= txtApproveDateFilter.ClientID %>').val());
 
-                let hasValue = false;
+           if (!hasAnyFilter) {
+               Swal.fire('Warning!', 'Please select at least one filter with a value.', 'warning');
+               return false;
+           }
 
-                if (mapping.controlId) {
-                    const control = document.getElementById(mapping.controlId);
-                    if (control) {
-                        if (control.tagName === 'SELECT') {
-                            hasValue = control.multiple ? control.selectedOptions.length > 0 : control.value.trim() !== "";
-                        } else if (control.tagName === 'INPUT') {
-                            hasValue = control.value.trim() !== "";
-                        }
-                    }
-                }
-
-                if (mapping.controlIds && mapping.controlIds.length === 2) {
-                    const from = document.getElementById(mapping.controlIds[0]);
-                    const to = document.getElementById(mapping.controlIds[1]);
-                    if (from && to && from.value.trim() !== "" && to.value.trim() !== "") {
-                        hasValue = true;
-                    }
-                }
-
-                if (hasValue) anyFilterActive = true;
-            }
-
-            if (!anyFilterActive) {
-                Swal.fire('Warning!', 'Please select at least one filter to apply and ensure it has a value.', 'warning');
-                return false;
-            }
-
-            if (!applyFiltersValidation()) return false;
-            InitializeItemVendorFilter();
-
-            // Refresh DataTable
-            refreshDataTable();
-            document.getElementById('gridCol').style.height = "74vh";
-            document.getElementById('gridCol').style.width = "auto";
-
-            return true;
-        }
-
-        function applyFiltersValidation() {
-            let anyFilterActive = false;
-
-            for (const [key, mapping] of Object.entries(filterMap)) {
-                const checkbox = document.getElementById(mapping.checkboxId);
-                if (!checkbox || !checkbox.checked) continue;
-
-                let hasValue = false;
-
-                if (mapping.controlId) {
-                    const control = document.getElementById(mapping.controlId);
-                    if (control) hasValue = control.value.trim() !== "" || (control.tagName === 'SELECT' && control.selectedIndex > 0);
-                }
-
-                if (mapping.controlIds && mapping.controlIds.length === 2) {
-                    const from = document.getElementById(mapping.controlIds[0]);
-                    const to = document.getElementById(mapping.controlIds[1]);
-                    hasValue = from && to && from.value.trim() !== "" && to.value.trim() !== "";
-                }
-
-                if (hasValue) anyFilterActive = true;
-            }
-
-            if (!anyFilterActive) {
-                Swal.fire('Warning!', 'Please select at least one filter to apply and ensure it has a value.', 'warning');
-                return false;
-            }
-
-            return true;
-        }
+           if ($.fn.DataTable.isDataTable(grid)) {
+               grid.DataTable().ajax.reload();
+           } else {
+               initializeComponents();
+           }
+       }
 
         Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
 
@@ -1053,10 +966,10 @@
                                         <!-- Registration Date Filter (From-To) -->
                                         <div class="form-group mt-3 filter-group" id="regeDateFilterGroup" runat="server" style="display:none">
                                             <label>Registration Date</label><br />
-                                            From: <input type="date" id="from1" class="form-control fa-1x" />
-                                            To: <input type="date" id="to1" class="form-control fa-1x" />
-                                            <asp:HiddenField ID="hfFrom1" runat="server" />
-                                            <asp:HiddenField ID="hfTo1" runat="server" />
+                                            From: <asp:TextBox runat="server" TextMode="Date" id="from1" class="form-control fa-1x"></asp:TextBox>
+                                            To: <asp:TextBox runat="server" TextMode="Date" id="to1" class="form-control fa-1x" ></asp:TextBox>
+                                          <%--  <asp:HiddenField ID="hfFrom1" runat="server" />
+                                            <asp:HiddenField ID="hfTo1" runat="server" />--%>
                                         </div>
 
                                          <!-- Approved Date Filter -->
@@ -1083,7 +996,7 @@
                                                 <asp:Button ID="btnApplyFilter" runat="server" 
                                                     CssClass="btn text-white mb-1" Style="background: #BD467F;"
                                                     Text="Apply Filters" 
-                                                    OnClientClick="return syncDateFiltersToHiddenFields(); handleApplyFilters();" OnClick="ApplyFilters_Click" 
+                                                    OnClientClick="handleApplyFilters(); return false;" 
                                                     CausesValidation="false" />
                     
                                                 <asp:Button ID="btnResetFilter" runat="server" 
@@ -1110,7 +1023,7 @@
                  <asp:HiddenField ID="hflength" runat="server" />
                  
                 <!-- Table -->
-                <div class="col-md-12 ms-4" id="gridCol">
+                <div class="col-md-12 ms-4 pt-2" id="gridCol">
                    <asp:UpdatePanel ID="UpdatePanel2" runat="server" UpdateMode="Conditional">
                      <ContentTemplate>
 

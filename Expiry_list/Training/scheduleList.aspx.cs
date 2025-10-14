@@ -63,12 +63,32 @@ namespace Expiry_list.Training
             int filterStoreId = ViewState["FilterStoreId"] != null ? Convert.ToInt32(ViewState["FilterStoreId"]) : 0;
             int filterTrainerId = ViewState["FilterTrainerId"] != null ? Convert.ToInt32(ViewState["FilterTrainerId"]) : 0;
 
+            var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
+            string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList")
+                ? formPermissions["TrainingList"]
+                : null;
+
+            // Hide Action Column for view-only permissions
+            int actionsColIndex = GridView2.Columns.Cast<DataControlField>()
+                .ToList()
+                .FindIndex(c => c.HeaderText == "Actions");
+
+            if (actionsColIndex >= 0)
+                GridView2.Columns[actionsColIndex].Visible = !(perm == "view" || string.IsNullOrEmpty(perm));
+
             DataTable dt = GetFilteredData(filterMonth, filterLevel, filterTopicId, filterStoreId, filterTrainerId);
 
             if (dt.Rows.Count == 0)
             {
-                ScriptManager.RegisterStartupScript(this, this.GetType(),
-                    "NoDataAlert", "Swal.fire({ icon: 'info', title: 'No Data', text: 'No data found for the selected month!' });", true);
+                // Show no data message only if there are active filters
+                bool hasActiveFilters = filterLevel > 0 || filterTopicId > 0 || filterStoreId > 0 || filterTrainerId > 0 ||
+                                       !string.IsNullOrEmpty(filterMonth) && filterMonth != DateTime.Now.ToString("yyyy-MM");
+
+                if (hasActiveFilters)
+                {
+                    ScriptManager.RegisterStartupScript(this, this.GetType(),
+                        "NoDataAlert", "Swal.fire({ icon: 'info', title: 'No Data', text: 'No schedules found for the selected filters!' });", true);
+                }
 
                 dt.Rows.Add(dt.NewRow());
                 GridView2.DataSource = dt;
@@ -92,7 +112,7 @@ namespace Expiry_list.Training
                 LoadScheduleTrainees(scheduleId);
                 upTrainees.Update();
 
-                ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
+                //ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
             }
         }
 
@@ -151,6 +171,16 @@ namespace Expiry_list.Training
                     }
                 }
 
+                if (e.Row.RowType == DataControlRowType.DataRow)
+                {
+                    LinkButton btnCancel = (LinkButton)e.Row.FindControl("btnCancel");
+                    if (btnCancel != null)
+                    {
+                        // Override onclick to trigger SweetAlert and prevent normal postback
+                        btnCancel.OnClientClick = "return showCancelSweetAlert(this);";
+                    }
+                }
+
                 DataRowView rowView = (DataRowView)e.Row.DataItem;
                 bool isActive = rowView["IsActive"] != DBNull.Value && Convert.ToBoolean(rowView["IsActive"]);
 
@@ -173,33 +203,79 @@ namespace Expiry_list.Training
 
                 try
                 {
-                    string deleteTraineeTopics = "DELETE FROM traineeTopicT WHERE scheduleId = @scheduleId";
-                    using (SqlCommand cmd = new SqlCommand(deleteTraineeTopics, conn, transaction))
-                    {
-                        cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
-                        cmd.ExecuteNonQuery();
-                    }
+                    //string updateTraineeTopics = @"UPDATE traineeTopicT 
+                    //                     SET status = 'Cancelled', 
+                    //                         updatedAt = @updatedAt,
+                    //                         updatedBy = @updatedBy
+                    //                     WHERE scheduleId = @scheduleId";
 
-                    string deleteSchedule = "DELETE FROM scheduleT WHERE id = @scheduleId";
-                    using (SqlCommand cmd = new SqlCommand(deleteSchedule, conn, transaction))
+                    //using (SqlCommand cmd = new SqlCommand(updateTraineeTopics, conn, transaction))
+                    //{
+                    //    cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
+                    //    cmd.Parameters.AddWithValue("@updatedAt", DateTime.Now);
+                    //    cmd.Parameters.AddWithValue("@updatedBy", User.Identity.Name);
+                    //    cmd.ExecuteNonQuery();
+                    //}
+
+                    string updateSchedule = @"UPDATE scheduleT 
+                                    SET IsCancel = 1,
+                                        updatedAt = @updatedAt,
+                                        updatedBy = @updatedBy
+                                    WHERE id = @scheduleId";
+
+                    using (SqlCommand cmd = new SqlCommand(updateSchedule, conn, transaction))
                     {
                         cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
+                        cmd.Parameters.AddWithValue("@updatedAt", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@updatedBy", User.Identity.Name);
                         cmd.ExecuteNonQuery();
                     }
 
                     transaction.Commit();
                     BindGrid();
 
-                    ScriptManager.RegisterStartupScript(this, GetType(), "DeleteSuccess",
-                        "Swal.fire('Cancelled!', 'The schedule and related trainees have been cancelled successfully.', 'success');", true);
+                    // Success message
+                    ScriptManager.RegisterStartupScript(this, GetType(), "CancelSuccess",
+                        "Swal.fire('Cancelled!', 'The schedule has been cancelled successfully.', 'success');", true);
                 }
                 catch (Exception ex)
                 {
                     transaction.Rollback();
 
-                    ScriptManager.RegisterStartupScript(this, GetType(), "DeleteError",
-                        $"Swal.fire('Error!', 'Failed to cancel schedule: {ex.Message}', 'error');", true);
+                    // Error message
+                    string errorMessage = $"Failed to cancel schedule: {ex.Message}";
+                    ScriptManager.RegisterStartupScript(this, GetType(), "CancelError",
+                        $"Swal.fire('Error!', '{errorMessage.Replace("'", "\\'")}', 'error');", true);
                 }
+            }
+        }
+
+        protected void GridView2_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "CancelSchedule")
+            {
+                int scheduleId = Convert.ToInt32(e.CommandArgument);
+                CancelSchedule(scheduleId);
+
+                // Refresh the grid after cancel
+                BindGrid();
+
+                ScriptManager.RegisterStartupScript(this, GetType(), "CancelSuccess",
+                    "Swal.fire('Cancelled!', 'The schedule has been cancelled successfully.', 'success');", true);
+            }
+        }
+
+        private void CancelSchedule(int scheduleId)
+        {
+            using (SqlConnection conn = new SqlConnection(strcon))
+            using (SqlCommand cmd = new SqlCommand(
+                "UPDATE scheduleT SET IsCancel = 1, updatedAt = @updatedAt, updatedBy = @updatedBy WHERE id = @id", conn))
+            {
+                cmd.Parameters.AddWithValue("@id", scheduleId);
+                cmd.Parameters.AddWithValue("@updatedAt", DateTime.Now);
+                cmd.Parameters.AddWithValue("@updatedBy", User.Identity.Name);
+                conn.Open();
+                cmd.ExecuteNonQuery();
             }
         }
 
@@ -218,7 +294,7 @@ namespace Expiry_list.Training
             LoadScheduleTrainees(scheduleId);
             upTrainees.Update();
 
-            ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
+            ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTableTrainees();", true);
         }
 
         private void UpdateTraineeStatusOrExam(int traineeId, string status, string exam)
@@ -342,34 +418,36 @@ namespace Expiry_list.Training
         {
             DataTable dt = new DataTable();
             string query = @"
-                SELECT 
-                    s.id,
-                    s.tranNo,
-                    tw.id as topicWLTId,
-                    tw.id AS topicId,
-                    t.topicName AS topicName,
-                    ISNULL(l.name, '') AS traineeLevel, 
-                    ISNULL(tr.name, '') AS trainerName,  
-                    s.position AS positionId,
-                    ISNULL(l2.name, '') AS position,   
-                    lo.name AS room,
-                    s.date,
-                    s.time
-                FROM scheduleT s
-                INNER JOIN topicWLT tw 
-                    ON s.topicName = tw.id 
-                INNER JOIN topicT t
-                    ON tw.topic = t.id      
-                LEFT JOIN trainerT tr       
-                    ON tw.trainerId = tr.id 
-                LEFT JOIN levelT l          
-                    ON tw.traineeLevel = l.id  
-                LEFT JOIN levelT l2        
-                    ON s.position = l2.id     
-                INNER JOIN locationT lo
-                    ON s.room = lo.id
-                ORDER BY s.id ASC;
-            ";
+        SELECT 
+            s.id,
+            s.tranNo,
+            tw.id as topicWLTId,
+            tw.id AS topicId,
+            t.topicName AS topicName,
+            ISNULL(l.name, '') AS traineeLevel, 
+            ISNULL(tr.name, '') AS trainerName,  
+            s.position AS positionId,
+            ISNULL(l2.name, '') AS position,   
+            lo.name AS room,
+            s.date,
+            s.time,
+            s.IsCancel
+        FROM scheduleT s
+        INNER JOIN topicWLT tw 
+            ON s.topicName = tw.id 
+        INNER JOIN topicT t
+            ON tw.topic = t.id      
+        LEFT JOIN trainerT tr       
+            ON tw.trainerId = tr.id 
+        LEFT JOIN levelT l          
+            ON tw.traineeLevel = l.id  
+        LEFT JOIN levelT l2        
+            ON s.position = l2.id     
+        INNER JOIN locationT lo
+            ON s.room = lo.id
+        WHERE s.IsCancel = 0
+        ORDER BY s.id ASC;
+    ";
 
             using (SqlConnection conn = new SqlConnection(strcon))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -389,6 +467,9 @@ namespace Expiry_list.Training
             DataTable dt = new DataTable();
             var whereClauses = new List<string>();
             var parameters = new List<SqlParameter>();
+
+            // Add condition to exclude cancelled schedules
+            whereClauses.Add("s.IsCancel = 0");
 
             // Month filter (using YEAR + MONTH instead of BETWEEN)
             if (!string.IsNullOrEmpty(filterMonth))
@@ -427,28 +508,29 @@ namespace Expiry_list.Training
             string where = whereClauses.Count > 0 ? $"WHERE {string.Join(" AND ", whereClauses)}" : "";
 
             string query = $@"
-                SELECT 
-                    s.id,
-                    s.tranNo,
-                    tw.id as topicWLTId,
-                    tw.topic AS topicId,      
-                    s.position AS positionId,
-                    t.topicName AS topicName,
-                    lo.name AS room,
-                    ISNULL(tr.name, '') AS trainerName,
-                    ISNULL(l.name, '') AS traineeLevel,
-                    ISNULL(l2.name, '') AS position,
-                    s.date,
-                    s.time
-                FROM scheduleT s
-                LEFT JOIN topicWLT tw ON s.topicName = tw.id  
-                LEFT JOIN topicT t ON tw.topic = t.id     
-                LEFT JOIN trainerT tr ON tw.trainerId = tr.id 
-                LEFT JOIN levelT l ON tw.traineeLevel = l.id 
-                LEFT JOIN levelT l2 ON s.position = l2.id    
-                LEFT JOIN locationT lo ON s.room = lo.id 
-                {where}
-                ORDER BY s.id ASC";
+        SELECT 
+            s.id,
+            s.tranNo,
+            tw.id as topicWLTId,
+            tw.topic AS topicId,      
+            s.position AS positionId,
+            t.topicName AS topicName,
+            lo.name AS room,
+            ISNULL(tr.name, '') AS trainerName,
+            ISNULL(l.name, '') AS traineeLevel,
+            ISNULL(l2.name, '') AS position,
+            s.date,
+            s.time,
+            s.IsCancel
+        FROM scheduleT s
+        LEFT JOIN topicWLT tw ON s.topicName = tw.id  
+        LEFT JOIN topicT t ON tw.topic = t.id     
+        LEFT JOIN trainerT tr ON tw.trainerId = tr.id 
+        LEFT JOIN levelT l ON tw.traineeLevel = l.id 
+        LEFT JOIN levelT l2 ON s.position = l2.id    
+        LEFT JOIN locationT lo ON s.room = lo.id 
+        {where}
+        ORDER BY s.id ASC";
 
             using (SqlConnection conn = new SqlConnection(strcon))
             using (SqlCommand cmd = new SqlCommand(query, conn))

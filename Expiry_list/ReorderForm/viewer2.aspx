@@ -42,7 +42,6 @@
      });
 
      let isDataTableInitialized = false;
-
      function initializeComponents() {
          const grid = $("#<%= GridView2.ClientID %>");
 
@@ -227,44 +226,42 @@
          if (filterPane) {
              filterPane.style.display = "<%= ViewState["FilterPanelVisible"] != null ? (bool)ViewState["FilterPanelVisible"] ? "block" : "none" : "none" %>";
          }
+         document.getElementById("link_home").href = "../AdminDashboard.aspx";
      });
 
      function setupFilterToggle() {
-         const filterMappings = {
-              '<%= filterAction.ClientID %>': '<%= actionFilterGroup.ClientID %>',
-              '<%= filterStatus.ClientID %>': '<%= statusFilterGroup.ClientID %>',
-              '<%= filterItem.ClientID %>': '<%= itemFilterGroup.ClientID %>',
-              '<%= filterStaff.ClientID %>': '<%= staffFilterGroup.ClientID %>',
-              '<%= filterVendor.ClientID %>': '<%= vendorFilterGroup.ClientID %>',
-             '<%= filterRegistrationDate.ClientID %>': '<%= regeDateFilterGroup.ClientID %>',
-             '<%= filterApproveDate.ClientID %>': '<%= approveDateFilterGroup.ClientID %>'
-         };
-
-         Object.entries(filterMappings).forEach(([checkboxId, filterGroupId]) => {
-             const checkbox = document.getElementById(checkboxId);
-             const filterGroup = document.getElementById(filterGroupId);
+         Object.entries(filterMap).forEach(([key, mapping]) => {
+             const checkbox = document.getElementById(mapping.checkboxId);
+             const filterGroup = document.getElementById(mapping.groupId);
 
              if (checkbox && filterGroup) {
                  filterGroup.style.display = checkbox.checked ? "block" : "none";
 
                  checkbox.addEventListener("change", function () {
-                     filterGroup.style.display = this.checked ? "block" : "none";
+                     const isChecked = this.checked;
+                     filterGroup.style.display = isChecked ? "block" : "none";
+
+                     // Clear filter value when unchecked
+                     if (!isChecked) {
+                         clearFilterControl(mapping.controlId);
+                     }
                  });
              }
          });
      }
 
      function toggleFilter() {
-         const filterPane = document.getElementById("filterPane"); 
+         const filterPane = document.getElementById("filterPane");
          const gridCol = document.getElementById("gridCol");
 
-         if (filterPane && gridCol) {
-             const isVisible = filterPane.style.display === "block";
-             filterPane.style.display = isVisible ? "none" : "block";
-
-             // Adjust grid column width
-             gridCol.classList.toggle("col-md-10", !isVisible);
-             gridCol.classList.toggle("col-md-12", isVisible);
+         if (filterPane.style.display === "none" || filterPane.style.display === "") {
+             filterPane.style.display = "block";
+             gridCol.classList.remove("col-md-12");
+             gridCol.classList.add("col-md-10");
+         } else {
+             filterPane.style.display = "none";
+             gridCol.classList.remove("col-md-10");
+             gridCol.classList.add("col-md-12");
          }
      }
 
@@ -306,75 +303,105 @@
          }
      };
 
+     //Clear the previous filter values
+     function clearFilterControl(controlId) {
+         const control = document.getElementById(controlId);
+         if (!control) return;
+
+         if (control.type === 'select-one') {
+             control.selectedIndex = 0;
+         } else if (control.type === 'text' || control.type === 'date') {
+             control.value = '';
+         } else if (control.tagName === 'SELECT' && control.multiple) {
+             $(control).val(null).trigger('change');
+         }
+
+         if ($(control).hasClass('select2-hidden-accessible')) {
+             $(control).val(null).trigger('change');
+         }
+     }
+
      function updateFilterVisibility() {
          Object.keys(filterMap).forEach(key => {
              const mapping = filterMap[key];
              const checkbox = document.getElementById(mapping.checkboxId);
              const filterGroup = document.getElementById(mapping.groupId);
+             const control = document.getElementById(mapping.controlId);
 
              if (checkbox && filterGroup) {
-                 filterGroup.style.display = checkbox.checked ? "block" : "none";
+                 const isChecked = checkbox.checked;
+                 filterGroup.style.display = isChecked ? "block" : "none";
+
+                 // Clear filter
+                 if (!isChecked && control) {
+                     clearFilterControl(mapping.controlId);
+                 }
              }
          });
      }
 
      function InitializeItemVendorFilter() {
          try {
-             $('#<%= item.ClientID %>, #<%= vendor.ClientID %>').select2({
-                 placeholder: 'Select item or vendor',
-                 allowClear: true,
-                 minimumResultsForSearch: 1
-             });
+             $('#<%= item.ClientID %>, #<%= vendor.ClientID %>').each(function () {
+                    var $el = $(this);
 
-             console.log("Select2 initialized for item and vendor filters.");
-         } catch (err) {
-             Swal.fire({
-                 icon: 'error',
-                 title: 'Initialization Failed',
-                 text: 'There was an error initializing item/vendor dropdowns: ' + err.message
-             });
-         }
-     }
+                    if ($el.hasClass("select2-hidden-accessible")) {
+                        $el.select2('destroy');
+                    }
+
+                    $el.removeClass('select2-hidden-accessible')
+                        .next('.select2-container').remove();
+
+                    $el.select2({
+                        placeholder: 'Select item or vendor',
+                        allowClear: true,
+                        minimumResultsForSearch: 1,
+                        width: '100%',
+                        dropdownParent: $el.closest('.filter-group'),
+
+                        templateResult: function (data) {
+                            return data.text;
+                        },
+
+                        templateSelection: function (data) {
+                            if (!data.id) return data.text;
+                            return data.id;
+                        }
+                    });
+                });
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Initialization Failed',
+                    text: 'There was an error initializing item/vendor dropdowns: ' + err.message
+                });
+            }
+        }
 
      function handleApplyFilters() {
-         let anyFilterActive = false;
-         for (const [key, mapping] of Object.entries(filterMap)) {
-             const checkbox = document.getElementById(mapping.checkboxId);
-             const control = document.getElementById(mapping.controlId);
+         const grid = $('#<%= GridView2.ClientID %>');
 
-             if (!checkbox || !control) continue;
+        // Check if at least one filter has a value
+        let hasAnyFilter =
+              ($('#<%= filterItem.ClientID %>').is(':checked') && $('#<%= item.ClientID %>').val()) ||
+              ($('#<%= filterVendor.ClientID %>').is(':checked') && $('#<%= vendor.ClientID %>').val()) ||
+              ($('#<%= filterStatus.ClientID %>').is(':checked') && $('#<%= ddlStatusFilter.ClientID %>').val()) ||
+              ($('#<%= filterAction.ClientID %>').is(':checked') && $('#<%= ddlActionFilter.ClientID %>').val()) ||
+              ($('#<%= filterRegistrationDate.ClientID %>').is(':checked') && $('#<%= txtRegDateFilter.ClientID %>').val()) ||
+              ($('#<%= filterStaff.ClientID %>').is(':checked') && $('#<%= txtstaffFilter.ClientID %>').val()) ||
+              ($('#<%= filterApproveDate.ClientID %>').is(':checked') && $('#<%= txtApproveDateFilter.ClientID %>').val());
 
-             if (checkbox.checked) {
-                 let hasValue = false;
-                 if (control.tagName === 'SELECT') {
-                     hasValue = control.multiple ?
-                         control.selectedOptions.length > 0 :
-                         control.selectedIndex > 0 && control.value !== "";
-                 }
-                 else if (control.tagName === 'INPUT') {
-                     hasValue = control.value.trim() !== "";
-                 }
+        if (!hasAnyFilter) {
+            Swal.fire('Warning!', 'Please select at least one filter with a value.', 'warning');
+            return false;
+        }
 
-                 if (hasValue) {
-                     anyFilterActive = true;
-                     break;
-                 }
-             }
-         }
-
-         if (!anyFilterActive) {
-             Swal.fire('Warning!', 'Please select at least one filter to apply and ensure it has a value.', 'warning');
-             return false;
-         }
-
-         const monthFilter = document.getElementById('monthFilter');
-         if (monthFilter) {
-             monthFilter.style.display = 'none';
-         }
-
-         document.getElementById('gridCol').style.height = "73vh";
-         return true;
-     }
+        if ($.fn.DataTable.isDataTable(grid)) {
+            grid.DataTable().ajax.reload();
+        } else {
+            initializeComponents();
+        }
+    }
 
        Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
              const filterPane = document.getElementById("filterPane");
@@ -659,7 +686,7 @@
                                                 <asp:Button ID="btnApplyFilter" runat="server" 
                                                     CssClass="btn text-white mb-1" Style="background: #BD467F;"
                                                     Text="Apply Filters" 
-                                                    OnClientClick="return handleApplyFilters();" OnClick="ApplyFilters_Click" 
+                                                     OnClientClick="handleApplyFilters(); return false;" 
                                                     CausesValidation="false" />
                     
                                                 <asp:Button ID="btnResetFilter" runat="server" 

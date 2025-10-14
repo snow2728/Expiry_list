@@ -27,8 +27,8 @@ namespace Expiry_list.ReorderForm
             if (Request.HttpMethod == "POST" && !string.IsNullOrEmpty(Request["draw"]))
             {
                 RespondWithData();
-                PopulateItemsDropdown();
-                PopulateVendorDropdown();
+                //PopulateItemsDropdown();
+                //PopulateVendorDropdown();
                 return;
             }
 
@@ -75,120 +75,196 @@ namespace Expiry_list.ReorderForm
 
         private void RespondWithData()
         {
-            using (SqlConnection conn = new SqlConnection(strcon))
+            try
             {
-                int draw = Convert.ToInt32(Request["draw"]);
-                int start = Convert.ToInt32(Request["start"]);
-                int length = Convert.ToInt32(Request["length"]);
-                int orderColumnIndex = Convert.ToInt32(Request["order[0][column]"]);
-                string orderDir = Request["order[0][dir]"] ?? "asc";
-                string searchValue = Request["search"] ?? "";
+                using (SqlConnection conn = new SqlConnection(strcon))
+                {
+                    int draw = Convert.ToInt32(Request["draw"]);
+                    int start = Convert.ToInt32(Request["start"]);
+                    int length = Convert.ToInt32(Request["length"]);
+                    int orderColumnIndex = Convert.ToInt32(Request["order[0][column]"]);
+                    string orderDir = Request["order[0][dir]"] ?? "asc";
+                    string searchValue = Request["search[value]"] ?? "";
 
-                if (length == 0) length = 100;
+                    string store = Request["store"] ?? "";
+                    string item = Request["item"] ?? "";
+                    string vendor = Request["vendor"] ?? "";
+                    string status = Request["status"] ?? "";
+                    string division = Request["division"] ?? "";
+                    string regDate = Request["regDate"] ?? "";
 
-                string[] columns = {
+                    if (length == 0) length = 100;
+
+                    string[] columns = {
                     "id", "no", "itemNo", "description", "barcodeNo", "qty", "uom", "packingInfo",
                     "storeNo", "vendorNo", "vendorName", "divisionCode", "regeDate", "approved", "note"
                 };
-                string[] searchableColumns = columns.Skip(1).ToArray();
-
-                // Map visible column index to actual DB column
-                int dbColIndex = orderColumnIndex - 1;
-                string orderBy = (dbColIndex >= 0 && dbColIndex < columns.Length) ? columns[dbColIndex] : "id";
-
-                var whereFilters = new List<string> {
-                    "(status NOT IN ('Reorder Added', 'No Reorder Added') OR status IS NULL)",
-                    "(approved != 'approved')"
-                };
-
-                var parameters = new List<SqlParameter>();
-
-                // Store filter
-                var storeList = Session["storeListRaw"] as List<string>;
-                bool showAllStores = storeList != null && storeList.Contains("HO", StringComparer.OrdinalIgnoreCase);
-
-                if (!showAllStores && storeList != null && storeList.Count > 0)
-                {
-                    var storeConditions = new List<string>();
-                    for (int i = 0; i < storeList.Count; i++)
+                    string orderByClause = "ORDER BY no ASC";
+                    if (orderColumnIndex >= 0 && orderColumnIndex < columns.Length)
                     {
-                        string paramName = "@store" + i;
-                        storeConditions.Add($"storeNo = {paramName}");
-                        parameters.Add(new SqlParameter(paramName, storeList[i]));
+                        string orderColumn = columns[orderColumnIndex];
+                        orderByClause = $"ORDER BY [{orderColumn}] {orderDir}";
                     }
-                    whereFilters.Add("(" + string.Join(" OR ", storeConditions) + ")");
+
+                    var where = new StringBuilder();
+                    where.Append("(status NOT IN ('Reorder Done', 'No Reordering') OR status IS NULL) AND approved = 'approved'");
+
+                    if (!string.IsNullOrEmpty(searchValue))
+                        where.Append(@"
+                            AND (
+                               no LIKE @search OR 
+                                storeNo LIKE @search OR 
+                                divisionCode LIKE @search OR 
+                                itemNo LIKE @search OR 
+                                description LIKE @search OR 
+                                packingInfo LIKE @search OR 
+                                qty LIKE @search OR 
+                                uom LIKE @search OR 
+                                action LIKE @search OR 
+                                status LIKE @search OR 
+                                remark LIKE @search OR 
+                                approver LIKE @search OR 
+                                vendorNo LIKE @search OR 
+                                vendorName LIKE @search OR 
+                                -- 🔹 Convert datetime to string for searching
+                                CONVERT(varchar(10), regeDate, 103) LIKE @search OR 
+                                CONVERT(varchar(10), approveDate, 103) LIKE @search
+                    )");
+
+                    if (!string.IsNullOrEmpty(store))
+                    {
+                        var stores = store.Replace("[", "").Replace("]", "").Replace("\"", "").Split(',');
+                        if (stores.Length > 0)
+                        {
+                            var storeParams = stores.Select((s, i) => "@store" + i).ToArray();
+                            where.Append($" AND storeNo IN ({string.Join(",", storeParams)})");
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(item))
+                        where.Append(" AND itemNo = @item");
+
+                    if (!string.IsNullOrEmpty(vendor))
+                        where.Append(" AND vendorNo LIKE @vendor");
+
+                    if (!string.IsNullOrEmpty(status) && status != "0")
+                        where.Append(" AND status = @status");
+
+                    if (!string.IsNullOrEmpty(division))
+                        where.Append(" AND divisionCode LIKE @division");
+
+                    if (!string.IsNullOrEmpty(regDate))
+                        where.Append(" AND CAST(regeDate AS DATE) = @regDate");
+
+                    //Main query
+                    string query = $@"
+                        SELECT * FROM itemListR
+                        WHERE {where}
+                        {orderByClause}
+                        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+                    //Execute Query
+                    DataTable dt = new DataTable();
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Offset", start);
+                        cmd.Parameters.AddWithValue("@PageSize", length);
+                        cmd.Parameters.AddWithValue("@search", $"%{searchValue}%");
+
+                        if (!string.IsNullOrEmpty(item)) cmd.Parameters.AddWithValue("@item", item);
+                        if (!string.IsNullOrEmpty(vendor)) cmd.Parameters.AddWithValue("@vendor", $"%{vendor}%");
+                        if (!string.IsNullOrEmpty(status)) cmd.Parameters.AddWithValue("@status", status);
+                        if (!string.IsNullOrEmpty(division)) cmd.Parameters.AddWithValue("@division", $"%{division}%");
+                        if (!string.IsNullOrEmpty(regDate)) cmd.Parameters.AddWithValue("@regDate", regDate);
+
+                        if (!string.IsNullOrEmpty(store))
+                        {
+                            var stores = store.Replace("[", "").Replace("]", "").Replace("\"", "").Split(',');
+                            for (int i = 0; i < stores.Length; i++)
+                                cmd.Parameters.AddWithValue("@store" + i, stores[i]);
+                        }
+
+                        conn.Open();
+                        new SqlDataAdapter(cmd).Fill(dt);
+                    }
+
+                    //Count query
+                    string countQuery = $"SELECT COUNT(*) FROM itemListR WHERE {where}";
+                    int totalRecords = 0;
+                    using (SqlCommand countCmd = new SqlCommand(countQuery, conn))
+                    {
+                        countCmd.Parameters.AddWithValue("@search", $"%{searchValue}%");
+                        if (!string.IsNullOrEmpty(item)) countCmd.Parameters.AddWithValue("@item", item);
+                        if (!string.IsNullOrEmpty(vendor)) countCmd.Parameters.AddWithValue("@vendor", $"%{vendor}%");
+                        if (!string.IsNullOrEmpty(status)) countCmd.Parameters.AddWithValue("@status", status);
+                        if (!string.IsNullOrEmpty(division)) countCmd.Parameters.AddWithValue("@division", $"%{division}%");
+                        if (!string.IsNullOrEmpty(regDate)) countCmd.Parameters.AddWithValue("@regDate", regDate);
+
+                        if (!string.IsNullOrEmpty(store))
+                        {
+                            var stores = store.Replace("[", "").Replace("]", "").Replace("\"", "").Split(',');
+                            for (int i = 0; i < stores.Length; i++)
+                                countCmd.Parameters.AddWithValue("@store" + i, stores[i]);
+                        }
+
+                        if (conn.State != ConnectionState.Open) conn.Open();
+                        totalRecords = (int)countCmd.ExecuteScalar();
+                    }
+
+                    var data = dt.AsEnumerable().Select(row => new
+                    {
+                        id = row["id"],
+                        checkbox = "",
+                        no = row["no"],
+                        itemNo = row["itemNo"],
+                        description = row["description"],
+                        barcodeNo = row["barcodeNo"],
+                        qty = row["qty"],
+                        uom = row["uom"],
+                        packingInfo = row["packingInfo"],
+                        storeNo = row["storeNo"],
+                        vendorNo = row["vendorNo"],
+                        vendorName = row["vendorName"],
+                        divisionCode = row["divisionCode"],
+                        regeDate = row["regeDate"] == DBNull.Value ? null : Convert.ToDateTime(row["regeDate"]).ToString("yyyy-MM-dd"),
+                        approved = row["approved"] != DBNull.Value ? row["approved"].ToString().ToUpperInvariant() : "PENDING",
+                        note = row["note"]
+                    }).ToList();
+
+                    var response = new
+                    {
+                        draw = draw,
+                        recordsTotal = totalRecords,
+                        recordsFiltered = totalRecords,
+                        data = data,
+                        debug = new
+                        {
+                            query,
+                            filters = new { store, item, vendor, status, division, regDate }
+                        }
+                    };
+
+                    Response.ContentType = "application/json";
+                    Response.Write(JsonConvert.SerializeObject(response));
                 }
-
-                // Search filter
-                if (!string.IsNullOrEmpty(searchValue))
-                {
-                    var searchParts = searchableColumns.Select(c => $"{c} LIKE @SearchValue");
-                    whereFilters.Add("(" + string.Join(" OR ", searchParts) + ")");
-                    parameters.Add(new SqlParameter("@SearchValue", "%" + searchValue + "%"));
-                }
-
-                string whereClause = whereFilters.Count > 0 ? "WHERE " + string.Join(" AND ", whereFilters) : "";
-                string orderByClause = $"ORDER BY {orderBy} {orderDir}";
-
-                string query = $@"
-                    SELECT * FROM itemListR
-                    {whereClause}
-                    {orderByClause}
-                    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
-
-                string countQuery = $@"SELECT COUNT(*) FROM itemListR {whereClause}";
-
-                var cmd = new SqlCommand(query, conn);
-                var countCmd = new SqlCommand(countQuery, conn);
-
-                cmd.Parameters.AddWithValue("@Offset", start);
-                cmd.Parameters.AddWithValue("@PageSize", length);
-                parameters.ForEach(p => {
-                    cmd.Parameters.AddWithValue(p.ParameterName, p.Value);
-                    countCmd.Parameters.AddWithValue(p.ParameterName, p.Value);
-                });
-
-                conn.Open();
-                DataTable dt = new DataTable();
-                new SqlDataAdapter(cmd).Fill(dt);
-                int totalRecords = (int)countCmd.ExecuteScalar();
-                conn.Close();
-
-                var data = dt.AsEnumerable().Select(row => new
-                {
-                    id = row["id"],
-                    checkbox = "",
-                    no = row["no"],
-                    itemNo = row["itemNo"],
-                    description = row["description"],
-                    barcodeNo = row["barcodeNo"],
-                    qty = row["qty"],
-                    uom = row["uom"],
-                    packingInfo = row["packingInfo"],
-                    storeNo = row["storeNo"],
-                    vendorNo = row["vendorNo"],
-                    vendorName = row["vendorName"],
-                    divisionCode = row["divisionCode"],
-                    regeDate = row["regeDate"] == DBNull.Value ? null : Convert.ToDateTime(row["regeDate"]).ToString("yyyy-MM-dd"),
-                    approved = row["approved"] != DBNull.Value ? row["approved"].ToString().ToUpperInvariant() : "PENDING",
-                    note = row["note"]
-                }).ToList();
-
-                var response = new
-                {
-                    draw = draw,
-                    recordsTotal = totalRecords,
-                    recordsFiltered = totalRecords,
-                    data = data,
-                    orderColumn = orderColumnIndex,
-                    orderDir = orderDir
-                };
-
-                string jsonResponse = JsonConvert.SerializeObject(response);
+            }
+            catch (Exception ex)
+            {
                 Response.ContentType = "application/json";
-                Response.Write(jsonResponse);
+                Response.Write(JsonConvert.SerializeObject(new
+                {
+                    draw = Request["draw"],
+                    recordsTotal = 0,
+                    recordsFiltered = 0,
+                    data = new List<object>(),
+                    error = ex.Message
+                }));
+            }
+            finally
+            {
                 Response.End();
             }
+
         }
 
         protected void GridView2_RowEditing(object sender, GridViewEditEventArgs e)
@@ -281,46 +357,46 @@ namespace Expiry_list.ReorderForm
             Response.Redirect("approval.aspx");
         }
 
-        protected void ApplyFilters_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // Save filter states
-                ViewState["FilterStoreChecked"] = filterStore.Checked;
-                ViewState["SelectedStores"] = string.Join(",",
-                    lstStoreFilter.Items.Cast<ListItem>()
-                        .Where(li => li.Selected)
-                        .Select(li => li.Value));
+        //protected void ApplyFilters_Click(object sender, EventArgs e)
+        //{
+        //    try
+        //    {
+        //        // Save filter states
+        //        ViewState["FilterStoreChecked"] = filterStore.Checked;
+        //        ViewState["SelectedStores"] = string.Join(",",
+        //            lstStoreFilter.Items.Cast<ListItem>()
+        //                .Where(li => li.Selected)
+        //                .Select(li => li.Value));
 
-                ViewState["FilterItemChecked"] = filterItem.Checked;
-                ViewState["SelectedItem"] = item.SelectedValue;
+        //        ViewState["FilterItemChecked"] = filterItem.Checked;
+        //        ViewState["SelectedItem"] = item.SelectedValue;
 
-                ViewState["FilterVendorChecked"] = filterVendor.Checked;
-                ViewState["SelectedVendor"] = vendor.SelectedValue;
+        //        ViewState["FilterVendorChecked"] = filterVendor.Checked;
+        //        ViewState["SelectedVendor"] = vendor.SelectedValue;
 
 
-                ViewState["FilterRegDateChecked"] = filterRegistrationDate.Checked;
-                ViewState["SelectedRegDate"] = txtRegDateFilter.Text;
+        //        ViewState["FilterRegDateChecked"] = filterRegistrationDate.Checked;
+        //        ViewState["SelectedRegDate"] = txtRegDateFilter.Text;
 
-                ViewState["FilterDivisionCodeChecked"] = filterDivisionCode.Checked;
-                ViewState["SelectedDivisionCode"] = txtDivisionCodeFilter.Text;
+        //        ViewState["FilterDivisionCodeChecked"] = filterDivisionCode.Checked;
+        //        ViewState["SelectedDivisionCode"] = txtDivisionCodeFilter.Text;
 
-                DataTable dt = GetFilteredData();
+        //        DataTable dt = GetFilteredData();
 
-                ViewState["FilteredData"] = dt;
+        //        ViewState["FilteredData"] = dt;
 
-                // Bind GridView
-                GridView2.DataSource = dt;
-                GridView2.DataBind();
+        //        // Bind GridView
+        //        GridView2.DataSource = dt;
+        //        GridView2.DataBind();
 
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Filter error: " + ex.ToString());
-                ScriptManager.RegisterStartupScript(this, GetType(), "Error",
-                    $"alert('Error applying filters: {ex.Message.Replace("'", "\\'")}');", true);
-            }
-        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Debug.WriteLine("Filter error: " + ex.ToString());
+        //        ScriptManager.RegisterStartupScript(this, GetType(), "Error",
+        //            $"alert('Error applying filters: {ex.Message.Replace("'", "\\'")}');", true);
+        //    }
+        //}
 
         protected void GridView1_Sorting(object sender, GridViewSortEventArgs e)
         {
@@ -330,7 +406,7 @@ namespace Expiry_list.ReorderForm
             ViewState["SortExpression"] = sortExpression;
             ViewState["SortDirection"] = sortDirection;
 
-            ApplyFilters_Click(sender, e);
+            //ApplyFilters_Click(sender, e);
         }
 
         protected void GridView1_RowCreated(object sender, GridViewRowEventArgs e)

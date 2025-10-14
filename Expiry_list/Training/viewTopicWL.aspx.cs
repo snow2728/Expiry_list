@@ -514,7 +514,7 @@ namespace Expiry_list.Training
         {
             GridView2.EditIndex = -1;
             BindUserGrid();
-            Response.Redirect("viewTopicWL.aspx");
+            //Response.Redirect("viewTopicWL.aspx");
         }
 
         private void ShowAlert(string title, string message, string type)

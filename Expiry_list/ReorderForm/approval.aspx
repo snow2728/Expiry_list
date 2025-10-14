@@ -106,11 +106,12 @@
                               order: d.order,
                               search: d.search.value,
 
-                              status: $('#<%= ddlApproveFilter.ClientID %>').val(),
-                              store: $('#<%= lstStoreFilter.ClientID %>').val(),
-                              item: $('#<%= item.ClientID %>').val(),
-                              vendor: $('#<%= vendor.ClientID %>').val(),
-                              regDate: $('#<%= txtRegDateFilter.ClientID %>').val()
+                              status: $('#<%= ddlApproveFilter.ClientID %>').val() || "",
+                              store: $('#<%= lstStoreFilter.ClientID %>').val() || "",
+                              item: $('#<%= item.ClientID %>').val() || "",
+                              vendor: $('#<%= vendor.ClientID %>').val() || "",
+                              regDate: $('#<%= txtRegDateFilter.ClientID %>').val() || "",
+                              division: $('#<%= txtDivisionCodeFilter.ClientID %>').val() || "",
                           };
                       }
                   },
@@ -275,23 +276,21 @@
           });
 
           function setupFilterToggle() {
-              const filterMappings = {
-                  '<%= filterStore.ClientID %>': '<%= storeFilterGroup.ClientID %>',
-                  '<%= filterItem.ClientID %>': '<%= itemFilterGroup.ClientID %>',
-                  '<%= filterVendor.ClientID %>': '<%= vendorFilterGroup.ClientID %>',
-                  '<%= filterRegistrationDate.ClientID %>': '<%= regeDateFilterGroup.ClientID %>',
-                  '<%= filterDivisionCode.ClientID %>': '<%= divisionCodeFilterGroup.ClientID %>'
-              };
-
-              Object.entries(filterMappings).forEach(([checkboxId, filterGroupId]) => {
-                  const checkbox = document.getElementById(checkboxId);
-                  const filterGroup = document.getElementById(filterGroupId);
+              Object.entries(filterMap).forEach(([key, mapping]) => {
+                  const checkbox = document.getElementById(mapping.checkboxId);
+                  const filterGroup = document.getElementById(mapping.groupId);
 
                   if (checkbox && filterGroup) {
                       filterGroup.style.display = checkbox.checked ? "block" : "none";
 
                       checkbox.addEventListener("change", function () {
-                          filterGroup.style.display = this.checked ? "block" : "none";
+                          const isChecked = this.checked;
+                          filterGroup.style.display = isChecked ? "block" : "none";
+
+                          // Clear filter value when unchecked
+                          if (!isChecked) {
+                              clearFilterControl(mapping.controlId);
+                          }
                       });
                   }
               });
@@ -305,12 +304,10 @@
                   filterPane.style.display = "block";
                   gridCol.classList.remove("col-md-12");
                   gridCol.classList.add("col-md-10");
-
               } else {
                   filterPane.style.display = "none";
                   gridCol.classList.remove("col-md-10");
                   gridCol.classList.add("col-md-12");
-
               }
           }
 
@@ -339,17 +336,41 @@
                   checkboxId: '<%= filterDivisionCode.ClientID %>',
                    controlId: '<%= txtDivisionCodeFilter.ClientID %>',
                    groupId: '<%= divisionCodeFilterGroup.ClientID %>'
-               }
+              }
           };
+
+          function clearFilterControl(controlId) {
+              const control = document.getElementById(controlId);
+              if (!control) return;
+
+              if (control.type === 'select-one') {
+                  control.selectedIndex = 0;
+              } else if (control.type === 'text' || control.type === 'date') {
+                  control.value = '';
+              } else if (control.tagName === 'SELECT' && control.multiple) {
+                  $(control).val(null).trigger('change');
+              }
+
+              if ($(control).hasClass('select2-hidden-accessible')) {
+                  $(control).val(null).trigger('change');
+              }
+          }
 
           function updateFilterVisibility() {
               Object.keys(filterMap).forEach(key => {
                   const mapping = filterMap[key];
                   const checkbox = document.getElementById(mapping.checkboxId);
                   const filterGroup = document.getElementById(mapping.groupId);
+                  const control = document.getElementById(mapping.controlId);
 
                   if (checkbox && filterGroup) {
-                      filterGroup.style.display = checkbox.checked ? "block" : "none";
+                      const isChecked = checkbox.checked;
+                      filterGroup.style.display = isChecked ? "block" : "none";
+
+                      // Clear filter
+                      if (!isChecked && control) {
+                          clearFilterControl(mapping.controlId);
+                      }
                   }
               });
           }
@@ -363,7 +384,7 @@
                   }
               });
               $('#<%= hfSelectedIDs.ClientID %>').val(selectedIDs.join(','));
-              console.log('Selected IDs:', selectedIDs);
+              //console.log('Selected IDs:', selectedIDs);
           }
 
           function InitializeStoreFilter() {
@@ -521,13 +542,33 @@
 
           function InitializeItemVendorFilter() {
               try {
-                  $('#<%= item.ClientID %>, #<%= vendor.ClientID %>').select2({
-                      placeholder: 'Select item or vendor',
-                      allowClear: true,
-                      minimumResultsForSearch: 1
-                  });
+                  $('#<%= item.ClientID %>, #<%= vendor.ClientID %>').each(function () {
+                      var $el = $(this);
 
-                  console.log("Select2 initialized for item and vendor filters.");
+                      if ($el.hasClass("select2-hidden-accessible")) {
+                          $el.select2('destroy');
+                      }
+
+                      $el.removeClass('select2-hidden-accessible')
+                          .next('.select2-container').remove();
+
+                      $el.select2({
+                          placeholder: 'Select item or vendor',
+                          allowClear: true,
+                          minimumResultsForSearch: 1,
+                          width: '100%',
+                          dropdownParent: $el.closest('.filter-group'),
+
+                          templateResult: function (data) {
+                              return data.text;
+                          },
+
+                          templateSelection: function (data) {
+                              if (!data.id) return data.text;
+                              return data.id;
+                          }
+                      });
+                  });
               } catch (err) {
                   Swal.fire({
                       icon: 'error',
@@ -647,42 +688,28 @@
               }
           }
 
-          function handleApplyFilters() {
-              let anyFilterActive = false;
-              for (const [key, mapping] of Object.entries(filterMap)) {
-                  const checkbox = document.getElementById(mapping.checkboxId);
-                  const control = document.getElementById(mapping.controlId);
+         function handleApplyFilters() {
+              const grid = $('#<%= GridView2.ClientID %>');
 
-                  if (!checkbox || !control) continue;
+                 // Check if at least one filter has a value
+                 let hasAnyFilter =
+                  ($('#<%= filterStore.ClientID %>').is(':checked') && $('#<%= lstStoreFilter.ClientID %>').val()?.length > 0) ||
+                  ($('#<%= filterItem.ClientID %>').is(':checked') && $('#<%= item.ClientID %>').val()) ||
+                  ($('#<%= filterVendor.ClientID %>').is(':checked') && $('#<%= vendor.ClientID %>').val()) ||
+                  ($('#<%= filterRegistrationDate.ClientID %>').is(':checked') && $('#<%= txtRegDateFilter.ClientID %>').val()) ||
+                  ($('#<%= filterDivisionCode.ClientID %>').is(':checked') && $('#<%= txtDivisionCodeFilter.ClientID %>').val());
 
-                  if (checkbox.checked) {
-                      let hasValue = false;
-                      if (control.tagName === 'SELECT') {
-                          hasValue = control.multiple ?
-                              control.selectedOptions.length > 0 :
-                              control.selectedIndex > 0 && control.value !== "";
-                      }
-                      else if (control.tagName === 'INPUT') {
-                          hasValue = control.value.trim() !== "";
-                      }
+             if (!hasAnyFilter) {
+                 Swal.fire('Warning!', 'Please select at least one filter with a value.', 'warning');
+                 return false;
+             }
 
-                      if (hasValue) {
-                          anyFilterActive = true;
-                          break;
-                      }
-                  }
-              }
-
-              if (!anyFilterActive) {
-                  Swal.fire('Warning!', 'Please select at least one filter to apply and ensure it has a value.', 'warning');
-                  return false;
-              }
-
-              document.getElementById('gridCol').style.height = "74vh";
-              document.getElementById('gridCol').style.width = "auto";
-
-              return true;
-          }
+             if ($.fn.DataTable.isDataTable(grid)) {
+                 grid.DataTable().ajax.reload();
+             } else {
+                 initializeComponents();
+             }
+         }
 
           Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
 
@@ -881,9 +908,9 @@
                                             <div class="form-group mt-3">
                                                 <asp:Button ID="btnApplyFilter" runat="server"
                                                     CssClass="btn text-white mb-1"
-                                                    Style="background: #A10D54;"
+                                                    Style="background-color: #a10d54;"
                                                     Text="Apply Filters"
-                                                    OnClientClick="return handleApplyFilters();" OnClick="ApplyFilters_Click"
+                                                    OnClientClick="handleApplyFilters(); return false;"
                                                     CausesValidation="false" />
 
                                                 <asp:Button ID="btnResetFilter" runat="server"

@@ -2,10 +2,12 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
      <script type="text/javascript">
          $(document).ready(function () {
+             initializeDataTable();
              InitializeGridEditStores();
              setupPermissionToggles();
              if (typeof (Sys) !== 'undefined') {
                  Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
+                     initializeDataTable();
                      InitializeGridEditStores();
                      setupPermissionToggles();
                  });
@@ -20,6 +22,77 @@
               listBox.addEventListener('change', updateLocationPillsDisplay);
           }
       });
+
+         function initializeDataTable() {
+             const grid = $("#<%= GridView2.ClientID %>");
+    
+    if (grid.length === 0 || grid.find('tr').length <= 1) { // Changed to <= 1
+        console.log('Grid not found or insufficient rows');
+        return;
+    }
+
+    if ($.fn.DataTable.isDataTable(grid)) {
+        grid.DataTable().destroy();
+        grid.removeAttr('style');
+    }
+
+    // Only initialize if not in edit mode
+         if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %> === false) {
+             // Ensure proper table structure
+             if (grid.find('thead').length === 0) {
+                 const headerRow = grid.find('tr:first').detach();
+                 grid.prepend($('<thead/>').append(headerRow));
+
+                 // Create tbody if it doesn't exist
+                 if (grid.find('tbody').length === 0) {
+                     const remainingRows = grid.find('tr').detach();
+                     grid.append($('<tbody/>').append(remainingRows));
+                 }
+             }
+
+             const headerCols = grid.find('thead tr:first th').length;
+             const bodyCols = grid.find('tbody tr:first td').length;
+
+             if (headerCols !== bodyCols) {
+                 console.error('Header and body column count mismatch:', headerCols, 'vs', bodyCols);
+                 return;
+             }
+
+             try {
+                 grid.DataTable({
+                     responsive: true,
+                     paging: true,
+                     searching: true,
+                     ordering: true,
+                     info: true,
+                     scrollX: false,
+                     scrollY: "63vh",
+                     scrollCollapse: true,
+                     autoWidth: true,
+                     stateSave: true,
+                     processing: false,
+                     lengthMenu: [[50, 100, 200], [50, 100, 200]],
+                     columnDefs: [
+                         { orderable: false, targets: [6], width: "107px", className: "text-center" },
+                         { targets: [3], width: "53px", className: "text-center" },
+                         { targets: [1], width: "113px", className: "text-center" },
+                         { targets: [0], width: "70px", className: "text-center" },
+                         { targets: [4], width: "191px", className: "text-center" },
+                         { targets: [5], className: "align-left" },
+                         { targets: [2], width: "103px" },
+                         { targets: '_all', orderSequence: ["asc", "desc", ""] }
+                     ],
+                     dom: '<"top"lf>rt<"bottom"ip><"clear">', 
+                     language: {
+                         emptyTable: "No users found",
+                         zeroRecords: "No matching users found"
+                     }
+                 });
+             } catch (e) {
+                 console.error('DataTable initialization error:', e);
+             }
+         }
+     }
 
          function InitializeGridEditStores() {
              $('.store-select').each(function () {
@@ -308,14 +381,36 @@
          });
 
      </script>
+    <style>
+        #<%= GridView2.ClientID %> .btn {
+            border: none !important;
+            box-shadow: none !important;
+        }
+    
+        /* Specific fix for action buttons */
+        #<%= GridView2.ClientID %> .btn.btn-sm {
+            border: none !important;
+            outline: none !important;
+        }
+    
+        /* Remove focus shadow */
+        #<%= GridView2.ClientID %> .btn:focus {
+            box-shadow: none !important;
+            outline: none !important;
+        }
+
+        tbody, td, tfoot, th, thead, tr{
+            border-bottom: 1px solid #d0caca ;
+            border-top-style: none;
+        }
+    </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
        <div class="d-flex justify-content-lg-around align-items-center">
            <h2>User Management</h2>
            <a href="regeForm.aspx" class="btn text-white" style="background-color:#188fa6;"><i class="fa-solid fa-user-plus"></i> Add New User</a>
        </div>
-        <div class="container overflow-x-scroll overflow-y-scroll" style="height:557px;">
-         
+        <div class="container shadow-lg p-3 mt-2 rounded-4 table-responsive">
 
             <asp:HiddenField ID="hfSelectedRows" runat="server" />
             <asp:HiddenField ID="hfSelectedIDs" runat="server" />
@@ -324,168 +419,216 @@
             <asp:HiddenField ID="hfEditedRowId" runat="server" />
 
             <asp:ScriptManager ID="ScriptManager1" runat="server" />
-            <asp:UpdatePanel ID="upGrid" runat="server">
-              <ContentTemplate>
-                 <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1"
-                     DataKeyNames="id" OnRowEditing="GridView2_RowEditing"
-                     OnRowUpdating="GridView2_RowUpdating" OnRowDeleting="GridView2_RowDeleting" OnRowCancelingEdit="GridView2_RowCancelingEdit"
-                     OnRowDataBound="GridView2_RowDataBound">
-                     <Columns>
-                         <asp:BoundField DataField="id" HeaderText="ID" ReadOnly="true" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" ItemStyle-CssClass="fixed-column-1" HeaderStyle-BackColor="Gray" HeaderStyle-ForeColor="White" />
+           
+            <div class="card p-3">
+                 <asp:UpdatePanel ID="upGrid" runat="server">
+                   <ContentTemplate>
+                      <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-hover table-bordered"
+                          DataKeyNames="id" OnRowEditing="GridView2_RowEditing"
+                          OnRowUpdating="GridView2_RowUpdating" OnRowDeleting="GridView2_RowDeleting" OnRowCancelingEdit="GridView2_RowCancelingEdit"
+                          OnRowDataBound="GridView2_RowDataBound" >
+                          <Columns>
+                              <asp:BoundField DataField="id" HeaderText="ID" ReadOnly="true" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" HeaderStyle-BackColor="Gray" HeaderStyle-ForeColor="White" />
         
-                         <asp:TemplateField HeaderText="Username" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" ItemStyle-CssClass="fixed-column-1">
-                             <ItemTemplate>
-                                 <asp:Label ID="lblUsername" runat="server" Text='<%# Eval("username") %>'></asp:Label>
-                             </ItemTemplate>
-                             <EditItemTemplate>
-                                 <asp:TextBox ID="txtUsername" runat="server" Text='<%# Bind("username") %>' 
-                                     CssClass="form-control" />
-                             </EditItemTemplate>
-                              <HeaderStyle ForeColor="White" BackColor="Gray" />
-                              <ItemStyle HorizontalAlign="Justify" />
-                         </asp:TemplateField>
+                              <asp:TemplateField HeaderText="Username" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
+                                  <ItemTemplate>
+                                      <asp:Label ID="lblUsername" runat="server" Text='<%# Eval("username") %>'></asp:Label>
+                                  </ItemTemplate>
+                                  <EditItemTemplate>
+                                      <asp:TextBox ID="txtUsername" runat="server" Text='<%# Bind("username") %>' 
+                                          CssClass="form-control" />
+                                  </EditItemTemplate>
+                                   <HeaderStyle ForeColor="White" BackColor="Gray" />
+                                   <ItemStyle HorizontalAlign="Justify" />
+                              </asp:TemplateField>
         
-                         <asp:TemplateField HeaderText="Password" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" ItemStyle-CssClass="fixed-column-1">
-                             <ItemTemplate>••••••••</ItemTemplate>
-                             <EditItemTemplate>
-                                 <asp:TextBox ID="txtPassword" runat="server" TextMode="Password" 
-                                     CssClass="form-control" placeholder="Leave blank to keep current" />
-                             </EditItemTemplate>
-                               <HeaderStyle ForeColor="White" BackColor="Gray" />
-                               <ItemStyle HorizontalAlign="Justify" />
-                         </asp:TemplateField>
+                              <asp:TemplateField HeaderText="Password" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
+                                  <ItemTemplate>••••••••</ItemTemplate>
+                                  <EditItemTemplate>
+                                      <asp:TextBox ID="txtPassword" runat="server" TextMode="Password" 
+                                          CssClass="form-control" placeholder="Leave blank to keep current" />
+                                  </EditItemTemplate>
+                                    <HeaderStyle ForeColor="White" BackColor="Gray" />
+                                    <ItemStyle HorizontalAlign="Justify" />
+                              </asp:TemplateField>
         
-                         <asp:TemplateField HeaderText="Enabled" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" ItemStyle-CssClass="fixed-column-1">
-                             <ItemTemplate>
-                                 <asp:CheckBox ID="chkEnabledItem" runat="server" 
-                                     Checked='<%# Eval("isEnabled") %>' Enabled="false" />
-                             </ItemTemplate>
-                             <EditItemTemplate>
-                                 <asp:CheckBox ID="chkEnabled" runat="server" 
-                                     Checked='<%# Bind("isEnabled") %>' />
-                             </EditItemTemplate>
-                               <HeaderStyle ForeColor="White" BackColor="Gray" />
-                               <ItemStyle HorizontalAlign="Justify" />
-                         </asp:TemplateField>
+                              <asp:TemplateField HeaderText="Enabled" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
+                                  <ItemTemplate>
+                                      <asp:CheckBox ID="chkEnabledItem" runat="server" 
+                                          Checked='<%# Eval("isEnabled") %>' Enabled="false" />
+                                  </ItemTemplate>
+                                  <EditItemTemplate>
+                                      <asp:CheckBox ID="chkEnabled" runat="server" 
+                                          Checked='<%# Bind("isEnabled") %>' />
+                                  </EditItemTemplate>
+                                    <HeaderStyle ForeColor="White" BackColor="Gray" />
+                                    <ItemStyle HorizontalAlign="Justify" />
+                              </asp:TemplateField>
 
-                         <asp:TemplateField HeaderText="Stores" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" ItemStyle-CssClass="fixed-column-1">
-                             <ItemTemplate>
-                                 <%# Eval("StoreNos") %>
-                             </ItemTemplate>
+                              <asp:TemplateField HeaderText="Stores" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
+                                  <ItemTemplate>
+                                      <%# Eval("StoreNos") %>
+                                  </ItemTemplate>
 
-                             <EditItemTemplate>
-                                 <asp:HiddenField ID="hfStoreIds" runat="server"
-                                                  Value='<%# Eval("StoreNos") %>' />
-                                 <asp:ListBox ID="lstStores" runat="server"
-                                              SelectionMode="Multiple"
-                                              CssClass="store-select form-control me-2"
-                                              Style="display:none; width:100%;" />
-                                 <div id="locationPillsContainer" class="location-pills-container mb-2"></div>
-                             </EditItemTemplate>
-                               <HeaderStyle ForeColor="White" BackColor="Gray" />
-                               <ItemStyle HorizontalAlign="Justify" />
-                         </asp:TemplateField>
+                                  <EditItemTemplate>
+                                      <asp:HiddenField ID="hfStoreIds" runat="server"
+                                                       Value='<%# Eval("StoreNos") %>' />
+                                      <asp:ListBox ID="lstStores" runat="server"
+                                                   SelectionMode="Multiple"
+                                                   CssClass="store-select form-control me-2"
+                                                   Style="display:none; width:100%;" />
+                                      <div id="locationPillsContainer" class="location-pills-container mb-2"></div>
+                                  </EditItemTemplate>
+                                    <HeaderStyle ForeColor="White" BackColor="Gray" />
+                                    <ItemStyle HorizontalAlign="Justify" />
+                              </asp:TemplateField>
 
-                             <asp:TemplateField HeaderText="Permissions" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" ItemStyle-CssClass="fixed-column-1">
-                               <ItemTemplate>
-                                 <%# Eval("Permissions") %>
-                               </ItemTemplate>
-                               <EditItemTemplate>
-                                 <div>
-                                   <div class="form-check">
-                                    <asp:CheckBox ID="chkExpiry_Enable" runat="server" CssClass="form-check-input perm-toggle bg-transparent" />
-                                    <label class="form-check-label" for="chkExpiry_Enable">Expiry List</label>
-                                  </div>
-                                  <div id="permExpiry" class="permission-options ms-4 mb-2 d-inline" >
-                                    <asp:RadioButton ID="rdoExpiry_View" runat="server" GroupName="ExpiryList" Text="View" CssClass="form-check-input bg-transparent me-1" /> 
-                                    <asp:RadioButton ID="rdoExpiry_Edit" runat="server" GroupName="ExpiryList" Text="Edit" CssClass="form-check-input bg-transparent me-1" /> 
-                                    <asp:RadioButton ID="rdoExpiry_Admin" runat="server" GroupName="ExpiryList" Text="Admin" CssClass="form-check-input bg-transparent me-1" />
-                                    <asp:RadioButton ID="rdoExpiry_Super" runat="server" GroupName="ExpiryList" Text="Super" CssClass="form-check-input bg-transparent me-1" /> 
-                                    <asp:RadioButton ID="rdoExpiry_Super1" runat="server" GroupName="ExpiryList" Text="Super1" CssClass="form-check-input bg-transparent me-1" /> 
-                                  </div>
+                             <asp:TemplateField HeaderText="Permissions" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
+                                  <ItemTemplate>
+                                      <%# Eval("Permissions") %>
+                                  </ItemTemplate>
+                                  <EditItemTemplate>
+                                    <div style="text-align: left !important;">
+                                      <div class="form-check" style="text-align: left !important; display: block !important;">
+                                       <asp:CheckBox ID="chkExpiry_Enable" runat="server" CssClass="form-check-input perm-toggle" style="float: left !important; margin-right: 8px !important;" />
+                                       <label class="form-check-label" for="chkExpiry_Enable" style="display: block !important; text-align: left !important; margin-left: 20px !important;">Expiry List</label>
+                                     </div>
+                                     <div id="permExpiry" class="permission-options ms-4 mb-2" style="text-align: left !important; display: block !important; clear: both !important;">
+                                       <div>
+                                         <asp:RadioButton ID="rdoExpiry_View" runat="server" GroupName="ExpiryList" Text="View" CssClass="form-check-input me-1" />
+                                         <asp:RadioButton ID="rdoExpiry_Edit" runat="server" GroupName="ExpiryList" Text="Edit" CssClass="form-check-input me-1" />
+                                         <asp:RadioButton ID="rdoExpiry_Admin" runat="server" GroupName="ExpiryList" Text="Admin" CssClass="form-check-input me-1" />
+                                         <asp:RadioButton ID="rdoExpiry_Super" runat="server" GroupName="ExpiryList" Text="Super" CssClass="form-check-input me-1" />
+                                         <asp:RadioButton ID="rdoExpiry_Super1" runat="server" GroupName="ExpiryList" Text="Super1" CssClass="form-check-input me-1" />
+                                       </div>
+                                     </div>
           
-                                   <div class="form-check">
-                                    <asp:CheckBox ID="chkNegative_Enable" runat="server" CssClass="form-check-input perm-toggle bg-transparent" />
-                                    <label class="form-check-label" for="chkNegative_Enable">Negative Inventory</label>
-                                  </div>
-                                  <div runat="server" id="permNegative" class="permission-options ms-4 mb-2 d-inline">
-                                    <asp:RadioButton ID="rdoNegative_View" runat="server" GroupName="NegativeInventory" Text="View" CssClass="form-check-input bg-transparent me-1" /> 
-                                    <asp:RadioButton ID="rdoNegative_Edit" runat="server" GroupName="NegativeInventory" Text="Edit" CssClass="form-check-input bg-transparent me-1" />
-                                    <asp:RadioButton ID="rdoNegative_Admin" runat="server" GroupName="NegativeInventory" Text="Admin" CssClass="form-check-input bg-transparent me-1" />
-                                    <asp:RadioButton ID="rdoNegative_Super" runat="server" GroupName="NegativeInventory" Text="Super" CssClass="form-check-input bg-transparent me-1" /> 
-                                  </div>
+                                      <div class="form-check" style="text-align: left !important; display: block !important;">
+                                       <asp:CheckBox ID="chkNegative_Enable" runat="server" CssClass="form-check-input perm-toggle" style="float: left !important; margin-right: 8px !important;" />
+                                       <label class="form-check-label" for="chkNegative_Enable" style="display: block !important; text-align: left !important; margin-left: 20px !important;">Negative Inventory</label>
+                                     </div>
+                                     <div runat="server" id="permNegative" class="permission-options ms-4 mb-2" style="text-align: left !important; display: block !important; clear: both !important;">
+                                       <div>
+                                         <asp:RadioButton ID="rdoNegative_View" runat="server" GroupName="NegativeInventory" Text="View" CssClass="form-check-input me-1" />
+                                         <asp:RadioButton ID="rdoNegative_Edit" runat="server" GroupName="NegativeInventory" Text="Edit" CssClass="form-check-input me-1" />
+                                         <asp:RadioButton ID="rdoNegative_Admin" runat="server" GroupName="NegativeInventory" Text="Admin" CssClass="form-check-input me-1" />
+                                         <asp:RadioButton ID="rdoNegative_Super" runat="server" GroupName="NegativeInventory" Text="Super" CssClass="form-check-input me-1" />
+                                       </div>
+                                     </div>
 
-                                 <div class="form-check">
-                                   <asp:CheckBox ID="chkSystem_Enable" runat="server" CssClass="form-check-input perm-toggle bg-transparent"  />
-                                   <label class="form-check-label" for="chkSystem_Enable">System Settings</label>
-                                 </div>
-                                 <div runat="server" id="permSystem" class="permission-options ms-4 mb-2 d-inline">
-                                   <asp:RadioButton ID="rdoSystem_View" runat="server" GroupName="SystemSettings" Text="View" CssClass="form-check-input bg-transparent me-1" /> 
-                                   <asp:RadioButton ID="rdoSystem_Edit" runat="server" GroupName="SystemSettings" Text="Edit" CssClass="form-check-input bg-transparent me-1" /> 
-                                   <asp:RadioButton ID="rdoSystem_Admin" runat="server" GroupName="SystemSettings" Text="Admin" CssClass="form-check-input bg-transparent me-1" /> 
-                                   <asp:RadioButton ID="rdoSystem_Super" runat="server" GroupName="SystemSettings" Text="Super" CssClass="form-check-input bg-transparent me-1" /> 
-                                 </div>
+                                    <div class="form-check" style="text-align: left !important; display: block !important;">
+                                      <asp:CheckBox ID="chkSystem_Enable" runat="server" CssClass="form-check-input perm-toggle" style="float: left !important; margin-right: 8px !important;" />
+                                      <label class="form-check-label" for="chkSystem_Enable" style="display: block !important; text-align: left !important; margin-left: 20px !important;">System Settings</label>
+                                    </div>
+                                    <div runat="server" id="permSystem" class="permission-options ms-4 mb-2" style="text-align: left !important; display: block !important; clear: both !important;">
+                                      <div>
+                                        <asp:RadioButton ID="rdoSystem_View" runat="server" GroupName="SystemSettings" Text="View" CssClass="form-check-input me-1" />
+                                        <asp:RadioButton ID="rdoSystem_Edit" runat="server" GroupName="SystemSettings" Text="Edit" CssClass="form-check-input me-1" />
+                                        <asp:RadioButton ID="rdoSystem_Admin" runat="server" GroupName="SystemSettings" Text="Admin" CssClass="form-check-input me-1" />
+                                        <asp:RadioButton ID="rdoSystem_Super" runat="server" GroupName="SystemSettings" Text="Super" CssClass="form-check-input me-1" />
+                                      </div>
+                                    </div>
 
-                                 <div class="form-check">
-                                   <asp:CheckBox ID="chkCarWay_Enable" runat="server" CssClass="form-check-input perm-toggle bg-transparent" />
-                                   <label class="form-check-label" for="chkCarWay_Enable">Car Way</label>
-                                 </div>
-                                 <div runat="server" id="permCarWay" class="permission-options ms-4 mb-2 d-inline">
-                                   <asp:RadioButton ID="rdoCarWay_View" runat="server" GroupName="CarWay" Text="View" CssClass="form-check-input bg-transparent me-1" /> 
-                                   <asp:RadioButton ID="rdoCarWay_Edit" runat="server" GroupName="CarWay" Text="Edit" CssClass="form-check-input bg-transparent me-1" /> 
-                                   <asp:RadioButton ID="rdoCarWay_Admin" runat="server" GroupName="CarWay" Text="Admin" CssClass="form-check-input bg-transparent me-1" /> 
-                                   <asp:RadioButton ID="rdoCarWay_Super" runat="server" GroupName="CarWay" Text="Super" CssClass="form-check-input bg-transparent me-1" /> 
-                                 </div>
+                                    <div class="form-check" style="text-align: left !important; display: block !important;">
+                                      <asp:CheckBox ID="chkCarWay_Enable" runat="server" CssClass="form-check-input perm-toggle" style="float: left !important; margin-right: 8px !important;" />
+                                      <label class="form-check-label" for="chkCarWay_Enable" style="display: block !important; text-align: left !important; margin-left: 20px !important;">Car Way</label>
+                                    </div>
+                                    <div runat="server" id="permCarWay" class="permission-options ms-4 mb-2" style="text-align: left !important; display: block !important; clear: both !important;">
+                                      <div>
+                                        <asp:RadioButton ID="rdoCarWay_View" runat="server" GroupName="CarWay" Text="View" CssClass="form-check-input me-1" />
+                                        <asp:RadioButton ID="rdoCarWay_Edit" runat="server" GroupName="CarWay" Text="Edit" CssClass="form-check-input me-1" />
+                                        <asp:RadioButton ID="rdoCarWay_Admin" runat="server" GroupName="CarWay" Text="Admin" CssClass="form-check-input me-1" />
+                                        <asp:RadioButton ID="rdoCarWay_Super" runat="server" GroupName="CarWay" Text="Super" CssClass="form-check-input me-1" />
+                                      </div>
+                                    </div>
 
-                                 <div class="form-check">
-                                   <asp:CheckBox ID="chkReorderQuantity_Enable" runat="server" CssClass="form-check-input perm-toggle bg-transparent" />
-                                   <label class="form-check-label" for="chkReorderQuantity_Enable">Reorder Quantity</label>
-                                 </div>
-                                 <div runat="server" id="permReorder" class="permission-options ms-4 mb-2 d-inline">
-                                   <asp:RadioButton ID="rdoReorderQuantity_View" runat="server" GroupName="ReorderQuantity" Text="View" CssClass="form-check-input bg-transparent me-1" /> 
-                                   <asp:RadioButton ID="rdoReorderQuantity_Edit" runat="server" GroupName="ReorderQuantity" Text="Edit" CssClass="form-check-input bg-transparent me-1" />
-                                   <asp:RadioButton ID="rdoReorderQuantity_Admin" runat="server" GroupName="ReorderQuantity" Text="Admin" CssClass="form-check-input bg-transparent me-1" />
-                                   <asp:RadioButton ID="rdoReorderQuantity_Super" runat="server" GroupName="ReorderQuantity" Text="Super" CssClass="form-check-input bg-transparent me-1" /> 
-                                   <asp:RadioButton ID="rdoReorderQuantity_Super1" runat="server" GroupName="ReorderQuantity" Text="Super1" CssClass="form-check-input bg-transparent me-1" /> 
-                                 </div>
+                                    <div class="form-check" style="text-align: left !important; display: block !important;">
+                                      <asp:CheckBox ID="chkReorderQuantity_Enable" runat="server" CssClass="form-check-input perm-toggle" style="float: left !important; margin-right: 8px !important;" />
+                                      <label class="form-check-label" for="chkReorderQuantity_Enable" style="display: block !important; text-align: left !important; margin-left: 20px !important;">Reorder Quantity</label>
+                                    </div>
+                                    <div runat="server" id="permReorder" class="permission-options ms-4 mb-2" style="text-align: left !important; display: block !important; clear: both !important;">
+                                      <div >
+                                        <asp:RadioButton ID="rdoReorderQuantity_View" runat="server" GroupName="ReorderQuantity" Text="View" CssClass="form-check-input me-1" />
+                                        <asp:RadioButton ID="rdoReorderQuantity_Edit" runat="server" GroupName="ReorderQuantity" Text="Edit" CssClass="form-check-input me-1" />
+                                        <asp:RadioButton ID="rdoReorderQuantity_Admin" runat="server" GroupName="ReorderQuantity" Text="Admin" CssClass="form-check-input me-1" />
+                                        <asp:RadioButton ID="rdoReorderQuantity_Super" runat="server" GroupName="ReorderQuantity" Text="Super" CssClass="form-check-input me-1" />
+                                        <asp:RadioButton ID="rdoReorderQuantity_Super1" runat="server" GroupName="ReorderQuantity" Text="Super1" CssClass="form-check-input me-1" />
+                                      </div>
+                                    </div>
 
-                                 <div class="form-check">
-                                   <asp:CheckBox ID="chkConsignList_Enable" runat="server" CssClass="form-check-input perm-toggle bg-transparent" />
-                                   <label class="form-check-label" for="chkConsignList_Enable">Consignment List</label>
-                                 </div>
-                                 <div runat="server" id="permConsign" class="permission-options ms-4 mb-2 d-inline">
-                                   <asp:RadioButton ID="rdoConsignList_View" runat="server" GroupName="ConsignmentList" Text="View" CssClass="form-check-input bg-transparent me-1" /> 
-                                   <asp:RadioButton ID="rdoConsignList_Edit" runat="server" GroupName="ConsignmentList" Text="Edit" CssClass="form-check-input bg-transparent me-1" />
-                                   <asp:RadioButton ID="rdoConsignList_Admin" runat="server" GroupName="ConsignmentList" Text="Admin" CssClass="form-check-input bg-transparent me-1" />
-                                   <asp:RadioButton ID="rdoConsignList_Super" runat="server" GroupName="ConsignmentList" Text="Super" CssClass="form-check-input bg-transparent me-1" /> 
-                                 </div>
+                                    <div class="form-check" style="text-align: left !important; display: block !important;">
+                                      <asp:CheckBox ID="chkConsignList_Enable" runat="server" CssClass="form-check-input perm-toggle" style="float: left !important; margin-right: 8px !important;" />
+                                      <label class="form-check-label" for="chkConsignList_Enable" style="display: block !important; text-align: left !important; margin-left: 20px !important;">Consignment List</label>
+                                    </div>
+                                    <div runat="server" id="permConsign" class="permission-options ms-4 mb-2" style="text-align: left !important; display: block !important; clear: both !important;">
+                                      <div>
+                                        <asp:RadioButton ID="rdoConsignList_View" runat="server" GroupName="ConsignmentList" Text="View" CssClass="form-check-input me-1" />
+                                        <asp:RadioButton ID="rdoConsignList_Edit" runat="server" GroupName="ConsignmentList" Text="Edit" CssClass="form-check-input me-1" />
+                                        <asp:RadioButton ID="rdoConsignList_Admin" runat="server" GroupName="ConsignmentList" Text="Admin" CssClass="form-check-input me-1" />
+                                        <asp:RadioButton ID="rdoConsignList_Super" runat="server" GroupName="ConsignmentList" Text="Super" CssClass="form-check-input me-1" />
+                                      </div>
+                                    </div>
 
-                                <div class="form-check">
-                                  <asp:CheckBox ID="chkTrainingList_Enable" runat="server" CssClass="form-check-input perm-toggle bg-transparent" />
-                                  <label class="form-check-label" for="chkTrainingList_Enable">Training List</label>
-                                </div>
-                                <div runat="server" id="permTraining" class="permission-options ms-4 mb-2 d-inline">
-                                  <asp:RadioButton ID="rdoTrainingList_View" runat="server" GroupName="TrainingList" Text="View" CssClass="form-check-input bg-transparent me-1" /> 
-                                  <asp:RadioButton ID="rdoTrainingList_Edit" runat="server" GroupName="TrainingList" Text="Edit" CssClass="form-check-input bg-transparent me-1" />
-                                  <asp:RadioButton ID="rdoTrainingList_Admin" runat="server" GroupName="TrainingList" Text="Admin" CssClass="form-check-input bg-transparent me-1" />
-                                  <asp:RadioButton ID="rdoTrainingList_Super" runat="server" GroupName="TrainingList" Text="Super" CssClass="form-check-input bg-transparent me-1" /> 
-                                </div>
+                                   <div class="form-check" style="text-align: left !important; display: block !important;">
+                                     <asp:CheckBox ID="chkTrainingList_Enable" runat="server" CssClass="form-check-input perm-toggle" style="float: left !important; margin-right: 8px !important;" />
+                                     <label class="form-check-label" for="chkTrainingList_Enable" style="display: block !important; text-align: left !important; margin-left: 20px !important;">Training List</label>
+                                   </div>
+                                   <div runat="server" id="permTraining" class="permission-options ms-4 mb-2" style="text-align: left !important; display: block !important; clear: both !important;">
+                                     <div>
+                                       <asp:RadioButton ID="rdoTrainingList_View" runat="server" GroupName="TrainingList" Text="View" CssClass="form-check-input me-1" />
+                                       <asp:RadioButton ID="rdoTrainingList_Edit" runat="server" GroupName="TrainingList" Text="Edit" CssClass="form-check-input me-1" />
+                                       <asp:RadioButton ID="rdoTrainingList_Admin" runat="server" GroupName="TrainingList" Text="Admin" CssClass="form-check-input me-1" />
+                                       <asp:RadioButton ID="rdoTrainingList_Super" runat="server" GroupName="TrainingList" Text="Super" CssClass="form-check-input me-1" />
+                                       <asp:RadioButton ID="rdoTrainingList_Approver" runat="server" GroupName="TrainingList" Text="Approver" CssClass="form-check-input me-1" />
+                                     </div>
+                                   </div>
 
-                                 </div>
-                               </EditItemTemplate>
-                                 <HeaderStyle ForeColor="White" BackColor="Gray" />
-                                 <ItemStyle HorizontalAlign="Justify" />
-                             </asp:TemplateField>
+                                    </div>
+                                  </EditItemTemplate>
+                                    <HeaderStyle ForeColor="White" BackColor="Gray" />
+                                    <ItemStyle HorizontalAlign="Left" VerticalAlign="Top" />
+                                </asp:TemplateField>
         
-                         <asp:CommandField ShowEditButton="true" ButtonType="Button" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1"
-                             ControlStyle-CssClass="btn btn-sm m-1 text-white" ControlStyle-BackColor="#188fa6" ItemStyle-CssClass="fixed-column-1" HeaderStyle-BackColor="Gray" HeaderStyle-ForeColor="White" />
-                         <asp:CommandField ShowDeleteButton="true" ButtonType="Button" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1"
-                             ControlStyle-CssClass="btn btn-sm m-1 btn-danger" ItemStyle-CssClass="fixed-column-1" HeaderStyle-BackColor="Gray" HeaderStyle-ForeColor="White" />
-                     </Columns>
-                 </asp:GridView>
-              </ContentTemplate>
-            </asp:UpdatePanel>
-            
+                             <asp:TemplateField HeaderText="Actions" 
+                                HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" 
+                                HeaderStyle-BackColor="Gray" HeaderStyle-ForeColor="White">
+
+                                <ItemTemplate>
+                                    <!-- Edit Button -->
+                                    <asp:LinkButton ID="btnEdit" runat="server"
+                                        CommandName="Edit"
+                                        CssClass="btn btn-sm m-1 text-white"
+                                        Style="background-color: #188fa6;">
+                                        <i class="fa fa-edit"></i>
+                                    </asp:LinkButton>
+
+                                    <!-- Delete Button -->
+                                    <asp:LinkButton ID="btnDelete" runat="server"
+                                        CommandName="Delete"
+                                        CssClass="btn btn-sm m-1 btn-danger"
+                                       OnClientClick="return showDeleteSweetAlert(this);">
+                                        <i class="fa fa-trash"></i>
+                                    </asp:LinkButton>
+                                </ItemTemplate>
+                                <EditItemTemplate>
+                                  <div class="text-center">
+                                      <asp:LinkButton ID="btnUpdate" runat="server" CommandName="Update" CausesValidation="False"
+                                          CssClass="btn btn-sm text-dark me-1" BackColor="#9ad9fe" ToolTip="Update">
+                                          <i class="fas fa-save"></i>
+                                      </asp:LinkButton>
+                                      <asp:LinkButton ID="btnCancel" runat="server" CommandName="Cancel" CausesValidation="False"
+                                          CssClass="btn btn-sm text-white btn-secondary" ToolTip="Cancel">
+                                          <i class="fas fa-times"></i>
+                                      </asp:LinkButton>
+                                  </div>
+                              </EditItemTemplate>
+                            </asp:TemplateField>
+
+                          </Columns>
+                      </asp:GridView>
+                   </ContentTemplate>
+                 </asp:UpdatePanel>
+            </div>
         </div>
 
 </asp:Content>

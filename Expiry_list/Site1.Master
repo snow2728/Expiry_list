@@ -322,6 +322,12 @@
                                                     <i class="fa-solid fa-calendar-check"></i>Training Schedule Dashboard
                                                 </a>
                                         <% } %>
+                                          <% if (perm == "admin" || perm == "approver")
+                                            { %>
+                                                 <a href="approve.aspx" class="nav-link <%= (currentPage == "approve.aspx" ? "active3" : "") %>">
+                                                     <i class="fa-solid fa-cancel"></i>Canceled Schedules
+                                                 </a>
+                                         <% } %>
                                         <%
                                     } // end TrainingList
                                }

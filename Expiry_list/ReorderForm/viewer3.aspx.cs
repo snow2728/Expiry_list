@@ -13,6 +13,7 @@ using System.Web.Services;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
+using DocumentFormat.OpenXml.Office.Word;
 using Newtonsoft.Json;
 
 namespace Expiry_list.ReorderForm
@@ -26,8 +27,8 @@ namespace Expiry_list.ReorderForm
             if (Request.HttpMethod == "POST" && !string.IsNullOrEmpty(Request["draw"]))
             {
                 RespondWithData();
-                PopulateItemsDropdown();
-                PopulateVendorDropdown();
+                //PopulateItemsDropdown();
+                //PopulateVendorDropdown();
                 return;
             }
 
@@ -59,7 +60,6 @@ namespace Expiry_list.ReorderForm
             }
             else
             {
-                // Restore ViewState for filter checkboxes
                 if (ViewState["SelectedItem"] != null)
                 {
                     item.SelectedValue = ViewState["SelectedItem"].ToString();
@@ -75,15 +75,51 @@ namespace Expiry_list.ReorderForm
         {
             using (SqlConnection conn = new SqlConnection(strcon))
             {
+                // DataTables request parameters
                 int draw = Convert.ToInt32(Request["draw"]);
                 int start = Convert.ToInt32(Request["start"]);
                 int length = Convert.ToInt32(Request["length"]);
                 int orderColumnIndex = Convert.ToInt32(Request["order[0][column]"]);
                 string orderDir = Request["order[0][dir]"] ?? "asc";
+                string searchValue = Request["search[value]"] ?? "";
 
+                // Filters
+                string item = Request["item"] ?? "";
+                string vendor = Request["vendor"] ?? "";
+                string action = Request["action"] ?? "";
+                string status = Request["status"] ?? "";
+                string staff = Request["staff"] ?? "";
+                string owner = Request["owner"] ?? "";
+                string from = Request["fromDate"] ?? "";
+                string to = Request["toDate"] ?? "";
+                string storeNO = Request["storeNO"] ?? "";
+                string division = Request["divisionCode"] ?? "";
+
+                bool hasFrom = DateTime.TryParse(from, out DateTime fromDate);
+                bool hasTo = DateTime.TryParse(to, out DateTime toDate);
+
+                if (length == 0) length = 100;
+
+                string[] columns = {
+                    "id", "no", "itemNo", "description", "qty", "uom",
+                    "packingInfo", "storeNo", "vendorNo", "vendorName",
+                    "divisionCode", "regeDate", "approveDate", "approver",
+                    "note", "action", "status", "remark", "completedDate", "owner"
+                };
+
+                string orderByClause = "ORDER BY no ASC";
+                if (orderColumnIndex >= 0 && orderColumnIndex < columns.Length)
+                {
+                    string orderColumn = columns[orderColumnIndex];
+                    orderByClause = $"ORDER BY [{orderColumn}] {orderDir}";
+                }
+
+                var where = new StringBuilder();
+                where.Append(" (status IN ('Reorder Done', 'No Reordering')) AND (approved = 'approved')");
+
+                // Permission check
                 string username = User.Identity.Name;
                 var permissions = GetAllowedFormsByUser(username);
-
                 if (!permissions.TryGetValue("ReorderQuantity", out string perm))
                 {
                     Response.Write("{\"error\":\"Unauthorized\"}");
@@ -91,91 +127,160 @@ namespace Expiry_list.ReorderForm
                     return;
                 }
 
+                if (!string.IsNullOrEmpty(searchValue))
+                    where.Append(@"
+                            AND (
+                                no LIKE @search OR 
+                                storeNo LIKE @search OR 
+                                divisionCode LIKE @search OR 
+                                itemNo LIKE @search OR 
+                                description LIKE @search OR 
+                                packingInfo LIKE @search OR 
+                                qty LIKE @search OR 
+                                uom LIKE @search OR 
+                                action LIKE @search OR 
+                                status LIKE @search OR 
+                                remark LIKE @search OR 
+                                approver LIKE @search OR 
+                                vendorNo LIKE @search OR 
+                                vendorName LIKE @search OR 
+                                CONVERT(varchar(10), regeDate, 103) LIKE @search OR 
+                                CONVERT(varchar(10), approveDate, 103) LIKE @search OR owner LIKE @search
+                            )");
+
                 List<string> storeNos = GetLoggedInUserStoreNames();
-                bool hasHO = storeNos.Any(s => s.Equals("HO", StringComparison.OrdinalIgnoreCase));
                 string selectedMonth = Request.Form["month"];
-                string searchValue = Request["search"] ?? "";
 
-                StringBuilder whereClause = new StringBuilder("1=1");
-                List<SqlParameter> parameters = new List<SqlParameter>();
-
-                whereClause.Append(" AND (status IN ('Reorder Done', 'No Reordering')) AND (approved = 'approved')");
-
-                // Month filter
-                if (!string.IsNullOrEmpty(selectedMonth) &&
+                //From–To date filter
+                if (hasFrom && hasTo)
+                    where.Append(" AND regeDate >= @FromDate AND regeDate < DATEADD(day, 1, @ToDate)");
+                else if (hasFrom)
+                    where.Append(" AND regeDate >= @FromDate");
+                else if (hasTo)
+                    where.Append(" AND regeDate < DATEADD(day, 1, @ToDate)");
+                else if (!string.IsNullOrEmpty(selectedMonth) &&
                     DateTime.TryParseExact(selectedMonth, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime monthDate))
                 {
-                    whereClause.Append(" AND YEAR(regeDate) = @Year AND MONTH(regeDate) = @Month");
-                    parameters.Add(new SqlParameter("@Year", monthDate.Year));
-                    parameters.Add(new SqlParameter("@Month", monthDate.Month));
+                    where.Append(" AND YEAR(regeDate) = @Year AND MONTH(regeDate) = @Month");
                 }
 
-
-                if (!hasHO && storeNos.Count > 0)
+                    storeNos = storeNos.Select(s => s.Trim().ToUpper()).ToList();
+                bool hasHO = storeNos.Contains("HO");
+                if (!hasHO && storeNos.Any())
                 {
-                    string[] storeConditions = storeNos.Select((s, i) => $"@store{i}").ToArray();
-                    whereClause.Append($" AND storeNo IN ({string.Join(",", storeConditions)})");
-
-                    for (int i = 0; i < storeNos.Count; i++)
-                    {
-                        parameters.Add(new SqlParameter($"@store{i}", storeNos[i]));
-                    }
+                    var storeParams = storeNos.Select((s, i) => $"@store{i}").ToArray();
+                    where.Append($" AND UPPER(storeNo) IN ({string.Join(",", storeParams)})");
                 }
 
-                // Search
-                if (!string.IsNullOrEmpty(searchValue))
-                {
-                    whereClause.Append(" AND (");
-                    string[] searchableColumns = {
-                        "no", "itemNo", "description","qty", "uom", "packingInfo", "storeNo",
-                        "approver","vendorNo", "vendorName", "divisionCode", "regeDate", "approveDate", "action", "status","note", "remark", "completedDate", "owner"
-                    };
+                // Individual filters
+                if (!string.IsNullOrEmpty(item))
+                    where.Append(" AND itemNo = @item");
 
-                    for (int i = 0; i < searchableColumns.Length; i++)
-                    {
-                        whereClause.Append($"{searchableColumns[i]} LIKE @SearchValue");
-                        if (i < searchableColumns.Length - 1)
-                            whereClause.Append(" OR ");
-                    }
+                if (!string.IsNullOrEmpty(vendor))
+                    where.Append(" AND vendorNo LIKE @vendor");
 
-                    whereClause.Append(")");
-                    parameters.Add(new SqlParameter("@SearchValue", $"%{searchValue}%"));
-                }
+                if (!string.IsNullOrEmpty(action) && action != "0")
+                    where.Append(" AND action = @action");
 
-                string[] columns = {
-                    "id", "no", "itemNo", "description", "qty", "uom",
-                    "packingInfo", "storeNo", "vendorNo", "vendorName","divisionCode", "regeDate", "approveDate", "approver", "note", "action", "status","remark", "completedDate", "owner"
-                };
-                string orderBy = columns.ElementAtOrDefault(orderColumnIndex) ?? "id";
+                if (!string.IsNullOrEmpty(status) && status != "0")
+                    where.Append(" AND status = @status");
 
-                string dataQuery = $@"
-                    SELECT * 
-                    FROM itemListR 
-                    WHERE {whereClause}
-                    ORDER BY {orderBy} {orderDir}
-                    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+                if (!string.IsNullOrEmpty(staff))
+                    where.Append(" AND approver LIKE @staff");
 
-                string countQuery = $"SELECT COUNT(*) FROM itemListR WHERE {whereClause}";
+                if (!string.IsNullOrEmpty(division))
+                    where.Append(" AND divisionCode = @division");
 
-                SqlCommand dataCmd = new SqlCommand(dataQuery, conn);
-                SqlCommand countCmd = new SqlCommand(countQuery, conn);
+                if (!string.IsNullOrEmpty(owner))
+                    where.Append(" AND owner = @owner");
 
-                parameters.ForEach(p =>
-                {
-                    dataCmd.Parameters.AddWithValue(p.ParameterName, p.Value);
-                    countCmd.Parameters.AddWithValue(p.ParameterName, p.Value);
-                });
 
-                dataCmd.Parameters.AddWithValue("@Offset", start);
-                dataCmd.Parameters.AddWithValue("@PageSize", length);
+                if (!string.IsNullOrEmpty(storeNO))
+                    where.Append(" AND storeNo = @storeNO");
 
-                conn.Open();
+                // Main query
+                string query = $@"
+                    SELECT * FROM itemListR WHERE
+                    {where}
+                    {orderByClause}
+                    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
+
                 DataTable dt = new DataTable();
-                new SqlDataAdapter(dataCmd).Fill(dt);
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    // Base parameters
+                    cmd.Parameters.AddWithValue("@Offset", start);
+                    cmd.Parameters.AddWithValue("@PageSize", length);
+                    cmd.Parameters.AddWithValue("@search", $"%{searchValue}%");
 
-                int totalRecords = (int)countCmd.ExecuteScalar();
-                conn.Close();
+                    // Individual filters
+                    if (!string.IsNullOrEmpty(item)) cmd.Parameters.AddWithValue("@item", item);
+                    if (!string.IsNullOrEmpty(vendor)) cmd.Parameters.AddWithValue("@vendor", $"%{vendor}%");
+                    if (!string.IsNullOrEmpty(action)) cmd.Parameters.AddWithValue("@action", action);
+                    if (!string.IsNullOrEmpty(status)) cmd.Parameters.AddWithValue("@status", status);
+                    if (!string.IsNullOrEmpty(staff)) cmd.Parameters.AddWithValue("@staff", $"%{staff}%");
+                    if (!string.IsNullOrEmpty(owner)) cmd.Parameters.AddWithValue("@owner", owner);
+                    if (!string.IsNullOrEmpty(division)) cmd.Parameters.AddWithValue("@division", division);
+                    if (!string.IsNullOrEmpty(storeNO)) cmd.Parameters.AddWithValue("@storeNO", storeNO);
 
+                    // Date parameters
+                    if (hasFrom) cmd.Parameters.AddWithValue("@FromDate", fromDate);
+                    if (hasTo) cmd.Parameters.AddWithValue("@ToDate", toDate);
+
+                    if (!hasHO && storeNos.Any())
+                    {
+                        for (int i = 0; i < storeNos.Count; i++)
+                            cmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
+                    }
+
+                    // Month filter
+                    if (!string.IsNullOrEmpty(selectedMonth) &&
+                        DateTime.TryParseExact(selectedMonth, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime monthDate1))
+                    {
+                        cmd.Parameters.AddWithValue("@Year", monthDate1.Year);
+                        cmd.Parameters.AddWithValue("@Month", monthDate1.Month);
+                    }
+
+                    conn.Open();
+                    new SqlDataAdapter(cmd).Fill(dt);
+                }
+
+                // Count query
+                string countQuery = $"SELECT COUNT(*) FROM itemListR WHERE {where}";
+                int totalRecords = 0;
+                using (SqlCommand countCmd = new SqlCommand(countQuery, conn))
+                {
+                    countCmd.Parameters.AddWithValue("@search", $"%{searchValue}%");
+                    if (!string.IsNullOrEmpty(item)) countCmd.Parameters.AddWithValue("@item", item);
+                    if (!string.IsNullOrEmpty(vendor)) countCmd.Parameters.AddWithValue("@vendor", $"%{vendor}%");
+                    if (!string.IsNullOrEmpty(action)) countCmd.Parameters.AddWithValue("@action", action);
+                    if (!string.IsNullOrEmpty(status)) countCmd.Parameters.AddWithValue("@status", status);
+                    if (!string.IsNullOrEmpty(staff)) countCmd.Parameters.AddWithValue("@staff", $"%{staff}%");
+                    if (!string.IsNullOrEmpty(owner)) countCmd.Parameters.AddWithValue("@owner", owner);
+                    if (!string.IsNullOrEmpty(division)) countCmd.Parameters.AddWithValue("@division", division);
+                    if (!string.IsNullOrEmpty(storeNO)) countCmd.Parameters.AddWithValue("@storeNO", storeNO);
+
+                    if (hasFrom) countCmd.Parameters.AddWithValue("@FromDate", fromDate);
+                    if (hasTo) countCmd.Parameters.AddWithValue("@ToDate", toDate);
+
+                    if (!hasHO && storeNos.Any())
+                    {
+                        for (int i = 0; i < storeNos.Count; i++)
+                            countCmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
+                    }
+
+                    if (!string.IsNullOrEmpty(selectedMonth) &&
+                    DateTime.TryParseExact(selectedMonth, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime monthDate1))
+                    {
+                        countCmd.Parameters.AddWithValue("@Year", monthDate1.Year);
+                        countCmd.Parameters.AddWithValue("@Month", monthDate1.Month);
+                    }
+
+                    if (conn.State != ConnectionState.Open) conn.Open();
+                    totalRecords = (int)countCmd.ExecuteScalar();
+                }
+
+                // Response
                 var data = dt.AsEnumerable().Select(row => new
                 {
                     id = row["id"],
@@ -202,17 +307,19 @@ namespace Expiry_list.ReorderForm
 
                 var response = new
                 {
-                    draw,
+                    draw = draw,
                     recordsTotal = totalRecords,
                     recordsFiltered = totalRecords,
-                    data,
-                    orderColumn = orderColumnIndex,
-                    orderDir
+                    data = data,
+                    debug = new
+                    {
+                        query,
+                        filters = new { item, vendor, storeNO, action, status, staff, owner, division, from, to }
+                    }
                 };
 
-                string jsonResponse = JsonConvert.SerializeObject(response);
                 Response.ContentType = "application/json";
-                Response.Write(jsonResponse);
+                Response.Write(JsonConvert.SerializeObject(response));
                 Response.End();
             }
         }
@@ -320,8 +427,8 @@ namespace Expiry_list.ReorderForm
                 ViewState["SelectedAction"] = ddlActionFilter.SelectedValue;
 
                 ViewState["FilterRegDateChecked"] = filterRegistrationDate.Checked;
-                ViewState["FilterFromDate"] = hfFrom1.Value;
-                ViewState["FilterToDate"] = hfTo1.Value;
+                ViewState["FilterFromDate"] = from1.Text;
+                ViewState["FilterToDate"] = to1.Text;
 
                 ViewState["FilterApproveDateChecked"] = filterApproveDate.Checked;
                 ViewState["SelectedApproveDate"] = txtApproveDateFilter.Text;
