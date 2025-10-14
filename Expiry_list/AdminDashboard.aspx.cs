@@ -246,6 +246,10 @@ namespace Expiry_list
             {
                 redirectUrl = "~/ReorderForm/approval.aspx";
             }
+            else if (allowedForms.ContainsKey("ReorderQuantity") && perm == "super1")
+            {
+                redirectUrl = "~/ReorderForm/viewer3.aspx";
+            }
             else
             {
                 redirectUrl = "~/AdminDashboard.aspx";

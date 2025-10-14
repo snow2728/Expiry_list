@@ -59,6 +59,9 @@
                       searching: true,
                       sorting: true,
                       info: true,
+                      scrollX: true,
+                      scrollY: "63vh",
+                      scrollCollapse: true,
                       order: [[0, 'asc']],
                       stateSave: false,
                       lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
@@ -99,7 +102,7 @@
 
                     <div class="table-responsive">
                         <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" 
-                            CssClass="table table-striped table-hover table-bordered align-middle"
+                           CssClass="table table-striped ResizableGrid table-hover border-2 shadow-lg sticky-grid overflow-x-auto overflow-y-auto display"
                             DataKeyNames="id" AllowPaging="false" PagerSettings-Visible="false"
                             OnRowEditing="GridView2_RowEditing"
                             OnRowUpdating="GridView2_RowUpdating"
@@ -110,7 +113,7 @@
 
                             <Columns>
 
-                                <asp:TemplateField ItemStyle-HorizontalAlign="Center" HeaderText="No">
+                                <asp:TemplateField ItemStyle-HorizontalAlign="Center" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" HeaderText="No">
                                     <ItemTemplate>
                                         <asp:Label ID="lblLinesNo" runat="server" Text='<%# Container.DataItemIndex + 1 %>' />
                                     </ItemTemplate>
@@ -118,7 +121,7 @@
                                     <ItemStyle Width="5%" />
                                 </asp:TemplateField>
 
-                                <asp:TemplateField HeaderText="Topic Name" SortExpression="topicName">
+                                <asp:TemplateField HeaderText="Topic Name" SortExpression="topicName" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                                     <ItemTemplate>
                                         <asp:Label ID="lblTopicName" runat="server" Text='<%# Eval("topicName") %>'></asp:Label>
                                     </ItemTemplate>
@@ -130,7 +133,7 @@
                                     <ItemStyle Width="35%" HorizontalAlign="Justify" />
                                 </asp:TemplateField>
 
-                                <asp:TemplateField HeaderText="Description" SortExpression="description">
+                                <asp:TemplateField HeaderText="Description" SortExpression="description" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                                     <ItemTemplate>
                                         <asp:Label ID="lblDescription" runat="server" Text='<%# Eval("description") %>'></asp:Label>
                                     </ItemTemplate>
@@ -142,7 +145,7 @@
                                     <ItemStyle Width="15%" HorizontalAlign="Justify" />
                                 </asp:TemplateField>
 
-                                <asp:TemplateField HeaderText="Trainer Name" SortExpression="trainerName">
+                                <asp:TemplateField HeaderText="Trainer Name" SortExpression="trainerName" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                                     <ItemTemplate>
                                         <asp:Label ID="lblTrainer" runat="server" Text='<%# Eval("trainerName") %>'></asp:Label>
                                     </ItemTemplate>
@@ -157,7 +160,7 @@
                                     <ItemStyle Width="20%" HorizontalAlign="Justify" />
                                 </asp:TemplateField>
 
-                               <asp:TemplateField HeaderText="Status" SortExpression="IsActive">
+                               <asp:TemplateField HeaderText="Status" SortExpression="IsActive" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                                     <ItemTemplate>
                                         <div style="text-align:left;">
                                             <%# Convert.ToBoolean(Eval("IsActive")) ? "Active" : "Inactive" %>
@@ -174,7 +177,7 @@
                                     <ItemStyle HorizontalAlign="Left" Width="10%" />
                                 </asp:TemplateField>
 
-                                <asp:TemplateField HeaderText="Actions">
+                                <asp:TemplateField HeaderText="Actions" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                                     <ItemTemplate>
                                         <div class="text-center">
 

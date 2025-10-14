@@ -123,6 +123,15 @@ namespace Expiry_list
         protected global::System.Web.UI.WebControls.RadioButton rdoExpiryList_Super;
 
         /// <summary>
+        /// rdoExpiryList_Super1 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RadioButton rdoExpiryList_Super1;
+
+        /// <summary>
         /// chkNegativeInventory_Enable control.
         /// </summary>
         /// <remarks>
@@ -301,6 +310,15 @@ namespace Expiry_list
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.RadioButton rdoReorderQuantity_Super;
+
+        /// <summary>
+        /// rdoReorderQuantity_Super1 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RadioButton rdoReorderQuantity_Super1;
 
         /// <summary>
         /// chkConsignmentList_Enable control.

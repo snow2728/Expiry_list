@@ -7,7 +7,7 @@
              line-height: 15px !important;
          }
          table.dataTable thead tr th {
-              border-bottom: none;
+              border: none;
           }
 
           table td{
@@ -20,13 +20,11 @@
               border-right: none !important;
           }
 
-          /* Base table borders */
-          table.dataTable th,
+          /* table.dataTable th,
           table.dataTable td {
               border-right: 1px solid #ccc;
           }
 
-          /* Remove per-cell borders on sticky columns */
           table.dataTable th.dtfc-fixed-left,
           table.dataTable td.dtfc-fixed-left {
               border-right: none !important;
@@ -37,7 +35,7 @@
           }
           table.dataTable td:last-child {
               border-right: none;
-          }
+          }*/
 
      </style>
 
@@ -68,7 +66,6 @@
           });
 
           let isDataTableInitialized = false;
-
           function initializeComponents() {
               const grid = $("#<%= GridView2.ClientID %>");
 
@@ -109,11 +106,12 @@
                               order: d.order,
                               search: d.search.value,
 
-                              status: $('#<%= ddlApproveFilter.ClientID %>').val(),
-                              store: $('#<%= lstStoreFilter.ClientID %>').val(),
-                              item: $('#<%= item.ClientID %>').val(),
-                              vendor: $('#<%= vendor.ClientID %>').val(),
-                              regDate: $('#<%= txtRegDateFilter.ClientID %>').val()
+                              status: $('#<%= ddlApproveFilter.ClientID %>').val() || "",
+                              store: $('#<%= lstStoreFilter.ClientID %>').val() || "",
+                              item: $('#<%= item.ClientID %>').val() || "",
+                              vendor: $('#<%= vendor.ClientID %>').val() || "",
+                              regDate: $('#<%= txtRegDateFilter.ClientID %>').val() || "",
+                              division: $('#<%= txtDivisionCodeFilter.ClientID %>').val() || "",
                           };
                       }
                   },
@@ -225,10 +223,6 @@
               };
           };
 
-          document.addEventListener('DOMContentLoaded', function () {
-              document.getElementById("link_home").href = "../AdminDashboard.aspx";
-          });
-
           function focusOnEditedRow() {
               const rowId = $('#<%= hfSelectedIDs.ClientID %>').val();
               if (!rowId) return;
@@ -277,26 +271,26 @@
               if (listBox) {
                   listBox.addEventListener('change', updateLocationPillsDisplay);
               }
+
+              document.getElementById("link_home").href = "../AdminDashboard.aspx";
           });
 
           function setupFilterToggle() {
-              const filterMappings = {
-                  '<%= filterStore.ClientID %>': '<%= storeFilterGroup.ClientID %>',
-                  '<%= filterItem.ClientID %>': '<%= itemFilterGroup.ClientID %>',
-                  '<%= filterVendor.ClientID %>': '<%= vendorFilterGroup.ClientID %>',
-                  '<%= filterRegistrationDate.ClientID %>': '<%= regeDateFilterGroup.ClientID %>',
-                  '<%= filterDivisionCode.ClientID %>': '<%= divisionCodeFilterGroup.ClientID %>'
-              };
-
-              Object.entries(filterMappings).forEach(([checkboxId, filterGroupId]) => {
-                  const checkbox = document.getElementById(checkboxId);
-                  const filterGroup = document.getElementById(filterGroupId);
+              Object.entries(filterMap).forEach(([key, mapping]) => {
+                  const checkbox = document.getElementById(mapping.checkboxId);
+                  const filterGroup = document.getElementById(mapping.groupId);
 
                   if (checkbox && filterGroup) {
                       filterGroup.style.display = checkbox.checked ? "block" : "none";
 
                       checkbox.addEventListener("change", function () {
-                          filterGroup.style.display = this.checked ? "block" : "none";
+                          const isChecked = this.checked;
+                          filterGroup.style.display = isChecked ? "block" : "none";
+
+                          // Clear filter value when unchecked
+                          if (!isChecked) {
+                              clearFilterControl(mapping.controlId);
+                          }
                       });
                   }
               });
@@ -310,229 +304,271 @@
                   filterPane.style.display = "block";
                   gridCol.classList.remove("col-md-12");
                   gridCol.classList.add("col-md-10");
-
               } else {
                   filterPane.style.display = "none";
                   gridCol.classList.remove("col-md-10");
                   gridCol.classList.add("col-md-12");
-
               }
           }
 
-      const filterMap = {
-          store: {
-              checkboxId: '<%= filterStore.ClientID %>',
-              controlId: '<%= lstStoreFilter.ClientID %>',
-              groupId: '<%= storeFilterGroup.ClientID %>'
-          },
-          item: {
-              checkboxId: '<%= filterItem.ClientID %>',
-              controlId: '<%= item.ClientID %>',
-              groupId: '<%= itemFilterGroup.ClientID %>'
-          },
-          vendor: {
-              checkboxId: '<%= filterVendor.ClientID %>',
-              controlId: '<%= vendor.ClientID %>',
-              groupId: '<%= vendorFilterGroup.ClientID %>'
-          },
-          registrationDate: { 
-              checkboxId: '<%= filterRegistrationDate.ClientID %>', 
-              controlId: '<%= txtRegDateFilter.ClientID %>',
-              groupId: '<%= regeDateFilterGroup.ClientID %>'
-          },
-          divisionCode: {
-              checkboxId: '<%= filterDivisionCode.ClientID %>',
-               controlId: '<%= txtDivisionCodeFilter.ClientID %>',
-               groupId: '<%= divisionCodeFilterGroup.ClientID %>'
-           }
-      };
-
-      function updateFilterVisibility() {
-          Object.keys(filterMap).forEach(key => {
-              const mapping = filterMap[key];
-              const checkbox = document.getElementById(mapping.checkboxId);
-              const filterGroup = document.getElementById(mapping.groupId);
-
-              if (checkbox && filterGroup) {
-                  filterGroup.style.display = checkbox.checked ? "block" : "none";
-              }
-          });
-      }
-
-      function updateSelectedIDs() {
-          var selectedIDs = [];
-          $('.rowCheckbox:checked').each(function () {
-              var id = $(this).data('id');
-              if (id) {
-                  selectedIDs.push(id);
-              }
-          });
-          $('#<%= hfSelectedIDs.ClientID %>').val(selectedIDs.join(','));
-          console.log('Selected IDs:', selectedIDs);
-      }
-
-      function InitializeStoreFilter() {
-          var $select = $('#<%= lstStoreFilter.ClientID %>');
-          var allOptionId = "all";
-
-          $select.find('option').filter(function () {
-              return $(this).val() === allOptionId;
-          }).slice(1).remove();
-
-          $select.select2({
-              placeholder: "-- Select stores --",
-              closeOnSelect: false,
-              width: '100%',
-              allowClear: true,
-              dropdownParent: $select.closest('.filter-group'),
-              minimumResultsForSearch: 1,
-              escapeMarkup: function (m) { return m; },
-
-              // Add search configuration
-              language: {
-                  noResults: function () {
-                      return "No stores found";
-                  }
+          const filterMap = {
+              store: {
+                  checkboxId: '<%= filterStore.ClientID %>',
+                  controlId: '<%= lstStoreFilter.ClientID %>',
+                  groupId: '<%= storeFilterGroup.ClientID %>'
               },
-              matcher: function (params, data) {
-                  if ($.trim(params.term) === '') {
-                      return data;
-                  }
-
-                  // Check search term
-                  if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
-                      return data;
-                  }
-
-                  return null;
+              item: {
+                  checkboxId: '<%= filterItem.ClientID %>',
+                  controlId: '<%= item.ClientID %>',
+                  groupId: '<%= itemFilterGroup.ClientID %>'
               },
-
-              templateResult: function (data) {
-                  if (!data.id) return data.text;
-                  var isAll = data.id === allOptionId;
-                  var selectedValues = $select.val() || [];
-                  var hasAll = $select.val()?.includes(allOptionId);
-                  var isChecked = isAll ? hasAll : selectedValues.includes(data.id);
-                  var isDisabled = hasAll && !isAll;
-
-                  return $(
-                      '<div class="select2-checkbox-option d-flex align-items-center">' +
-                      '  <input type="checkbox" class="select2-checkbox me-2" ' +
-                      (isChecked ? 'checked' : '') +
-                      (isAll ? ' data-is-all="true"' : '') +
-                      (isDisabled ? ' disabled' : '') + '>' +
-                      '  <div class="select2-text' + (isAll ? ' fw-bold"' : '"') + '>' + data.text + '</div>' +
-                      '</div>'
-                  );
+              vendor: {
+                  checkboxId: '<%= filterVendor.ClientID %>',
+                  controlId: '<%= vendor.ClientID %>',
+                  groupId: '<%= vendorFilterGroup.ClientID %>'
               },
-
-              templateSelection: function (data, container) {
-                  return ''; 
+              registrationDate: { 
+                  checkboxId: '<%= filterRegistrationDate.ClientID %>', 
+                  controlId: '<%= txtRegDateFilter.ClientID %>',
+                  groupId: '<%= regeDateFilterGroup.ClientID %>'
+              },
+              divisionCode: {
+                  checkboxId: '<%= filterDivisionCode.ClientID %>',
+                   controlId: '<%= txtDivisionCodeFilter.ClientID %>',
+                   groupId: '<%= divisionCodeFilterGroup.ClientID %>'
               }
-          });
+          };
 
-          // checkbox
-          $select.data('select2').$dropdown.on('click', '.select2-checkbox', function (e) {
-              var $option = $(this).closest('.select2-results__option');
-              var data = $option.data('data');
-              if (data) {
-                  var isAll = data.id === allOptionId;
-                  var selected = $select.val() || [];
+          function clearFilterControl(controlId) {
+              const control = document.getElementById(controlId);
+              if (!control) return;
 
-                  if (isAll) {
-                      if (this.checked) {
-                          $select.val([allOptionId]).trigger('change');
+              if (control.type === 'select-one') {
+                  control.selectedIndex = 0;
+              } else if (control.type === 'text' || control.type === 'date') {
+                  control.value = '';
+              } else if (control.tagName === 'SELECT' && control.multiple) {
+                  $(control).val(null).trigger('change');
+              }
+
+              if ($(control).hasClass('select2-hidden-accessible')) {
+                  $(control).val(null).trigger('change');
+              }
+          }
+
+          function updateFilterVisibility() {
+              Object.keys(filterMap).forEach(key => {
+                  const mapping = filterMap[key];
+                  const checkbox = document.getElementById(mapping.checkboxId);
+                  const filterGroup = document.getElementById(mapping.groupId);
+                  const control = document.getElementById(mapping.controlId);
+
+                  if (checkbox && filterGroup) {
+                      const isChecked = checkbox.checked;
+                      filterGroup.style.display = isChecked ? "block" : "none";
+
+                      // Clear filter
+                      if (!isChecked && control) {
+                          clearFilterControl(mapping.controlId);
+                      }
+                  }
+              });
+          }
+
+          function updateSelectedIDs() {
+              var selectedIDs = [];
+              $('.rowCheckbox:checked').each(function () {
+                  var id = $(this).data('id');
+                  if (id) {
+                      selectedIDs.push(id);
+                  }
+              });
+              $('#<%= hfSelectedIDs.ClientID %>').val(selectedIDs.join(','));
+              //console.log('Selected IDs:', selectedIDs);
+          }
+
+          function InitializeStoreFilter() {
+              var $select = $('#<%= lstStoreFilter.ClientID %>');
+              var allOptionId = "all";
+
+              $select.find('option').filter(function () {
+                  return $(this).val() === allOptionId;
+              }).slice(1).remove();
+
+              $select.select2({
+                  placeholder: "-- Select stores --",
+                  closeOnSelect: false,
+                  width: '100%',
+                  allowClear: true,
+                  dropdownParent: $select.closest('.filter-group'),
+                  minimumResultsForSearch: 1,
+                  escapeMarkup: function (m) { return m; },
+
+                  // Add search configuration
+                  language: {
+                      noResults: function () {
+                          return "No stores found";
+                      }
+                  },
+                  matcher: function (params, data) {
+                      if ($.trim(params.term) === '') {
+                          return data;
+                      }
+
+                      // Check search term
+                      if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+                          return data;
+                      }
+
+                      return null;
+                  },
+
+                  templateResult: function (data) {
+                      if (!data.id) return data.text;
+                      var isAll = data.id === allOptionId;
+                      var selectedValues = $select.val() || [];
+                      var hasAll = $select.val()?.includes(allOptionId);
+                      var isChecked = isAll ? hasAll : selectedValues.includes(data.id);
+                      var isDisabled = hasAll && !isAll;
+
+                      return $(
+                          '<div class="select2-checkbox-option d-flex align-items-center">' +
+                          '  <input type="checkbox" class="select2-checkbox me-2" ' +
+                          (isChecked ? 'checked' : '') +
+                          (isAll ? ' data-is-all="true"' : '') +
+                          (isDisabled ? ' disabled' : '') + '>' +
+                          '  <div class="select2-text' + (isAll ? ' fw-bold"' : '"') + '>' + data.text + '</div>' +
+                          '</div>'
+                      );
+                  },
+
+                  templateSelection: function (data, container) {
+                      return ''; 
+                  }
+              });
+
+              // checkbox
+              $select.data('select2').$dropdown.on('click', '.select2-checkbox', function (e) {
+                  var $option = $(this).closest('.select2-results__option');
+                  var data = $option.data('data');
+                  if (data) {
+                      var isAll = data.id === allOptionId;
+                      var selected = $select.val() || [];
+
+                      if (isAll) {
+                          if (this.checked) {
+                              $select.val([allOptionId]).trigger('change');
+                          } else {
+                              $select.val([]).trigger('change');
+                          }
                       } else {
-                          $select.val([]).trigger('change');
+                          var index = selected.indexOf(data.id);
+                          if (this.checked && index === -1) {
+                              selected.push(data.id);
+                          } else if (!this.checked && index !== -1) {
+                              selected.splice(index, 1);
+                          }
+                          $select.val(selected).trigger('change');
+                      }
+                  }
+              });
+
+              // Update display on change
+              $select.on('change', function () {
+                  var values = $select.val() || [];
+                  var hasAll = values.includes(allOptionId);
+
+                  if (hasAll) {
+                      if (values.length > 1) {
+                          $select.val([allOptionId]).trigger('change');
+                          return;
                       }
                   } else {
-                      var index = selected.indexOf(data.id);
-                      if (this.checked && index === -1) {
-                          selected.push(data.id);
-                      } else if (!this.checked && index !== -1) {
-                          selected.splice(index, 1);
+                      values = values.filter(v => v !== allOptionId);
+                      if (values.length !== $select.val().length) {
+                          $select.val(values).trigger('change');
                       }
-                      $select.val(selected).trigger('change');
                   }
-              }
-          });
 
-          // Update display on change
-          $select.on('change', function () {
+                  setTimeout(() => {
+                      $select.select2('close');
+                      $select.select2('open');
+                  }, 50);
+
+                  // Update checkboxes in dropdown
+                  updateSelect2Checkboxes($select);
+                  updateLocationPillsDisplay();
+              });
+
+
+              // Initialize display
+              updateLocationPillsDisplay();
+              updateSelect2Checkboxes($select);
+
+              $select.on('select2:selecting select2:unselecting', function (e) {
+                  if (e.params?.args?.originalEvent &&
+                      !$(e.params.args.originalEvent.target).hasClass('select2-checkbox')) {
+                      e.preventDefault();
+                  }
+              });
+
+              $select.on('select2:clearing', function (e) {
+                  $select.data('select2').$dropdown.find('.select2-checkbox')
+                      .prop('checked', false)
+                      .prop('disabled', false);
+                  $select.trigger('input.select2');
+              });
+          }
+
+          function updateSelect2Checkboxes($select) {
               var values = $select.val() || [];
+              var allOptionId = "all";
               var hasAll = values.includes(allOptionId);
 
-              if (hasAll) {
-                  if (values.length > 1) {
-                      $select.val([allOptionId]).trigger('change');
-                      return;
+              var $checkboxes = $select.data('select2').$dropdown.find('.select2-checkbox');
+              $checkboxes.each(function () {
+                  var $cb = $(this);
+                  var data = $cb.closest('.select2-results__option').data('data');
+                  if (data && data.id) {
+                      var isAll = data.id === allOptionId;
+                      var isChecked = isAll ? hasAll : values.includes(data.id);
+                      var isDisabled = hasAll && !isAll;
+
+                      $cb.prop('checked', isChecked)
+                          .prop('disabled', isDisabled);
                   }
-              } else {
-                  values = values.filter(v => v !== allOptionId);
-                  if (values.length !== $select.val().length) {
-                      $select.val(values).trigger('change');
-                  }
-              }
-
-              setTimeout(() => {
-                  $select.select2('close');
-                  $select.select2('open');
-              }, 50);
-
-              // Update checkboxes in dropdown
-              updateSelect2Checkboxes($select);
-              updateLocationPillsDisplay();
-          });
-
-
-          // Initialize display
-          updateLocationPillsDisplay();
-          updateSelect2Checkboxes($select);
-
-          $select.on('select2:selecting select2:unselecting', function (e) {
-              if (e.params?.args?.originalEvent &&
-                  !$(e.params.args.originalEvent.target).hasClass('select2-checkbox')) {
-                  e.preventDefault();
-              }
-          });
-
-          $select.on('select2:clearing', function (e) {
-              $select.data('select2').$dropdown.find('.select2-checkbox')
-                  .prop('checked', false)
-                  .prop('disabled', false);
-              $select.trigger('input.select2');
-          });
-      }
-
-      function updateSelect2Checkboxes($select) {
-          var values = $select.val() || [];
-          var allOptionId = "all";
-          var hasAll = values.includes(allOptionId);
-
-          var $checkboxes = $select.data('select2').$dropdown.find('.select2-checkbox');
-          $checkboxes.each(function () {
-              var $cb = $(this);
-              var data = $cb.closest('.select2-results__option').data('data');
-              if (data && data.id) {
-                  var isAll = data.id === allOptionId;
-                  var isChecked = isAll ? hasAll : values.includes(data.id);
-                  var isDisabled = hasAll && !isAll;
-
-                  $cb.prop('checked', isChecked)
-                      .prop('disabled', isDisabled);
-              }
-          });
-      }
+              });
+          }
 
           function InitializeItemVendorFilter() {
               try {
-                  $('#<%= item.ClientID %>, #<%= vendor.ClientID %>').select2({
-                      placeholder: 'Select item or vendor',
-                      allowClear: true,
-                      minimumResultsForSearch: 1
-                  });
+                  $('#<%= item.ClientID %>, #<%= vendor.ClientID %>').each(function () {
+                      var $el = $(this);
 
-                  console.log("Select2 initialized for item and vendor filters.");
+                      if ($el.hasClass("select2-hidden-accessible")) {
+                          $el.select2('destroy');
+                      }
+
+                      $el.removeClass('select2-hidden-accessible')
+                          .next('.select2-container').remove();
+
+                      $el.select2({
+                          placeholder: 'Select item or vendor',
+                          allowClear: true,
+                          minimumResultsForSearch: 1,
+                          width: '100%',
+                          dropdownParent: $el.closest('.filter-group'),
+
+                          templateResult: function (data) {
+                              return data.text;
+                          },
+
+                          templateSelection: function (data) {
+                              if (!data.id) return data.text;
+                              return data.id;
+                          }
+                      });
+                  });
               } catch (err) {
                   Swal.fire({
                       icon: 'error',
@@ -542,105 +578,105 @@
               }
           }
 
-      function setupEventDelegation() {
-          $(document).off('click', '[id*=chkAll1]').on('click', '[id*=chkAll1]', function () {
-              const isChecked = this.checked;
+          function setupEventDelegation() {
+              $(document).off('click', '[id*=chkAll1]').on('click', '[id*=chkAll1]', function () {
+                  const isChecked = this.checked;
 
-              const grid = $("#<%= GridView2.ClientID %>");
-              const rowCheckboxes = grid.find("input[type='checkbox'][id*='CheckBox1']");
+                  const grid = $("#<%= GridView2.ClientID %>");
+                  const rowCheckboxes = grid.find("input[type='checkbox'][id*='CheckBox1']");
 
-              rowCheckboxes.prop('checked', isChecked);
+                  rowCheckboxes.prop('checked', isChecked);
 
-              const selectedIDs = [];
-              rowCheckboxes.each(function () {
-                  if ($(this).is(':checked')) {
-                      const dataId = $(this).attr('data-id');
-                      if (dataId) {
-                          selectedIDs.push(dataId);
-                      } else {
-                          selectedIDs.push($(this).attr('id'));
+                  const selectedIDs = [];
+                  rowCheckboxes.each(function () {
+                      if ($(this).is(':checked')) {
+                          const dataId = $(this).attr('data-id');
+                          if (dataId) {
+                              selectedIDs.push(dataId);
+                          } else {
+                              selectedIDs.push($(this).attr('id'));
+                          }
                       }
-                  }
-              });
-
-              $('#<%= hfSelectedIDs.ClientID %>').val(selectedIDs.join(','));
-
-              updateSelectedIDs();
-          });
-
-          $(document).on('change', '.rowCheckbox', function () {
-              updateSelectedIDs();
-          });
-
-          if (typeof (Sys) !== 'undefined' && Sys.WebForms && Sys.WebForms.PageRequestManager) {
-              const prm = Sys.WebForms.PageRequestManager.getInstance();
-              if (!prm._events._list["endRequest"]) {
-                  prm.add_endRequest(initializeComponents);
-              }
-          }
-      }
-
-      function pageLoad() {
-          updateLocationPillsDisplay();
-
-          const listBox = document.getElementById('<%= lstStoreFilter.ClientID %>');
-          if (listBox) {
-              listBox.addEventListener('change', updateLocationPillsDisplay);
-          }
-      }
-
-      function updateLocationPillsDisplay() {
-              var $select = $('#<%= lstStoreFilter.ClientID %>');
-              var listBox = $select[0];
-              var container = document.getElementById('locationPillsContainer');
-              var allOptionId = "all";
-
-              if (!listBox || !container) return;
-
-              container.innerHTML = '';
-
-              var values = $select.val() || [];
-              var hasAll = values.includes(allOptionId);
-
-              if (hasAll) {
-                  var pill = document.createElement('span');
-                  pill.className = 'location-pill';
-                  pill.innerHTML = `
-                     <span class="pill-text">All Stores</span>
-                     <span class="pill-remove" data-value="all">×</span>
-                  `;
-
-                  pill.querySelector('.pill-remove').addEventListener('click', function (e) {
-                      e.preventDefault();
-                      $select.val(values.filter(v => v !== allOptionId)).trigger('change');
                   });
 
-                  container.appendChild(pill);
-              } else {
-                  values.forEach(function (value) {
-                      if (value === allOptionId) return;
+                  $('#<%= hfSelectedIDs.ClientID %>').val(selectedIDs.join(','));
 
-                      var option = $select.find('option[value="' + value + '"]')[0];
-                      if (!option) return;
+                  updateSelectedIDs();
+              });
 
+              $(document).on('change', '.rowCheckbox', function () {
+                  updateSelectedIDs();
+              });
+
+              if (typeof (Sys) !== 'undefined' && Sys.WebForms && Sys.WebForms.PageRequestManager) {
+                  const prm = Sys.WebForms.PageRequestManager.getInstance();
+                  if (!prm._events._list["endRequest"]) {
+                      prm.add_endRequest(initializeComponents);
+                  }
+              }
+          }
+
+          function pageLoad() {
+              updateLocationPillsDisplay();
+
+              const listBox = document.getElementById('<%= lstStoreFilter.ClientID %>');
+              if (listBox) {
+                  listBox.addEventListener('change', updateLocationPillsDisplay);
+              }
+          }
+
+          function updateLocationPillsDisplay() {
+                  var $select = $('#<%= lstStoreFilter.ClientID %>');
+                  var listBox = $select[0];
+                  var container = document.getElementById('locationPillsContainer');
+                  var allOptionId = "all";
+
+                  if (!listBox || !container) return;
+
+                  container.innerHTML = '';
+
+                  var values = $select.val() || [];
+                  var hasAll = values.includes(allOptionId);
+
+                  if (hasAll) {
                       var pill = document.createElement('span');
                       pill.className = 'location-pill';
                       pill.innerHTML = `
-                         <span class="pill-text">${option.text}</span>
-                         <span class="pill-remove" data-value="${value}">×</span>
-                     `;
+                         <span class="pill-text">All Stores</span>
+                         <span class="pill-remove" data-value="all">×</span>
+                      `;
 
                       pill.querySelector('.pill-remove').addEventListener('click', function (e) {
                           e.preventDefault();
-                          $select.val(values.filter(v => v !== value)).trigger('change');
+                          $select.val(values.filter(v => v !== allOptionId)).trigger('change');
                       });
 
                       container.appendChild(pill);
-                  });
-              }
+                  } else {
+                      values.forEach(function (value) {
+                          if (value === allOptionId) return;
 
-          container.style.display = values.length > 0 ? 'grid' : 'none';
-      }
+                          var option = $select.find('option[value="' + value + '"]')[0];
+                          if (!option) return;
+
+                          var pill = document.createElement('span');
+                          pill.className = 'location-pill';
+                          pill.innerHTML = `
+                             <span class="pill-text">${option.text}</span>
+                             <span class="pill-remove" data-value="${value}">×</span>
+                         `;
+
+                          pill.querySelector('.pill-remove').addEventListener('click', function (e) {
+                              e.preventDefault();
+                              $select.val(values.filter(v => v !== value)).trigger('change');
+                          });
+
+                          container.appendChild(pill);
+                      });
+                  }
+
+              container.style.display = values.length > 0 ? 'grid' : 'none';
+          }
 
           function resetLocationPills() {
               const listBox = document.getElementById('<%= lstStoreFilter.ClientID %>');
@@ -652,42 +688,28 @@
               }
           }
 
-          function handleApplyFilters() {
-              let anyFilterActive = false;
-              for (const [key, mapping] of Object.entries(filterMap)) {
-                  const checkbox = document.getElementById(mapping.checkboxId);
-                  const control = document.getElementById(mapping.controlId);
+         function handleApplyFilters() {
+              const grid = $('#<%= GridView2.ClientID %>');
 
-                  if (!checkbox || !control) continue;
+                 // Check if at least one filter has a value
+                 let hasAnyFilter =
+                  ($('#<%= filterStore.ClientID %>').is(':checked') && $('#<%= lstStoreFilter.ClientID %>').val()?.length > 0) ||
+                  ($('#<%= filterItem.ClientID %>').is(':checked') && $('#<%= item.ClientID %>').val()) ||
+                  ($('#<%= filterVendor.ClientID %>').is(':checked') && $('#<%= vendor.ClientID %>').val()) ||
+                  ($('#<%= filterRegistrationDate.ClientID %>').is(':checked') && $('#<%= txtRegDateFilter.ClientID %>').val()) ||
+                  ($('#<%= filterDivisionCode.ClientID %>').is(':checked') && $('#<%= txtDivisionCodeFilter.ClientID %>').val());
 
-                  if (checkbox.checked) {
-                      let hasValue = false;
-                      if (control.tagName === 'SELECT') {
-                          hasValue = control.multiple ?
-                              control.selectedOptions.length > 0 :
-                              control.selectedIndex > 0 && control.value !== "";
-                      }
-                      else if (control.tagName === 'INPUT') {
-                          hasValue = control.value.trim() !== "";
-                      }
+             if (!hasAnyFilter) {
+                 Swal.fire('Warning!', 'Please select at least one filter with a value.', 'warning');
+                 return false;
+             }
 
-                      if (hasValue) {
-                          anyFilterActive = true;
-                          break;
-                      }
-                  }
-              }
-
-              if (!anyFilterActive) {
-                  Swal.fire('Warning!', 'Please select at least one filter to apply and ensure it has a value.', 'warning');
-                  return false;
-              }
-
-              document.getElementById('gridCol').style.height = "74vh";
-              document.getElementById('gridCol').style.width = "auto";
-
-              return true;
-          }
+             if ($.fn.DataTable.isDataTable(grid)) {
+                 grid.DataTable().ajax.reload();
+             } else {
+                 initializeComponents();
+             }
+         }
 
           Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
 
@@ -723,7 +745,7 @@
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
         
-<div class="container-fluid col-lg-12 col-md-12 mt-0">
+<div class="container-fluid col-lg-12 col-md-12">
     <div class="card shadow-md border-0" style="background-color: #F1B4D1;">
         <div class="card-header" style="background-color:#A10D54;">
              <h4 class="text-center fw-bold text-white">Approval List</h4>
@@ -779,7 +801,7 @@
                 </div>
             </div>
 
-                <div class="d-flex p-2 pt-0 col-lg-12 col-md-12 overflow-x-auto overflow-y-auto">
+                <div class="d-flex col-lg-12 col-md-12 overflow-x-auto overflow-y-auto">
                     <div class="row">
                         <!-- Filter Panel (Hidden by default) -->
                         <div class="col" id="filterPane" style="display: none;">
@@ -886,9 +908,9 @@
                                             <div class="form-group mt-3">
                                                 <asp:Button ID="btnApplyFilter" runat="server"
                                                     CssClass="btn text-white mb-1"
-                                                    Style="background: #A10D54;"
+                                                    Style="background-color: #a10d54;"
                                                     Text="Apply Filters"
-                                                    OnClientClick="return handleApplyFilters();" OnClick="ApplyFilters_Click"
+                                                    OnClientClick="handleApplyFilters(); return false;"
                                                     CausesValidation="false" />
 
                                                 <asp:Button ID="btnResetFilter" runat="server"
@@ -924,9 +946,9 @@
                                 <div class="alert alert-info">No items to Filter</div>
                             </asp:Panel>
 
-                            <div class="gridview-container p-2">
+                            <div class="table-responsive gridview-container p-2 rounded-1">
                                    <asp:GridView ID="GridView2" runat="server"
-                                        CssClass="table table-striped table-hover border-2 shadow-lg sticky-grid overflow-x-auto overflow-y-auto"
+                                        CssClass="table table-striped table-hover  shadow-lg overflow-x-auto overflow-y-auto"
                                         AutoGenerateColumns="False"
                                         DataKeyNames="id"
                                         UseAccessibleHeader="true"
@@ -942,7 +964,8 @@
                                         ForeColor="#333333"
                                         GridLines="None"
                                         AutoGenerateEditButton="false" ShowHeaderWhenEmpty="true"  >
-                                        <EditRowStyle BackColor="white" />
+
+                                        <EditRowStyle BackColor="#999999" />
                                         <FooterStyle BackColor="#5D7B9D" Font-Bold="True" ForeColor="White" />
                                         <HeaderStyle Wrap="false" BackColor="#bd467f" Font-Bold="True" ForeColor="White"></HeaderStyle>
                                         <PagerStyle CssClass="pagination-wrapper" HorizontalAlign="Center" VerticalAlign="Middle" />
@@ -1010,7 +1033,7 @@
                                                 <ItemStyle HorizontalAlign="Justify" />
                                             </asp:TemplateField>
                                             
-                                           <asp:TemplateField HeaderText="Barcode No" SortExpression="barcodeNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-6">
+                                           <asp:TemplateField HeaderText="Barcode No" SortExpression="barcodeNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-6 border-1">
                                                <ItemTemplate>
                                                    <asp:Label ID="lblBarcode" runat="server" Text='<%# Eval("barcodeNo") %>' />
                                                </ItemTemplate>
@@ -1019,7 +1042,7 @@
                                                <ItemStyle HorizontalAlign="Justify" />
                                            </asp:TemplateField>
 
-                                            <asp:TemplateField HeaderText="Qty" SortExpression="qty" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-7">
+                                            <asp:TemplateField HeaderText="Qty" SortExpression="qty" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-7 border-1">
                                                 <ItemTemplate>
                                                     <asp:Label ID="lblQty" runat="server" Text='<%# Eval("qty") %>' />
                                                 </ItemTemplate>
@@ -1036,7 +1059,7 @@
                                                 <ItemStyle HorizontalAlign="Justify" />
                                             </asp:TemplateField>
 
-                                            <asp:TemplateField HeaderText="UOM" SortExpression="uom" HeaderStyle-ForeColor="White" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-8">
+                                            <asp:TemplateField HeaderText="UOM" SortExpression="uom" HeaderStyle-ForeColor="White" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-8 border-1">
                                                 <ItemTemplate>
                                                     <asp:Label ID="lblUom" runat="server" Text='<%# Eval("uom") %>' />
                                                 </ItemTemplate>
@@ -1055,7 +1078,7 @@
                                                 <HeaderStyle ForeColor="White" BackColor="#bd467f" />
                                             </asp:TemplateField>
 
-                                            <asp:TemplateField HeaderText="Packing Info" SortExpression="packingInfo" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-9">
+                                            <asp:TemplateField HeaderText="Packing Info" SortExpression="packingInfo" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-9 border-1">
                                                 <ItemTemplate>
                                                     <asp:Label ID="lblPacking" runat="server" Text='<%# Eval("packingInfo") %>' />
                                                 </ItemTemplate>
@@ -1064,7 +1087,7 @@
                                                 <ItemStyle HorizontalAlign="Justify" />
                                             </asp:TemplateField>
 
-                                            <asp:TemplateField HeaderText="Division" SortExpression="divisionCode" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-9">
+                                            <asp:TemplateField HeaderText="Division" SortExpression="divisionCode" HeaderStyle-ForeColor="Black" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-9 border-1">
                                                  <ItemTemplate>
                                                      <asp:Label ID="lblDivisionCode" runat="server" Text='<%# Eval("divisionCode") %>' />
                                                  </ItemTemplate>
@@ -1073,7 +1096,7 @@
                                                  <ItemStyle HorizontalAlign="Justify" />
                                              </asp:TemplateField>
 
-                                            <asp:TemplateField HeaderText="Location" SortExpression="storeNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-51">
+                                            <asp:TemplateField HeaderText="Location" SortExpression="storeNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-51 border-1">
                                                 <ItemTemplate>
                                                     <asp:Label ID="lblStoreNo" runat="server" Text='<%# Eval("storeNo") %>' />
                                                 </ItemTemplate>
@@ -1082,7 +1105,7 @@
                                                 <ItemStyle HorizontalAlign="Justify" />
                                             </asp:TemplateField>
 
-                                            <asp:TemplateField HeaderText="Vendor No" SortExpression="vendorNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-54">
+                                            <asp:TemplateField HeaderText="Vendor No" SortExpression="vendorNo" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-54 border-1">
                                                 <ItemTemplate>
                                                     <asp:Label ID="lblVendorNo" runat="server" Text='<%# Eval("vendorNo") %>' />
                                                 </ItemTemplate>
@@ -1091,7 +1114,7 @@
                                                 <ItemStyle HorizontalAlign="Justify" />
                                             </asp:TemplateField>
 
-                                            <asp:TemplateField HeaderText="Vendor Name" ItemStyle-Width="170px" SortExpression="vendorName" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-55">
+                                            <asp:TemplateField HeaderText="Vendor Name" ItemStyle-Width="170px" SortExpression="vendorName" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-55 border-1">
                                                 <ItemTemplate>
                                                     <asp:Label ID="lblVendorName" runat="server" Text=' <%# Eval("vendorName") %>' />
                                                 </ItemTemplate>
@@ -1100,7 +1123,7 @@
                                                 <ItemStyle HorizontalAlign="Justify" />
                                             </asp:TemplateField>
 
-                                            <asp:TemplateField HeaderText="Regi Date" SortExpression="regeDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-56">
+                                            <asp:TemplateField HeaderText="Regi Date" SortExpression="regeDate" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-56 border-1">
                                                 <ItemTemplate>
                                                     <asp:Label ID="lblRege" runat="server" Text='<%# Eval("regeDate", "{0:dd-MM-yyyy}") %>' />
                                                 </ItemTemplate>
@@ -1109,7 +1132,7 @@
                                                 <ItemStyle HorizontalAlign="Justify" />
                                             </asp:TemplateField>
 
-                                            <asp:TemplateField HeaderText="Approval Status" SortExpression="approved" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" 
+                                            <asp:TemplateField HeaderText="Approval Status" SortExpression="approved" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" 
                                                 ItemStyle-CssClass="fixed-column-58">
                                                 <EditItemTemplate>
                                                     <!-- Show dropdown only for view-only users -->
@@ -1138,7 +1161,7 @@
                                                 <ItemStyle HorizontalAlign="Justify" />
                                             </asp:TemplateField>
 
-                                            <asp:TemplateField HeaderText="Note" SortExpression="note" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0" ItemStyle-CssClass="fixed-column-59">
+                                            <asp:TemplateField HeaderText="Note" SortExpression="note" HeaderStyle-HorizontalAlign="Center" HeaderStyle-VerticalAlign="Middle" ItemStyle-HorizontalAlign="Justify" HeaderStyle-CssClass="position-sticky top-0 border-1" ItemStyle-CssClass="fixed-column-59 border-1">
                                                 <ItemTemplate>
                                                     <asp:Label ID="lblNote" runat="server" Text=' <%# Eval("note") %>'></asp:Label>
                                                 </ItemTemplate>

@@ -26,16 +26,9 @@ namespace Expiry_list.ReorderForm
             if (Request.HttpMethod == "POST" && !string.IsNullOrEmpty(Request["draw"]))
             {
                 RespondWithData();
-                PopulateItemsDropdown();
-                PopulateVendorDropdown();
+               // PopulateItemsDropdown();
+                //PopulateVendorDropdown();
                 return;
-            }
-
-            if (!IsPostBack && !string.IsNullOrEmpty(hfLastSearch.Value))
-            {
-                // Apply manual highlighting for searched rows
-                ScriptManager.RegisterStartupScript(this, GetType(), "HighlightSearched",
-                    $"applyManualSearchHighlighting('{hfLastSearch.Value}');", true);
             }
 
             if (!IsPostBack)
@@ -44,7 +37,6 @@ namespace Expiry_list.ReorderForm
                 BindStores();
                 PopulateItemsDropdown();
                 PopulateVendorDropdown();
-                hfLastSearch.Value = "";
             }
             else
             {
@@ -67,34 +59,55 @@ namespace Expiry_list.ReorderForm
                 if (ViewState["IsFiltered"] != null)
                     hfIsFiltered.Value = ViewState["IsFiltered"].ToString();
 
-                if (!string.IsNullOrEmpty(Request.Form[hfLastSearch.UniqueID]))
-                {
-                    hfLastSearch.Value = Request.Form[hfLastSearch.UniqueID];
-                }
-
-                ViewState["LastSearch"] = hfLastSearch.Value;
             }
         }
 
         [System.Web.Services.WebMethod]
         public static string UpdateCell(int id, string column, string value)
         {
+            var allowedColumns = new HashSet<string> { "action", "status", "remark" };
+            if (!allowedColumns.Contains(column))
+                throw new Exception("Invalid column name");
+
             using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["con"].ConnectionString))
             {
                 conn.Open();
 
-                var allowedColumns = new HashSet<string> { "action", "status", "remark" };
-                if (!allowedColumns.Contains(column))
-                    throw new Exception("Invalid column name");
+                string sql;
+                SqlCommand cmd;
 
-                string sql = $"UPDATE itemListR SET {column} = @value WHERE ID = @id";
-                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                if (column == "action" || column == "status")
                 {
+                    sql = $"UPDATE itemListR SET {column} = @value, completedDate = @completedDate, owner = @owner WHERE ID = @id";
+                    cmd = new SqlCommand(sql, conn);
+
                     cmd.Parameters.AddWithValue("@value", string.IsNullOrEmpty(value) ? (object)DBNull.Value : value);
                     cmd.Parameters.AddWithValue("@id", id);
-                    cmd.ExecuteNonQuery();
+
+                    string username = HttpContext.Current.User.Identity.Name;
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        cmd.Parameters.AddWithValue("@completedDate", DateTime.Now.Date);
+                        cmd.Parameters.AddWithValue("@owner", username);
+                    }
+                    else
+                    {
+                        cmd.Parameters.AddWithValue("@completedDate", DBNull.Value);
+                        cmd.Parameters.AddWithValue("@owner", DBNull.Value);
+                    }
                 }
+                else
+                {
+                    sql = $"UPDATE itemListR SET {column} = @value WHERE ID = @id";
+                    cmd = new SqlCommand(sql, conn);
+
+                    cmd.Parameters.AddWithValue("@value", string.IsNullOrEmpty(value) ? (object)DBNull.Value : value);
+                    cmd.Parameters.AddWithValue("@id", id);
+                }
+
+                cmd.ExecuteNonQuery();
             }
+
             return "OK";
         }
 
@@ -110,144 +123,193 @@ namespace Expiry_list.ReorderForm
             {
                 using (SqlConnection conn = new SqlConnection(strcon))
                 {
-                    // Get DataTables parameters
                     int draw = Convert.ToInt32(Request["draw"]);
                     int start = Convert.ToInt32(Request["start"]);
                     int length = Convert.ToInt32(Request["length"]);
                     int orderColumnIndex = Convert.ToInt32(Request["order[0][column]"]);
                     string orderDir = Request["order[0][dir]"] ?? "asc";
+                    string searchValue = Request["search[value]"] ?? "";
+
+                    string store = Request["store"] ?? "";
+                    string item = Request["item"] ?? "";
+                    string vendor = Request["vendor"] ?? "";
+                    string action = Request["action"] ?? "";
+                    string status = Request["status"] ?? "";
+                    string staff = Request["staff"] ?? "";
+                    string division = Request["division"] ?? "";
+                    string regDate = Request["regDate"] ?? "";
+                    string approveDate = Request["approveDate"] ?? "";
 
                     if (length == 0) length = 100;
 
                     string[] columns = {
-                        "id","no","storeNo", "divisionCode","approveDate", "itemNo", "description", "packingInfo", "barcodeNo", "qty", "uom",
-                         "action", "status", "remark", "approver", "note", "vendorNo", "vendorName", "regeDate"
+                        "id","no","storeNo", "divisionCode","approveDate", "itemNo", "description", "packingInfo", "qty", "uom",
+                        "action", "status", "remark", "approver", "note", "vendorNo", "vendorName", "regeDate"
                     };
 
-                    string[] searchableColumns = {
-                        "no","storeNo", "divisionCode","approveDate", "itemNo", "description", "packingInfo", "barcodeNo", "qty", "uom",
-                         "action", "status", "remark", "approver", "note", "vendorNo", "vendorName", "regeDate"
-                    };
-
-
-                    string searchValue = Request["search[value]"] ?? "";
-                    string[] dateColumns = { "regeDate", "approveDate", "completedDate" };
-
-                    // Build WHERE clause
-                    StringBuilder whereClause = new StringBuilder();
-                    whereClause.Append("(status NOT IN ('Reorder Done', 'No Reordering') OR status IS NULL) AND (approved = 'approved')");
-
-                    if (!string.IsNullOrEmpty(searchValue))
-                    {
-                        whereClause.Append(" AND (");
-                        foreach (string col in searchableColumns)
-                        {
-                            if (dateColumns.Contains(col))
-                            {
-                                whereClause.Append($"(CONVERT(VARCHAR, {col}, 103) LIKE '%' + @SearchValue + '%' OR ");
-                                whereClause.Append($"CONVERT(VARCHAR, {col}, 126) LIKE '%' + @SearchValue + '%') OR ");
-                            }
-                            else
-                            {
-                                whereClause.Append($"{col} LIKE '%' + @SearchValue + '%' OR ");
-                            }
-                        }
-                        whereClause.Remove(whereClause.Length - 4, 4);
-                        whereClause.Append(")");
-                    }
-
-                    string orderByClause = " ORDER BY id ASC";
-
-                    // Validate the index from DataTables
+                    string orderByClause = "ORDER BY no ASC";
                     if (orderColumnIndex >= 0 && orderColumnIndex < columns.Length)
                     {
                         string orderColumn = columns[orderColumnIndex];
+                        orderByClause = $"ORDER BY [{orderColumn}] {orderDir}";
+                    }
 
-                        // Do not allow sorting on the checkbox column
-                        if (orderColumn != "id")
+                    var where = new StringBuilder();
+                    where.Append("(status NOT IN ('Reorder Done', 'No Reordering') OR status IS NULL) AND approved = 'approved'");
+
+                    if (!string.IsNullOrEmpty(searchValue))
+                        where.Append(@"
+                            AND (
+                                no LIKE @search OR 
+                                storeNo LIKE @search OR 
+                                divisionCode LIKE @search OR 
+                                itemNo LIKE @search OR 
+                                description LIKE @search OR 
+                                packingInfo LIKE @search OR 
+                                qty LIKE @search OR 
+                                uom LIKE @search OR 
+                                action LIKE @search OR 
+                                status LIKE @search OR 
+                                remark LIKE @search OR 
+                                approver LIKE @search OR 
+                                vendorNo LIKE @search OR 
+                                vendorName LIKE @search OR 
+                                -- 🔹 Convert datetime to string for searching
+                                CONVERT(varchar(10), regeDate, 103) LIKE @search OR 
+                                CONVERT(varchar(10), approveDate, 103) LIKE @search
+                            )");
+
+                    if (!string.IsNullOrEmpty(store))
+                    {
+                        var stores = store.Replace("[", "").Replace("]", "").Replace("\"", "").Split(',');
+                        if (stores.Length > 0)
                         {
-                            orderDir = (orderDir == "asc" || orderDir == "desc") ? orderDir : "asc";
-                            orderByClause = $" ORDER BY [{orderColumn}] {orderDir}";
+                            var storeParams = stores.Select((s, i) => "@store" + i).ToArray();
+                            where.Append($" AND storeNo IN ({string.Join(",", storeParams)})");
                         }
                     }
-                    else
-                    {
-                        orderByClause = " ORDER BY no ASC";
-                    }
 
-                    // Get paginated data
+                    if (!string.IsNullOrEmpty(item))
+                        where.Append(" AND itemNo = @item");
+
+                    if (!string.IsNullOrEmpty(vendor))
+                        where.Append(" AND vendorNo LIKE @vendor");
+
+                    if (!string.IsNullOrEmpty(action) && action != "0")
+                        where.Append(" AND action = @action");
+
+                    if (!string.IsNullOrEmpty(status) && status != "0")
+                        where.Append(" AND status = @status");
+
+                    if (!string.IsNullOrEmpty(staff))
+                        where.Append(" AND approver LIKE @staff");
+
+                    if (!string.IsNullOrEmpty(division))
+                        where.Append(" AND divisionCode LIKE @division");
+
+                    if (!string.IsNullOrEmpty(regDate))
+                        where.Append(" AND CAST(regeDate AS DATE) = @regDate");
+
+                    if (!string.IsNullOrEmpty(approveDate))
+                        where.Append(" AND CAST(approveDate AS DATE) = @approveDate");
+
+                    //Main query
                     string query = $@"
-                        SELECT * 
-                        FROM itemListR 
-                        WHERE {whereClause}
+                        SELECT * FROM itemListR
+                        WHERE {where}
                         {orderByClause}
-                        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
+                        OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
 
-                    System.Data.DataTable dt = new System.Data.DataTable();
+                    //Execute Query
+                    DataTable dt = new DataTable();
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@Offset", start);
-                        cmd.Parameters.AddWithValue("@SearchValue", searchValue);
                         cmd.Parameters.AddWithValue("@PageSize", length);
+                        cmd.Parameters.AddWithValue("@search", $"%{searchValue}%");
+
+                        if (!string.IsNullOrEmpty(item)) cmd.Parameters.AddWithValue("@item", item);
+                        if (!string.IsNullOrEmpty(vendor)) cmd.Parameters.AddWithValue("@vendor", $"%{vendor}%");
+                        if (!string.IsNullOrEmpty(action)) cmd.Parameters.AddWithValue("@action", action);
+                        if (!string.IsNullOrEmpty(status)) cmd.Parameters.AddWithValue("@status", status);
+                        if (!string.IsNullOrEmpty(staff)) cmd.Parameters.AddWithValue("@staff", $"%{staff}%");
+                        if (!string.IsNullOrEmpty(division)) cmd.Parameters.AddWithValue("@division", $"%{division}%");
+                        if (!string.IsNullOrEmpty(regDate)) cmd.Parameters.AddWithValue("@regDate", regDate);
+                        if (!string.IsNullOrEmpty(approveDate)) cmd.Parameters.AddWithValue("@approveDate", approveDate);
+
+                        if (!string.IsNullOrEmpty(store))
+                        {
+                            var stores = store.Replace("[", "").Replace("]", "").Replace("\"", "").Split(',');
+                            for (int i = 0; i < stores.Length; i++)
+                                cmd.Parameters.AddWithValue("@store" + i, stores[i]);
+                        }
 
                         conn.Open();
-                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
-                        {
-                            da.Fill(dt);
-                        }
+                        new SqlDataAdapter(cmd).Fill(dt);
                     }
 
-                    // Get total records count
-                    string countQuery = $@"SELECT COUNT(*) FROM itemListR WHERE {whereClause}";
+                    //Count query
+                    string countQuery = $"SELECT COUNT(*) FROM itemListR WHERE {where}";
                     int totalRecords = 0;
                     using (SqlCommand countCmd = new SqlCommand(countQuery, conn))
                     {
-                        countCmd.Parameters.AddWithValue("@SearchValue", searchValue);
+                        countCmd.Parameters.AddWithValue("@search", $"%{searchValue}%");
+                        if (!string.IsNullOrEmpty(item)) countCmd.Parameters.AddWithValue("@item", item);
+                        if (!string.IsNullOrEmpty(vendor)) countCmd.Parameters.AddWithValue("@vendor", $"%{vendor}%");
+                        if (!string.IsNullOrEmpty(action)) countCmd.Parameters.AddWithValue("@action", action);
+                        if (!string.IsNullOrEmpty(status)) countCmd.Parameters.AddWithValue("@status", status);
+                        if (!string.IsNullOrEmpty(staff)) countCmd.Parameters.AddWithValue("@staff", $"%{staff}%");
+                        if (!string.IsNullOrEmpty(division)) countCmd.Parameters.AddWithValue("@division", $"%{division}%");
+                        if (!string.IsNullOrEmpty(regDate)) countCmd.Parameters.AddWithValue("@regDate", regDate);
+                        if (!string.IsNullOrEmpty(approveDate)) countCmd.Parameters.AddWithValue("@approveDate", approveDate);
+
+                        if (!string.IsNullOrEmpty(store))
+                        {
+                            var stores = store.Replace("[", "").Replace("]", "").Replace("\"", "").Split(',');
+                            for (int i = 0; i < stores.Length; i++)
+                                countCmd.Parameters.AddWithValue("@store" + i, stores[i]);
+                        }
+
                         if (conn.State != ConnectionState.Open) conn.Open();
                         totalRecords = (int)countCmd.ExecuteScalar();
                     }
 
-                    var data = dt.AsEnumerable().Select(row => {
-                        // Create search text by joining all values
-                        string searchText = string.Join(" ", row.ItemArray
-                            .Where(x => !DBNull.Value.Equals(x))
-                            .Select(x => x.ToString().ToLower()));
-
-                        return new
-                        {
-                            id = row["id"],
-                            checkbox = "",
-                            no = row["no"],
-                            itemNo = row["itemNo"],
-                            description = row["description"],
-                            barcodeNo = row["barcodeNo"],
-                            qty = row["qty"],
-                            uom = row["uom"],
-                            packingInfo = row["packingInfo"],
-                            divisionCode = row["divisionCode"],
-                            storeNo = row["storeNo"],
-                            vendorNo = row["vendorNo"],
-                            vendorName = row["vendorName"],
-                            regeDate = row["regeDate"] is DBNull ? "" : Convert.ToDateTime(row["regeDate"]).ToString("yyyy-MM-dd"),
-                            approveDate = row["approveDate"] is DBNull ? "" : Convert.ToDateTime(row["approveDate"]).ToString("yyyy-MM-dd"),
-                            approver = row["approver"],
-                            note = row["note"],
-                            action = row["action"],
-                            status = row["status"],
-                            remark = row["remark"],
-                        };
+                    var data = dt.AsEnumerable().Select(row => new
+                    {
+                        id = row["id"],
+                        checkbox = "",
+                        no = row["no"],
+                        itemNo = row["itemNo"],
+                        description = row["description"],
+                        qty = row["qty"],
+                        uom = row["uom"],
+                        packingInfo = row["packingInfo"],
+                        divisionCode = row["divisionCode"],
+                        storeNo = row["storeNo"],
+                        vendorNo = row["vendorNo"],
+                        vendorName = row["vendorName"],
+                        regeDate = row["regeDate"] is DBNull ? "" : Convert.ToDateTime(row["regeDate"]).ToString("yyyy-MM-dd"),
+                        approveDate = row["approveDate"] is DBNull ? "" : Convert.ToDateTime(row["approveDate"]).ToString("yyyy-MM-dd"),
+                        approver = row["approver"],
+                        note = row["note"],
+                        action = row["action"],
+                        status = row["status"],
+                        remark = row["remark"]
                     }).ToList();
 
-                    // Create response object
                     var response = new
                     {
                         draw = draw,
                         recordsTotal = totalRecords,
                         recordsFiltered = totalRecords,
-                        data = data
+                        data = data,
+                        debug = new
+                        {
+                            query,
+                            filters = new { store, item, vendor, action, status, staff, division, regDate, approveDate }
+                        }
                     };
 
-                    // Return JSON
                     Response.ContentType = "application/json";
                     Response.Write(JsonConvert.SerializeObject(response));
                 }
@@ -272,48 +334,43 @@ namespace Expiry_list.ReorderForm
 
         protected void GridView2_RowEditing(object sender, GridViewEditEventArgs e)
         {
-            GridView2.EditIndex = e.NewEditIndex;
-            string searchTerm = hfLastSearch.Value;
+            //GridView2.EditIndex = e.NewEditIndex;
 
-            if (Request["search[value]"] != null)
-            {
-                ViewState["LastSearch"] = Request["search[value]"];
-            }
+            //if (Request["search[value]"] != null)
+            //{
+            //    ViewState["LastSearch"] = Request["search[value]"];
+            //}
 
-            if (hfIsFiltered.Value == "true")
-            {
-                if (ViewState["FilteredData"] != null)
-                {
-                    GridView2.DataSource = ViewState["FilteredData"] as System.Data.DataTable;
-                    GridView2.DataBind();
+            //if (hfIsFiltered.Value == "true")
+            //{
+            //    if (ViewState["FilteredData"] != null)
+            //    {
+            //        GridView2.DataSource = ViewState["FilteredData"] as System.Data.DataTable;
+            //        GridView2.DataBind();
 
-                    if (GridView2.HeaderRow != null)
-                    {
-                        GridView2.HeaderRow.TableSection = TableRowSection.TableHeader;
-                        GridView2.HeaderRow.CssClass = "static-header";
-                    }
+            //        if (GridView2.HeaderRow != null)
+            //        {
+            //            GridView2.HeaderRow.TableSection = TableRowSection.TableHeader;
+            //            GridView2.HeaderRow.CssClass = "static-header";
+            //        }
 
-                    ScriptManager.RegisterStartupScript(this, GetType(), "RestoreHeader_" + GridView2.ClientID,
-                        "$('[id=\\\"" + GridView2.ClientID + "\\\"] thead').addClass('static-header').css('display','table-header-group').show();",
-                        true);
+            //        ScriptManager.RegisterStartupScript(this, GetType(), "RestoreHeader_" + GridView2.ClientID,
+            //            "$('[id=\\\"" + GridView2.ClientID + "\\\"] thead').addClass('static-header').css('display','table-header-group').show();",
+            //            true);
 
-                }
-            }
-            else
-            {
-                BindGrid();
-            }
+            //    }
+            //}
+            //else
+            //{
+            //    BindGrid();
+            //}
 
-            searchValue.Text = searchTerm;
-            searchValue.Style["display"] = "inline";
-            searchLabel.Style["display"] = "inline";
-
-            if (GridView2.DataKeys != null && e.NewEditIndex < GridView2.DataKeys.Count)
-            {
-                string rowId = GridView2.DataKeys[e.NewEditIndex].Value.ToString();
-                hfEditedRowId.Value = rowId;
-                ViewState["EditedRowID"] = rowId;
-            }
+            //if (GridView2.DataKeys != null && e.NewEditIndex < GridView2.DataKeys.Count)
+            //{
+            //    string rowId = GridView2.DataKeys[e.NewEditIndex].Value.ToString();
+            //    hfEditedRowId.Value = rowId;
+            //    ViewState["EditedRowID"] = rowId;
+            //}
         }
 
         protected void GridView2_RowUpdating(object sender, GridViewUpdateEventArgs e)
@@ -492,78 +549,43 @@ namespace Expiry_list.ReorderForm
             }
         }
 
-        protected void ApplyFilters_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // Check if at least one filter is selected and has a value
-                bool hasAnyFilter =
-                    (filterStore.Checked && lstStoreFilter.SelectedIndex >= 0) ||
-                    (filterItem.Checked && !string.IsNullOrEmpty(item.SelectedValue)) ||
-                    (filterVendor.Checked && !string.IsNullOrEmpty(vendor.SelectedValue)) ||
-                    (filterStatus.Checked && !string.IsNullOrEmpty(ddlStatusFilter.SelectedValue)) ||
-                    (filterAction.Checked && !string.IsNullOrEmpty(ddlActionFilter.SelectedValue)) ||
-                    (filterRegistrationDate.Checked && !string.IsNullOrEmpty(txtRegDateFilter.Text)) ||
-                    (filterStaff.Checked && !string.IsNullOrEmpty(txtstaffFilter.Text)) ||
-                    (filterDivisionCode.Checked && !string.IsNullOrEmpty(txtDivisionCodeFilter.Text)) ||
-                    (filterApproveDate.Checked && !string.IsNullOrEmpty(txtApproveDateFilter.Text));
+        //protected void ApplyFilters_Click(object sender, EventArgs e)
+        //{
+        //    try
+        //    {
+        //        bool hasAnyFilter =
+        //            (filterStore.Checked && lstStoreFilter.SelectedIndex >= 0) ||
+        //            (filterItem.Checked && !string.IsNullOrEmpty(item.SelectedValue)) ||
+        //            (filterVendor.Checked && !string.IsNullOrEmpty(vendor.SelectedValue)) ||
+        //            (filterStatus.Checked && !string.IsNullOrEmpty(ddlStatusFilter.SelectedValue)) ||
+        //            (filterAction.Checked && !string.IsNullOrEmpty(ddlActionFilter.SelectedValue)) ||
+        //            (filterRegistrationDate.Checked && !string.IsNullOrEmpty(txtRegDateFilter.Text)) ||
+        //            (filterStaff.Checked && !string.IsNullOrEmpty(txtstaffFilter.Text)) ||
+        //            (filterDivisionCode.Checked && !string.IsNullOrEmpty(txtDivisionCodeFilter.Text)) ||
+        //            (filterApproveDate.Checked && !string.IsNullOrEmpty(txtApproveDateFilter.Text));
 
-                if (!hasAnyFilter)
-                {
-                    ScriptManager.RegisterStartupScript(this, this.GetType(), "alertNoFilter",
-                        "Swal.fire('Warning!', 'Please select at least one filter with a value.', 'warning');", true);
-                    return;
-                }
+        //        if (!hasAnyFilter)
+        //        {
+        //            ScriptManager.RegisterStartupScript(this, this.GetType(), "alertNoFilter",
+        //                "Swal.fire('Warning!', 'Please select at least one filter with a value.', 'warning');", true);
+        //            return;
+        //        }
 
-                // Save selected filter values in ViewState (optional)
-                ViewState["SelectedStores"] = string.Join(",", lstStoreFilter.Items.Cast<ListItem>()
-                                                    .Where(li => li.Selected).Select(li => li.Value));
-                ViewState["SelectedItem"] = item.SelectedValue;
-                ViewState["SelectedVendor"] = vendor.SelectedValue;
-                ViewState["SelectedStatus"] = ddlStatusFilter.SelectedValue;
-                ViewState["SelectedAction"] = ddlActionFilter.SelectedValue;
-                ViewState["SelectedRegDate"] = txtRegDateFilter.Text;
-                ViewState["SelectedStaff"] = txtstaffFilter.Text;
-                ViewState["SelectedDivisionCode"] = txtDivisionCodeFilter.Text;
-                ViewState["SelectedApproveDate"] = txtApproveDateFilter.Text;
+        //        ScriptManager.RegisterStartupScript(this, this.GetType(), "ReloadDataTable", @"
+        //            if (typeof dataTable !== 'undefined' && $.fn.DataTable.isDataTable('#" + GridView2.ClientID + @"')) {
+        //                dataTable.ajax.reload();
+        //            } else {
+        //                initializeComponents();
+        //            }
+        //        ", true);
 
-                // Get filtered data from your data source
-                System.Data.DataTable dtFiltered = GetFilteredData();
-                ViewState["FilteredData"] = dtFiltered;
-
-                // Bind GridView (optional for server-side fallback)
-                GridView2.DataSource = dtFiltered;
-                GridView2.DataBind();
-
-                // Ensure header and body are set correctly
-                if (GridView2.HeaderRow != null)
-                {
-                    GridView2.HeaderRow.TableSection = TableRowSection.TableHeader;
-                }
-                foreach (GridViewRow row in GridView2.Rows)
-                {
-                    row.TableSection = TableRowSection.TableBody;
-                }
-
-                // Trigger DataTable AJAX reload OR rebind editing
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "ReloadTableAndResize", @"
-                    if (typeof dataTable !== 'undefined' && $.fn.DataTable.isDataTable('#" + GridView2.ClientID + @"')) { 
-                        // Draw new data and then reinitialize resizable columns
-                        dataTable.draw(false); 
-                        initializeResizableColumns();
-                    } else { 
-                        // Fallback for non-DataTable cases
-                        enableGridViewInlineEditing(); 
-                        initializeResizableColumns();
-                    }", true);
-
-            }
-            catch (Exception ex)
-            {
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "alertError",
-                    "Swal.fire('Error!', 'An error occurred while applying filters.', 'error');", true);
-            }
-        }
+        //    }
+        //    catch (Exception)
+        //    {
+        //        ScriptManager.RegisterStartupScript(this, this.GetType(), "alertError",
+        //            "Swal.fire('Error!', 'An error occurred while applying filters.', 'error');", true);
+        //    }
+        //}
 
         protected void GridView1_Sorting(object sender, GridViewSortEventArgs e)
         {
@@ -573,7 +595,7 @@ namespace Expiry_list.ReorderForm
             ViewState["SortExpression"] = sortExpression;
             ViewState["SortDirection"] = sortDirection;
 
-            ApplyFilters_Click(sender, e);
+            //ApplyFilters_Click(sender, e);
         }
 
         protected void GridView1_RowCreated(object sender, GridViewRowEventArgs e)
@@ -619,32 +641,6 @@ namespace Expiry_list.ReorderForm
                         ddlStatus.SelectedValue = GetStatusText(rowView["status"].ToString());
 
                     ViewState["EditedRowID"] = id;
-                }
-
-                string searchTerm = hfLastSearch.Value;
-                if (!string.IsNullOrEmpty(searchTerm))
-                {
-                    // Apply highlighting to each cell
-                    foreach (TableCell cell in e.Row.Cells)
-                    {
-                        TextBox txt = cell.Controls.OfType<TextBox>().FirstOrDefault();
-                        if (txt != null && txt.Text.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            cell.BackColor = System.Drawing.Color.Yellow;
-                            continue;
-                        }
-
-                        if (!string.IsNullOrEmpty(cell.Text)
-                            && cell.Text.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            cell.Text = System.Text.RegularExpressions.Regex.Replace(
-                                cell.Text,
-                                $"({System.Text.RegularExpressions.Regex.Escape(searchTerm)})",
-                                "<span class='highlight'>$1</span>",
-                                System.Text.RegularExpressions.RegexOptions.IgnoreCase
-                            );
-                        }
-                    }
                 }
             }
 
@@ -1198,8 +1194,8 @@ namespace Expiry_list.ReorderForm
             if (filterVendor.Checked && !string.IsNullOrEmpty(vendor.SelectedValue))
             {
                 Debug.WriteLine($"Selected vendor: {vendor.SelectedValue}");
-                query += " AND vendorNo = @VendorNo";
-                parameters.Add(new SqlParameter("@VendorNo", vendor.SelectedValue));
+                query += " AND vendorNo LIKE @VendorNo";
+                parameters.Add(new SqlParameter("@VendorNo", vendor.SelectedValue.Trim() + "%"));
             }
 
             // STATUS filter
@@ -1300,52 +1296,51 @@ namespace Expiry_list.ReorderForm
             return string.Join(" ", words.Take(maxWords)) + " ...";
         }
 
-        protected void btnEdit_Click(object sender, EventArgs e)
-        {
-            if (!string.IsNullOrEmpty(hfSelectedIDs.Value))
-            {
-                string[] selectedIds = hfSelectedIDs.Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+        //protected void btnEdit_Click(object sender, EventArgs e)
+        //{
+        //    if (!string.IsNullOrEmpty(hfSelectedIDs.Value))
+        //    {
+        //        string[] selectedIds = hfSelectedIDs.Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
-                if (selectedIds.Length > 1)
-                {
-                    ScriptManager.RegisterStartupScript(this, this.GetType(), "alertMultiple",
-                        "swal('Warning!', 'Please select only one row to edit.', 'warning');", true);
-                    Response.Redirect("viewer1.aspx", false);
-                }
+        //        if (selectedIds.Length > 1)
+        //        {
+        //            ScriptManager.RegisterStartupScript(this, this.GetType(), "alertMultiple",
+        //                "swal('Warning!', 'Please select only one row to edit.', 'warning');", true);
+        //            Response.Redirect("viewer1.aspx", false);
+        //        }
 
-                string selectedId = selectedIds.FirstOrDefault();
-                GridView2.HeaderRow.TableSection = TableRowSection.TableHeader;
-                hfEditInitiatedByButton.Value = "true";
+        //        string selectedId = selectedIds.FirstOrDefault();
+        //        GridView2.HeaderRow.TableSection = TableRowSection.TableHeader;
+        //        hfEditInitiatedByButton.Value = "true";
 
-                for (int i = 0; i < GridView2.Rows.Count; i++)
-                {
-                    var rowId = GridView2.DataKeys[i].Value.ToString();
-                    if (rowId == selectedId)
-                    {
-                        GridView2.EditIndex = i;
-                        break;
-                    }
-                }
+        //        for (int i = 0; i < GridView2.Rows.Count; i++)
+        //        {
+        //            var rowId = GridView2.DataKeys[i].Value.ToString();
+        //            if (rowId == selectedId)
+        //            {
+        //                GridView2.EditIndex = i;
+        //                break;
+        //            }
+        //        }
 
-                RebindGridWithFilter();
-                hfIsSearchEdit.Value = "true";
-                hfEditedRowId.Value = selectedId;
+        //        RebindGridWithFilter();
+        //        hfEditedRowId.Value = selectedId;
 
-                if (hfIsFiltered.Value != "true")
-                {
-                    RefreshDataTable();
-                }
+        //        if (hfIsFiltered.Value != "true")
+        //        {
+        //            RefreshDataTable();
+        //        }
 
-                ScriptManager.RegisterStartupScript(this, GetType(), "ScrollToRow",
-                    $"setTimeout(function() {{ scrollToEditedRow('{selectedId}'); }}, 300);", true);
-            }
-            else
-            {
-                ScriptManager.RegisterStartupScript(this, this.GetType(), "alertMultiple",
-                    "swal('Warning!', 'Please select only one row to edit.', 'warning');", true);
-                Response.Redirect("viewer1.aspx", false);
-            }
-        }
+        //        ScriptManager.RegisterStartupScript(this, GetType(), "ScrollToRow",
+        //            $"setTimeout(function() {{ scrollToEditedRow('{selectedId}'); }}, 300);", true);
+        //    }
+        //    else
+        //    {
+        //        ScriptManager.RegisterStartupScript(this, this.GetType(), "alertMultiple",
+        //            "swal('Warning!', 'Please select only one row to edit.', 'warning');", true);
+        //        Response.Redirect("viewer1.aspx", false);
+        //    }
+        //}
 
         private void BindStores()
         {

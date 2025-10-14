@@ -57,8 +57,12 @@
                       searching: true,
                       sorting: true,
                       info: true,
+                      scrollX: true,
+                      scrollY: "63vh",
+                      scrollCollapse: true,
+                      autoWidth: false,
                       order: [[0, 'asc']],
-                      stateSave: false,
+                      stateSave: true,
                       lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                       columnDefs: [
                           { orderable: false, targets: [3] },
@@ -71,6 +75,16 @@
           }
       }
   </script>
+
+    <style>
+        .small-col {
+            width: 60px !important;
+            max-width: 60px !important;
+            text-align: center;
+        }
+
+    </style>
+
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -95,10 +109,9 @@
                             </a>
                         </div>
                         
-                     <div class="table-responsive mb-1">
-                        <asp:GridView ID="GridView2" runat="server"
-                            AutoGenerateColumns="False"
-                            CssClass="table table-striped table-hover table-bordered align-middle mt-1"
+                    <div class="table-responsive gridview-container pt-2 pe-2 rounded-1">
+                          <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="false"
+                              CssClass="table table-striped table-hover border-2 shadow-lg sticky-grid overflow-x-auto overflow-y-auto display"
                                 DataKeyNames="id"
                                 AllowPaging="false"
                                 PagerSettings-Visible="False"
@@ -110,16 +123,16 @@
                                 HeaderStyle-BackColor="#4486ab" HeaderStyle-ForeColor="White"
                                 EmptyDataText="No records found." ShowHeaderWhenEmpty="true">
                                 <Columns>
-                                    <asp:TemplateField HeaderText="No.">
+                                    <asp:TemplateField HeaderText="No." HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1 small-col">
+                                        <HeaderStyle CssClass="text-white small-col" BackColor="#4486ab" />
+                                        <ItemStyle CssClass="small-col" />
                                         <ItemTemplate>
                                             <asp:Label ID="lblLinesNo" runat="server"
                                                 Text='<%# Container.DataItemIndex + 1 %>' />
                                         </ItemTemplate>
-                                        <HeaderStyle CssClass="text-white" BackColor="#4486ab"  />
-                                        <ItemStyle HorizontalAlign="Left" />
                                     </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="<i class='fa-solid fa-user me-2'></i>Name" SortExpression="name">
+                                    <asp:TemplateField HeaderText="<i class='fa-solid fa-user me-2'></i>Name" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1"  SortExpression="name">
                                         <ItemTemplate>
                                             <asp:Label ID="lblName" runat="server" Text='<%# Eval("name") %>'></asp:Label>
                                         </ItemTemplate>
@@ -130,7 +143,7 @@
                                         <ItemStyle HorizontalAlign="Left" />
                                     </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="<i class='fa-solid fa-briefcase me-2'></i>Position" SortExpression="positionName">
+                                    <asp:TemplateField HeaderText="<i class='fa-solid fa-briefcase me-2'></i>Position" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1"  SortExpression="positionName">
                                         <ItemTemplate>
                                             <asp:Label ID="lblPosition" runat="server" Text='<%# Eval("positionName") %>'></asp:Label>
                                         </ItemTemplate>
@@ -142,7 +155,7 @@
                                         <ItemStyle HorizontalAlign="Left" />
                                     </asp:TemplateField>
 
-                                    <asp:TemplateField HeaderText="Actions" >
+                                    <asp:TemplateField HeaderText="Actions" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1"  >
                                         <ItemTemplate>
 
                                              <%

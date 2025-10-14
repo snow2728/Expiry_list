@@ -1,4 +1,4 @@
-﻿using System;
+﻿    using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
@@ -63,12 +63,32 @@ namespace Expiry_list.Training
             int filterStoreId = ViewState["FilterStoreId"] != null ? Convert.ToInt32(ViewState["FilterStoreId"]) : 0;
             int filterTrainerId = ViewState["FilterTrainerId"] != null ? Convert.ToInt32(ViewState["FilterTrainerId"]) : 0;
 
+            var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
+            string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList")
+                ? formPermissions["TrainingList"]
+                : null;
+
+            // Hide Action Column for view-only permissions
+            int actionsColIndex = GridView2.Columns.Cast<DataControlField>()
+                .ToList()
+                .FindIndex(c => c.HeaderText == "Actions");
+
+            if (actionsColIndex >= 0)
+                GridView2.Columns[actionsColIndex].Visible = !(perm == "view" || string.IsNullOrEmpty(perm));
+
             DataTable dt = GetFilteredData(filterMonth, filterLevel, filterTopicId, filterStoreId, filterTrainerId);
 
             if (dt.Rows.Count == 0)
             {
-                ScriptManager.RegisterStartupScript(this, this.GetType(),
-                    "NoDataAlert", "Swal.fire({ icon: 'info', title: 'No Data', text: 'No data found for the selected month!' });", true);
+                // Show no data message only if there are active filters
+                bool hasActiveFilters = filterLevel > 0 || filterTopicId > 0 || filterStoreId > 0 || filterTrainerId > 0 ||
+                                       !string.IsNullOrEmpty(filterMonth) && filterMonth != DateTime.Now.ToString("yyyy-MM");
+
+                if (hasActiveFilters)
+                {
+                    ScriptManager.RegisterStartupScript(this, this.GetType(),
+                        "NoDataAlert", "Swal.fire({ icon: 'info', title: 'No Data', text: 'No schedules found for the selected filters!' });", true);
+                }
 
                 dt.Rows.Add(dt.NewRow());
                 GridView2.DataSource = dt;
@@ -92,8 +112,7 @@ namespace Expiry_list.Training
                 LoadScheduleTrainees(scheduleId);
                 upTrainees.Update();
 
-                // Initialize DataTable after UpdatePanel refresh
-                ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
+                //ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
             }
         }
 
@@ -104,19 +123,19 @@ namespace Expiry_list.Training
                 using (SqlConnection conn = new SqlConnection(strcon))
                 using (SqlCommand cmd = new SqlCommand(@"
                     SELECT t.id,
-                        tr.name,
-                        st.storeNo   AS store,
-                        lv.name   AS position,
-                        t.status,
-                        t.exam
+                           tr.name,
+                           st.storeNo   AS store,
+                           lv.name      AS position,
+                           t.status,
+                           t.exam,
+                           tr.IsActive  -- 🔹 Include trainee IsActive
                     FROM traineeTopicT t
                     JOIN traineeT tr ON t.traineeId = tr.id
                     LEFT JOIN stores st ON tr.store = st.id
                     LEFT JOIN levelT lv ON tr.position = lv.id
-                    WHERE t.scheduleId = @ScheduleId;
-                    ", conn))
+                    WHERE t.scheduleId = @ScheduleId;", conn))
                 {
-                    cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
+                    cmd.Parameters.AddWithValue("@ScheduleId", scheduleId);
 
                     conn.Open();
                     SqlDataAdapter da = new SqlDataAdapter(cmd);
@@ -151,6 +170,112 @@ namespace Expiry_list.Training
                         ddlStatus.SelectedIndex = 0; 
                     }
                 }
+
+                if (e.Row.RowType == DataControlRowType.DataRow)
+                {
+                    LinkButton btnCancel = (LinkButton)e.Row.FindControl("btnCancel");
+                    if (btnCancel != null)
+                    {
+                        // Override onclick to trigger SweetAlert and prevent normal postback
+                        btnCancel.OnClientClick = "return showCancelSweetAlert(this);";
+                    }
+                }
+
+                DataRowView rowView = (DataRowView)e.Row.DataItem;
+                bool isActive = rowView["IsActive"] != DBNull.Value && Convert.ToBoolean(rowView["IsActive"]);
+
+                if (ddlStatus != null && !isActive)
+                {
+                    ddlStatus.Enabled = false; 
+                    ddlStatus.CssClass += " disabled";
+                }
+            }
+        }
+
+        protected void GridView2_RowDeleting(object sender, GridViewDeleteEventArgs e)
+        {
+            int scheduleId = Convert.ToInt32(GridView2.DataKeys[e.RowIndex].Value);
+
+            using (SqlConnection conn = new SqlConnection(strcon))
+            {
+                conn.Open();
+                SqlTransaction transaction = conn.BeginTransaction();
+
+                try
+                {
+                    //string updateTraineeTopics = @"UPDATE traineeTopicT 
+                    //                     SET status = 'Cancelled', 
+                    //                         updatedAt = @updatedAt,
+                    //                         updatedBy = @updatedBy
+                    //                     WHERE scheduleId = @scheduleId";
+
+                    //using (SqlCommand cmd = new SqlCommand(updateTraineeTopics, conn, transaction))
+                    //{
+                    //    cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
+                    //    cmd.Parameters.AddWithValue("@updatedAt", DateTime.Now);
+                    //    cmd.Parameters.AddWithValue("@updatedBy", User.Identity.Name);
+                    //    cmd.ExecuteNonQuery();
+                    //}
+
+                    string updateSchedule = @"UPDATE scheduleT 
+                                    SET IsCancel = 1,
+                                        updatedAt = @updatedAt,
+                                        updatedBy = @updatedBy
+                                    WHERE id = @scheduleId";
+
+                    using (SqlCommand cmd = new SqlCommand(updateSchedule, conn, transaction))
+                    {
+                        cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
+                        cmd.Parameters.AddWithValue("@updatedAt", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@updatedBy", User.Identity.Name);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    transaction.Commit();
+                    BindGrid();
+
+                    // Success message
+                    ScriptManager.RegisterStartupScript(this, GetType(), "CancelSuccess",
+                        "Swal.fire('Cancelled!', 'The schedule has been cancelled successfully.', 'success');", true);
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+
+                    // Error message
+                    string errorMessage = $"Failed to cancel schedule: {ex.Message}";
+                    ScriptManager.RegisterStartupScript(this, GetType(), "CancelError",
+                        $"Swal.fire('Error!', '{errorMessage.Replace("'", "\\'")}', 'error');", true);
+                }
+            }
+        }
+
+        protected void GridView2_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "CancelSchedule")
+            {
+                int scheduleId = Convert.ToInt32(e.CommandArgument);
+                CancelSchedule(scheduleId);
+
+                // Refresh the grid after cancel
+                BindGrid();
+
+                ScriptManager.RegisterStartupScript(this, GetType(), "CancelSuccess",
+                    "Swal.fire('Cancelled!', 'The schedule has been cancelled successfully.', 'success');", true);
+            }
+        }
+
+        private void CancelSchedule(int scheduleId)
+        {
+            using (SqlConnection conn = new SqlConnection(strcon))
+            using (SqlCommand cmd = new SqlCommand(
+                "UPDATE scheduleT SET IsCancel = 1, updatedAt = @updatedAt, updatedBy = @updatedBy WHERE id = @id", conn))
+            {
+                cmd.Parameters.AddWithValue("@id", scheduleId);
+                cmd.Parameters.AddWithValue("@updatedAt", DateTime.Now);
+                cmd.Parameters.AddWithValue("@updatedBy", User.Identity.Name);
+                conn.Open();
+                cmd.ExecuteNonQuery();
             }
         }
 
@@ -169,7 +294,7 @@ namespace Expiry_list.Training
             LoadScheduleTrainees(scheduleId);
             upTrainees.Update();
 
-            ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTable2();", true);
+            ScriptManager.RegisterStartupScript(this, GetType(), "initDT2", "initializeDataTableTrainees();", true);
         }
 
         private void UpdateTraineeStatusOrExam(int traineeId, string status, string exam)
@@ -206,7 +331,8 @@ namespace Expiry_list.Training
 
                 bool isAdmin = false;
                 var allowedForms = GetAllowedFormsByUser(username);
-                if (allowedForms.Values.Contains("admin") || allowedForms.Values.Contains("super") || username.Equals("admin", StringComparison.OrdinalIgnoreCase))
+                if (allowedForms.Values.Contains("admin") || allowedForms.Values.Contains("super") ||
+                    username.Equals("admin", StringComparison.OrdinalIgnoreCase))
                 {
                     isAdmin = true;
                 }
@@ -218,13 +344,16 @@ namespace Expiry_list.Training
                     con.Open();
 
                     string sql = @"
-                    SELECT t.id, t.name, t.position AS positionId, p.name AS position, st.storeNo as store
-                    FROM traineeT t
-                    LEFT JOIN levelT p ON t.position = p.id
-                    LEFT JOIN stores st ON t.store = st.id
-                    WHERE t.name LIKE @SearchTerm
-                    AND (@PositionId = 0 OR t.position = @PositionId)";
+                SELECT t.id, t.name, t.position AS positionId, 
+                       p.name AS position, st.storeNo as store
+                FROM traineeT t
+                LEFT JOIN levelT p ON t.position = p.id
+                LEFT JOIN stores st ON t.store = st.id
+                WHERE t.IsActive = 1
+                  AND t.name LIKE @SearchTerm
+                  AND (@PositionId = 0 OR t.position = @PositionId)";
 
+                    // Apply store restriction for non-admin users
                     if (!isAdmin && storeNos.Any())
                     {
                         sql += $" AND st.storeNo IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})";
@@ -249,14 +378,13 @@ namespace Expiry_list.Training
                         {
                             while (reader.Read())
                             {
-                                var trainee = new Trainee
+                                trainees.Add(new Trainee
                                 {
                                     Id = reader["id"].ToString(),
                                     Name = reader["name"]?.ToString(),
                                     Position = reader["position"]?.ToString(),
                                     Store = reader["store"]?.ToString()
-                                };
-                                trainees.Add(trainee);
+                                });
                             }
                         }
                     }
@@ -290,34 +418,36 @@ namespace Expiry_list.Training
         {
             DataTable dt = new DataTable();
             string query = @"
-                SELECT 
-                    s.id,
-                    s.tranNo,
-                    tw.id as topicWLTId,
-                    tw.id AS topicId,
-                    t.topicName AS topicName,
-                    ISNULL(l.name, '') AS traineeLevel, 
-                    ISNULL(tr.name, '') AS trainerName,  
-                    s.position AS positionId,
-                    ISNULL(l2.name, '') AS position,   
-                    lo.name AS room,
-                    s.date,
-                    s.time
-                FROM scheduleT s
-                INNER JOIN topicWLT tw 
-                    ON s.topicName = tw.id 
-                INNER JOIN topicT t
-                    ON tw.topic = t.id      
-                LEFT JOIN trainerT tr       
-                    ON tw.trainerId = tr.id 
-                LEFT JOIN levelT l          
-                    ON tw.traineeLevel = l.id  
-                LEFT JOIN levelT l2        
-                    ON s.position = l2.id     
-                INNER JOIN locationT lo
-                    ON s.room = lo.id
-                ORDER BY s.id ASC;
-            ";
+        SELECT 
+            s.id,
+            s.tranNo,
+            tw.id as topicWLTId,
+            tw.id AS topicId,
+            t.topicName AS topicName,
+            ISNULL(l.name, '') AS traineeLevel, 
+            ISNULL(tr.name, '') AS trainerName,  
+            s.position AS positionId,
+            ISNULL(l2.name, '') AS position,   
+            lo.name AS room,
+            s.date,
+            s.time,
+            s.IsCancel
+        FROM scheduleT s
+        INNER JOIN topicWLT tw 
+            ON s.topicName = tw.id 
+        INNER JOIN topicT t
+            ON tw.topic = t.id      
+        LEFT JOIN trainerT tr       
+            ON tw.trainerId = tr.id 
+        LEFT JOIN levelT l          
+            ON tw.traineeLevel = l.id  
+        LEFT JOIN levelT l2        
+            ON s.position = l2.id     
+        INNER JOIN locationT lo
+            ON s.room = lo.id
+        WHERE s.IsCancel = 0
+        ORDER BY s.id ASC;
+    ";
 
             using (SqlConnection conn = new SqlConnection(strcon))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -337,6 +467,9 @@ namespace Expiry_list.Training
             DataTable dt = new DataTable();
             var whereClauses = new List<string>();
             var parameters = new List<SqlParameter>();
+
+            // Add condition to exclude cancelled schedules
+            whereClauses.Add("s.IsCancel = 0");
 
             // Month filter (using YEAR + MONTH instead of BETWEEN)
             if (!string.IsNullOrEmpty(filterMonth))
@@ -375,28 +508,29 @@ namespace Expiry_list.Training
             string where = whereClauses.Count > 0 ? $"WHERE {string.Join(" AND ", whereClauses)}" : "";
 
             string query = $@"
-                SELECT 
-                    s.id,
-                    s.tranNo,
-                    tw.id as topicWLTId,
-                    tw.topic AS topicId,      
-                    s.position AS positionId,
-                    t.topicName AS topicName,
-                    lo.name AS room,
-                    ISNULL(tr.name, '') AS trainerName,
-                    ISNULL(l.name, '') AS traineeLevel,
-                    ISNULL(l2.name, '') AS position,
-                    s.date,
-                    s.time
-                FROM scheduleT s
-                LEFT JOIN topicWLT tw ON s.topicName = tw.id  
-                LEFT JOIN topicT t ON tw.topic = t.id     
-                LEFT JOIN trainerT tr ON tw.trainerId = tr.id 
-                LEFT JOIN levelT l ON tw.traineeLevel = l.id 
-                LEFT JOIN levelT l2 ON s.position = l2.id    
-                LEFT JOIN locationT lo ON s.room = lo.id 
-                {where}
-                ORDER BY s.id ASC";
+        SELECT 
+            s.id,
+            s.tranNo,
+            tw.id as topicWLTId,
+            tw.topic AS topicId,      
+            s.position AS positionId,
+            t.topicName AS topicName,
+            lo.name AS room,
+            ISNULL(tr.name, '') AS trainerName,
+            ISNULL(l.name, '') AS traineeLevel,
+            ISNULL(l2.name, '') AS position,
+            s.date,
+            s.time,
+            s.IsCancel
+        FROM scheduleT s
+        LEFT JOIN topicWLT tw ON s.topicName = tw.id  
+        LEFT JOIN topicT t ON tw.topic = t.id     
+        LEFT JOIN trainerT tr ON tw.trainerId = tr.id 
+        LEFT JOIN levelT l ON tw.traineeLevel = l.id 
+        LEFT JOIN levelT l2 ON s.position = l2.id    
+        LEFT JOIN locationT lo ON s.room = lo.id 
+        {where}
+        ORDER BY s.id ASC";
 
             using (SqlConnection conn = new SqlConnection(strcon))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -459,8 +593,8 @@ namespace Expiry_list.Training
                 return;
             }
 
-            // Validate topicId
-            if (!int.TryParse(hfTopicId.Value, out int topicId))
+            // Validate topicWLT Id
+            if (!int.TryParse(hfTopicId.Value, out int topicWltId))
             {
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "alert",
                     "Swal.fire('Invalid Topic Id!', '', 'error');", true);
@@ -493,8 +627,15 @@ namespace Expiry_list.Training
             {
                 conn.Open();
 
-                List<string> blockedTrainees = new List<string>(); // trainees already registered for topic
-                List<Trainee> validTrainees = new List<Trainee>(); // trainees allowed to register for this schedule
+                int masterTopicId;
+                using (SqlCommand getMasterTopic = new SqlCommand("SELECT topic FROM topicWLT WHERE id=@topicWltId", conn))
+                {
+                    getMasterTopic.Parameters.AddWithValue("@topicWltId", topicWltId);
+                    masterTopicId = Convert.ToInt32(getMasterTopic.ExecuteScalar());
+                }
+
+                List<string> blockedTrainees = new List<string>();
+                List<Trainee> validTrainees = new List<Trainee>();
                 int registeredCount = 0;
 
                 foreach (var trainee in selectedTrainees)
@@ -502,49 +643,57 @@ namespace Expiry_list.Training
                     if (!int.TryParse(trainee.Id?.ToString(), out int traineeId))
                         continue;
 
-                    // Get trainee name
                     string actualName = null;
-                    using (SqlCommand cmd = new SqlCommand("SELECT name FROM traineeT WHERE id=@traineeId", conn))
+                    int currentPosition = 0;
+                    using (SqlCommand cmd = new SqlCommand("SELECT name, position FROM traineeT WHERE id=@traineeId", conn))
                     {
                         cmd.Parameters.AddWithValue("@traineeId", traineeId);
-                        actualName = cmd.ExecuteScalar()?.ToString();
+                        using (SqlDataReader dr = cmd.ExecuteReader())
+                        {
+                            if (dr.Read())
+                            {
+                                actualName = dr["name"].ToString();
+                                currentPosition = dr["position"] != DBNull.Value ? Convert.ToInt32(dr["position"]) : 0;
+                            }
+                        }
                     }
 
                     if (string.IsNullOrEmpty(actualName))
-                        continue; // skip if trainee doesn't exist
+                        continue;
 
-                    // Check if trainee already registered for this topic in any schedule
                     using (SqlCommand checkDup = new SqlCommand(@"
-                SELECT COUNT(1)
-                FROM traineeTopicT
-                WHERE traineeId=@traineeId AND topicId=@topicId", conn))
+                        SELECT COUNT(1)
+                        FROM traineeTopicT tt
+                        INNER JOIN topicWLT tw ON tw.id = tt.topicId
+                        WHERE tt.traineeId=@traineeId 
+                          AND tw.topic=@masterTopicId", conn))
                     {
                         checkDup.Parameters.AddWithValue("@traineeId", traineeId);
-                        checkDup.Parameters.AddWithValue("@topicId", topicId);
+                        checkDup.Parameters.AddWithValue("@masterTopicId", masterTopicId);
 
                         if (Convert.ToInt32(checkDup.ExecuteScalar()) > 0)
                             blockedTrainees.Add(actualName);
                         else
-                            validTrainees.Add(new Trainee { Id = traineeId.ToString(), Name = actualName });
+                            validTrainees.Add(new Trainee { Id = traineeId.ToString(), Name = actualName, Position = currentPosition.ToString() });
                     }
                 }
 
-                // Insert only valid trainees into the selected schedule
                 foreach (var trainee in validTrainees)
                 {
                     if (!int.TryParse(trainee.Id?.ToString(), out int traineeId))
                         continue;
 
                     string query = @"
-                INSERT INTO traineeTopicT
-                (traineeId, topicId, scheduleId, status, exam, updatedAt, updatedBy)
-                VALUES
-                (@traineeId, @topicId, @scheduleId, @status, @exam, @updatedAt, @updatedBy)";
+                        INSERT INTO traineeTopicT
+                        (traineeId, level, topicId, scheduleId, status, exam, updatedAt, updatedBy)
+                        VALUES
+                        (@traineeId, @level, @topicId, @scheduleId, @status, @exam, @updatedAt, @updatedBy)";
 
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@traineeId", traineeId);
-                        cmd.Parameters.AddWithValue("@topicId", topicId);
+                        cmd.Parameters.AddWithValue("@level", Convert.ToInt32(trainee.Position)); 
+                        cmd.Parameters.AddWithValue("@topicId", topicWltId);
                         cmd.Parameters.AddWithValue("@scheduleId", scheduleId);
                         cmd.Parameters.AddWithValue("@status", "Registered");
                         cmd.Parameters.AddWithValue("@exam", "Not Taken");
@@ -556,18 +705,17 @@ namespace Expiry_list.Training
                     }
                 }
 
-                // Build result message
                 string message;
                 string messageType = "success";
 
                 if (blockedTrainees.Count > 0 && registeredCount > 0)
                 {
-                    message = $"{registeredCount} trainee(s) registered successfully. The following trainee(s) are already registered for this topic in another schedule: {string.Join(", ", blockedTrainees)}";
+                    message = $"{registeredCount} trainee(s) registered successfully. The following trainee(s) are already registered for this topic (under another trainer): {string.Join(", ", blockedTrainees)}";
                     messageType = "warning";
                 }
                 else if (blockedTrainees.Count > 0 && registeredCount == 0)
                 {
-                    message = $"No new trainees registered. The following trainee(s) are already registered for this topic in another schedule: {string.Join(", ", blockedTrainees)}";
+                    message = $"No new trainees registered. The following trainee(s) are already registered for this topic (under another trainer): {string.Join(", ", blockedTrainees)}";
                     messageType = "warning";
                 }
                 else if (registeredCount > 0)
@@ -581,14 +729,13 @@ namespace Expiry_list.Training
                     messageType = "warning";
                 }
 
-                // Show SweetAlert
                 string script = $@"
-            Swal.fire({{
-                icon: '{messageType}',
-                title: 'Registration Result',
-                text: '{message.Replace("'", "\\'")}',
-                confirmButtonColor: '#3085d6'
-            }});";
+                    Swal.fire({{
+                        icon: '{messageType}',
+                        title: 'Registration Result',
+                        text: '{message.Replace("'", "\\'")}',
+                        confirmButtonColor: '#3085d6'
+                    }});";
 
                 ScriptManager.RegisterStartupScript(this, this.GetType(), "registrationResult", script, true);
             }

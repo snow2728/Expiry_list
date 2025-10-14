@@ -18,6 +18,7 @@
             if (typeof (Sys) !== 'undefined') {
                 Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
                     initializeDataTable();
+          /*          initializeDataTable2();*/
                 });
             }
 
@@ -37,41 +38,49 @@
         }
 
         function initializeDataTable() {
-          const grid = $("#<%= GridView2.ClientID %>");
+            const grid = $("#<%= GridView2.ClientID %>");
 
-            if (grid.length === 0 || grid.find('tr').length === 0) {
-                return;
-            }
+           if (grid.length === 0 || grid.find("tr").length === 0) {
+               return;
+           }
 
-            // Destroy existing DataTable if already initialized
-            if ($.fn.DataTable.isDataTable(grid)) {
-                grid.DataTable().destroy();
-                grid.removeAttr('style');
-            }
+           if ($.fn.DataTable.isDataTable(grid)) {
+               grid.DataTable().destroy();
+               grid.removeAttr("style");
+           }
 
-          if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %> === false) {
-                // Ensure proper table structure
-                if (grid.find('thead').length === 0) {
-                    const headerRow = grid.find('tr:first').detach();
-                    grid.prepend($('<thead/>').append(headerRow));
-                }
+           if (<%= GridView2.EditIndex >= 0 ? "true" : "false" %> === false) {
+               if (grid.find("thead").length === 0) {
+                   const headerRow = grid.find("tr:first").detach();
+                   grid.prepend($("<thead/>").append(headerRow));
+               }
 
-                try {
-                    grid.DataTable({
-                        responsive: true,
-                        paging: true,
-                        searching: true,
-                        sorting: true,
-                        info: true,
-                        order: [[0, 'asc']],
-                        stateSave: true,
-                        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-                        dom: 'f<"top-toggle">ltip',
-                        initComplete: function () {
+               const headerCells = grid.find("thead th").length;
+               const bodyCells = grid.find("tbody tr:first td").length;
 
-                            const toggleHtml = `
+               if (headerCells === 0 || headerCells !== bodyCells) {
+                   console.warn("Skipping DataTable init: header/body column mismatch", { headerCells, bodyCells });
+                   return;
+               }
+
+               try {
+                   grid.DataTable({
+                       responsive: true,
+                       paging: true,
+                       searching: true,
+                       sorting: true,
+                       info: true,
+                       order: [[0, "asc"]],
+                       scrollX: true,
+                       scrollY: "63vh",
+                       scrollCollapse: true,
+                       stateSave: true,
+                       lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                       dom: 'f<"top-toggle">ltip',
+
+                       initComplete: function () {
+                               const toggleHtml = `
                                 <div class="toggle-container">
-        
                                     <label class="switch">
                                         <input type="checkbox" id="toggleSwitch">
                                         <span class="slider round"></span>
@@ -79,32 +88,38 @@
                                     <span class="toggle-status" id="toggleStatus">Active</span>
                                 </div>`;
 
-                                $('.top-toggle').append(toggleHtml);
-                                //$('.top-toggle').html(toggleHtml);
-                                var savedState = $("#<%= hdnToggleStatus.ClientID %>").val();
-                                if (savedState === "Inactive") {
-                                    $('#toggleSwitch').prop('checked', true);
-                                    $('#toggleStatus').text('Inactive').css('color', '#dc3545');
-                                } else {
-                                    $('#toggleSwitch').prop('checked', false);
-                                    $('#toggleStatus').text('Active').css('color', '#000');
-                                }
+                                   $(".top-toggle").append(toggleHtml);
 
-                                $('#toggleSwitch').on('change', function () {
-                                    var isChecked = $(this).is(":checked");
-                                    $("#<%= hdnToggleStatus.ClientID %>").val(isChecked ? "Inactive" : "Active");
-                                 __doPostBack('<%= btnTogglePostBack.UniqueID %>', '');
+                               var savedState = $("#<%= hdnToggleStatus.ClientID %>").val();
+                            if (savedState === "Inactive") {
+                                $("#toggleSwitch").prop("checked", true);
+                                $("#toggleStatus").text("Inactive").css("color", "#dc3545");
+                            } else {
+                                $("#toggleSwitch").prop("checked", false);
+                                $("#toggleStatus").text("Active").css("color", "#000");
+                            }
+
+                            $("#toggleSwitch").on("change", function () {
+                                var isChecked = $(this).is(":checked");
+                                $("#<%= hdnToggleStatus.ClientID %>").val(isChecked ? "Inactive" : "Active");
+                                __doPostBack("<%= btnTogglePostBack.UniqueID %>", "");
                             });
-                        },
-                        columnDefs: [
-                            { orderable: false, targets: [5, 6] },
-                            { targets: '_all', orderSequence: ["asc", "desc", ""] }
+                       },
+                       columnDefs: [
+                            {
+                                orderable: false,
+                                targets: function () {
+                                    const colCount = grid.find("thead th").length;
+                                    return colCount > 6 ? [5, 6] : [colCount - 1];
+                                }()
+                            },
+                            { targets: "_all", orderSequence: ["asc", "desc", ""] }
                         ]
-                    });
+                   });
                 } catch (e) {
-                    console.error('DataTable initialization error:', e);
+                    console.error("DataTable initialization error:", e);
                 }
-          }
+            }
         }
 
         function initializeDataTable2() {
@@ -125,18 +140,34 @@
             }
 
             table.DataTable({
+                responsive: false,
                 paging: true,
                 searching: true,
                 ordering: true,
-                responsive: true,
                 autoWidth: false,
+                //scrollX: true,
+                //scrollY: '50vh',
+                //scrollCollapse: true,
+                stateSave: true,
                 columnDefs: [
-                    //{ orderable: false, targets: [-1, -2] }
+                    { orderable: false, targets: [2] },
                     { targets: '_all', orderSequence: ["asc", "desc", ""] }
                 ]
               
             });
         }
+
+        function highlightRow(btn) {
+            $('#<%= GridView2.ClientID %> tbody tr').removeClass('selected-row');
+
+            var row = $(btn).closest('tr');
+            row.addClass('selected-row');
+        }
+
+        // Initialize only when modal becomes visible
+        $('#topicsModal').on('shown.bs.modal', function () {
+            initializeDataTable2();
+        });
 
         document.addEventListener('DOMContentLoaded', function () {
             document.getElementById("link_home").href = "../AdminDashboard.aspx";
@@ -145,7 +176,34 @@
 
     </script>
     <style>
+        .selected-row {
+            background-color: #dfebf1 !important;
+        }
+
         .hidden-col { display: none; }
+
+        table.dataTable tbody td:first-child,
+        table.dataTable thead th:first-child {
+            text-align: left !important;
+            vertical-align: middle !important; 
+        }
+
+         table.dataTable thead th {
+             background-color: #4486ab !important;
+             color: white !important;
+             position: sticky;
+             top: 0;
+             z-index: 10;
+         }
+
+         .sticky-header1 {
+            background-color: #4486ab !important;
+            color: white !important;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
     </style>
 
 </asp:Content>
@@ -166,9 +224,10 @@
                     </div>
                     <asp:HiddenField ID="hdnToggleStatus" runat="server" />
                     <asp:HiddenField ID="hdnHasInactive" runat="server" />
+
                     <asp:Button ID="btnTogglePostBack" runat="server" Style="display:none" OnClick="btnTogglePostBack_Click" />
-                    <div class="table-responsive">
-                        <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-bordered table-hover border border-2 shadow-lg sticky-grid mt-1 overflow-scroll"
+                    <div class="table-responsive gridview-container pt-2 pe-2 rounded-1">
+                        <asp:GridView ID="GridView2" runat="server" AutoGenerateColumns="False" CssClass="table table-striped table-hover border-2 shadow-lg sticky-grid overflow-x-auto overflow-y-auto display"
                             DataKeyNames="id,name,storeId,positionId,IsActive"
                              OnRowEditing="GridView2_RowEditing"
                              OnRowUpdating="GridView2_RowUpdating"
@@ -177,7 +236,7 @@
                              OnRowDataBound="GridView2_RowDataBound" >
                            <Columns>
 
-                                <asp:TemplateField ItemStyle-HorizontalAlign="Justify" HeaderText="No">
+                                <asp:TemplateField ItemStyle-HorizontalAlign="Justify" HeaderText="No" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                                      <ItemTemplate>
                                          <asp:Label ID="lblLinesNo" runat="server" Text='<%# Container.DataItemIndex + 1 %>' />
                                      </ItemTemplate>
@@ -186,7 +245,7 @@
                                      <ItemStyle HorizontalAlign="Justify" />
                                  </asp:TemplateField>
 
-                                 <asp:TemplateField HeaderText="Name" ItemStyle-HorizontalAlign="Justify" SortExpression="name" >
+                                 <asp:TemplateField HeaderText="Name" ItemStyle-HorizontalAlign="Justify" SortExpression="name" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" >
                                      <ItemTemplate>
                                          <asp:Label ID="lblName" runat="server" Text='<%# Eval("name") %>'></asp:Label>
                                      </ItemTemplate>
@@ -198,7 +257,7 @@
                                      <ItemStyle HorizontalAlign="Justify" />
                                  </asp:TemplateField>
 
-                                 <asp:TemplateField HeaderText="Store" SortExpression="store" HeaderStyle-VerticalAlign="Middle" >
+                                 <asp:TemplateField HeaderText="Store" SortExpression="store" HeaderStyle-VerticalAlign="Middle" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" >
                                      <ItemTemplate>
                                          <asp:Label ID="lblStore" runat="server" Text='<%# Eval("storeName") %>' />
                                      </ItemTemplate>
@@ -213,19 +272,31 @@
                                      <HeaderStyle ForeColor="White" BackColor="#488db4" />
                                  </asp:TemplateField>
 
-                                 <asp:TemplateField HeaderText="Level" SortExpression="level" HeaderStyle-VerticalAlign="Middle" >
-                                     <ItemTemplate>
-                                         <asp:Label ID="lblPosition" runat="server" Text='<%# Eval("positionName") %>'></asp:Label>
-                                     </ItemTemplate>
-                                     <EditItemTemplate>
-                                         <asp:DropDownList ID="PositionDb" runat="server" CssClass="form-control form-control-sm dropdown-icon" DataTextField="name" DataValueField="id" >
-                                         </asp:DropDownList>
-                                     </EditItemTemplate>
-                                     <HeaderStyle ForeColor="White" BackColor="#488db4" />
-                                     <ItemStyle HorizontalAlign="Justify" />
-                                 </asp:TemplateField>
+                                 <asp:TemplateField HeaderText="Level" SortExpression="level" HeaderStyle-VerticalAlign="Middle" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
+                                    <ItemTemplate>
+                                        <asp:Label ID="lblPosition" runat="server" Text='<%# Eval("positionName") %>'></asp:Label>
+                                    </ItemTemplate>
 
-                                 <asp:TemplateField HeaderText="Status" SortExpression="IsActive">
+                                    <EditItemTemplate>
+                                        <%
+                                            var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
+                                            string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList") ? formPermissions["TrainingList"] : null;
+                                        %>
+
+                                        <% if (perm == "admin") { %>
+                                            <asp:DropDownList ID="PositionDb" runat="server" CssClass="form-control form-control-sm dropdown-icon"
+                                                DataTextField="name" DataValueField="id">
+                                            </asp:DropDownList>
+                                        <% } else { %>
+                                            <asp:Label ID="lblPositionEdit" runat="server" Text='<%# Eval("positionName") %>'></asp:Label>
+                                        <% } %>
+                                    </EditItemTemplate>
+                                    <HeaderStyle ForeColor="White" BackColor="#488db4" />
+                                    <ItemStyle HorizontalAlign="Justify" />
+                                </asp:TemplateField>
+
+
+                                 <asp:TemplateField HeaderText="Status" SortExpression="IsActive" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                                     <ItemTemplate>
                                         <div style="text-align:left;">
                                             <%# Convert.ToBoolean(Eval("IsActive") == DBNull.Value? 1: Eval("IsActive")) ? "Active" : "Inactive" %>
@@ -242,10 +313,10 @@
                                     <ItemStyle HorizontalAlign="Left" Width="10%" />
                                 </asp:TemplateField>        
 
-                               <asp:TemplateField HeaderText="Topics" SortExpression="topics" HeaderStyle-VerticalAlign="Middle" >
+                               <asp:TemplateField HeaderText="Topics" SortExpression="topics" HeaderStyle-VerticalAlign="Middle" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" >
                                    <ItemTemplate>
                                      <button type="button" class="btn btn-sm btn-outline-info fw-bold"
-                                         onclick="openTraineeDetails(<%# Eval("id") %>)">
+                                         onclick="highlightRow(this); openTraineeDetails(<%# Eval("id") %>)">
                                        Details
                                      </button>
                                    </ItemTemplate>
@@ -253,7 +324,7 @@
                                      <ItemStyle HorizontalAlign="Justify" />
                               </asp:TemplateField>
 
-                              <asp:TemplateField HeaderText="Actions">
+                              <asp:TemplateField HeaderText="Actions" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                                 <ItemTemplate>
 
                                     <div class="text-center">
@@ -374,7 +445,7 @@
 
 
 <!-- View / Edit Topics Modal -->
-<div class="modal fade" id="topicsModal" tabindex="-1" aria-labelledby="topicsModalLabel" aria-hidden="true">
+<div class="modal fade h-75 mt-5" id="topicsModal" tabindex="-1" aria-labelledby="topicsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
         <div class="modal-content rounded-3 shadow-lg h-100">
 
@@ -387,35 +458,44 @@
             </div>
 
             <!-- Modal Body -->
-            <div class="modal-body p-2" style="max-height:75vh; overflow-y:auto;">
+            <div class="table-responsive modal-body gridview-container pt-2 pe-2 rounded-1">
 
                 <asp:UpdatePanel ID="upTopics" runat="server" UpdateMode="Conditional">
                     <ContentTemplate>
 
-                        <!-- Hidden trigger for async load -->
+                        <div class="mb-3 mt-2 col-6 d-flex align-items-center">
+                            <label for="ddlFilterLevle" class="form-label fw-semibold me-3 mb-0" style="color:#4486ab">
+                                Employee level:
+                            </label>
+                            <asp:DropDownList ID="ddlFilterLevle" runat="server" CssClass="form-select form-select-sm shadow-sm border border-1 border-dark w-auto" 
+                                AutoPostBack="true" OnSelectedIndexChanged="ddlFilterLevle_SelectedIndexChanged">
+                            </asp:DropDownList>
+                        </div>
+
+                        <!-- Hidden -->
                         <asp:Button ID="btnLoadTopics" runat="server" OnClick="btnLoadTopics_Click" Style="display:none;" />
                         <asp:HiddenField ID="hiddenTraineeId" runat="server" />
 
                         <!-- Topics Grid -->
-                        <asp:GridView ID="gvTraineeTopics" runat="server" AutoGenerateColumns="False"
+                         <asp:GridView ID="gvTraineeTopics" runat="server" AutoGenerateColumns="False"
                             DataKeyNames="topicId"
                             OnRowDataBound="gvTraineeTopics_RowDataBound"
-                            CssClass="table table-bordered table-striped dataTable w-100"
+                            CssClass="table table-striped table-hover border-2 shadow-lg sticky-grid overflow-x-auto overflow-y-auto display"
                             ClientIDMode="Static"
                             ShowHeader="true" HeaderStyle-BackColor="#4486ab" HeaderStyle-ForeColor="White"
                             EmptyDataText="No topics found."
                             UseAccessibleHeader="true">
 
                             <Columns>
-                                <asp:BoundField DataField="topicName" HeaderText="Topic Name" />
-                                <asp:BoundField DataField="status" HeaderText="Status" />
+                                <asp:BoundField DataField="topicName" HeaderText="Topic Name" ItemStyle-CssClass="text-left align-left" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" />
+                                <asp:BoundField DataField="status" HeaderText="Status" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1" />
 
-                                <asp:TemplateField HeaderText="Exam">
+                                <asp:TemplateField HeaderText="Exam" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                                      <ItemTemplate>
                                          <asp:DropDownList ID="ddlExam" runat="server" CssClass="form-select form-select-sm"
                                              AutoPostBack="true"
                                              OnSelectedIndexChanged="ddlExam_SelectedIndexChanged"
-                                             SelectedValue='<%# Eval("exam") %>'>
+                                             SelectedValue='<%# Eval("exam") %>' Enabled="true">
                                              <asp:ListItem Text="Not Taken" Value="Not Taken"></asp:ListItem>
                                              <asp:ListItem Text="Passed" Value="Passed"></asp:ListItem>
                                              <asp:ListItem Text="Failed" Value="Failed"></asp:ListItem>
@@ -426,18 +506,19 @@
 
                         </asp:GridView>
 
+                        <!-- Modal Footer inside UpdatePanel -->
+                        <div class="modal-footer d-flex justify-content-between">
+                            <asp:Button ID="btnUpgrade" runat="server" CssClass="btn btn-primary" 
+                                        Text="Upgrade" OnClick="btnUpgrade_Click" Enabled="false" />
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+
                     </ContentTemplate>
                 </asp:UpdatePanel>
-
+                
             </div>
-
-            <!-- Modal Footer -->
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
-
         </div>
     </div>
-</div>
 
 </asp:Content>

@@ -267,13 +267,22 @@ namespace Expiry_list.ReorderForm
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl regeDateFilterGroup;
 
         /// <summary>
-        /// txtRegDateFilter control.
+        /// from1 control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtRegDateFilter;
+        protected global::System.Web.UI.WebControls.TextBox from1;
+
+        /// <summary>
+        /// to1 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox to1;
 
         /// <summary>
         /// approveDateFilterGroup control.
