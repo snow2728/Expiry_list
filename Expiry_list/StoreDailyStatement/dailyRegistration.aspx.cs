@@ -239,10 +239,14 @@ namespace Expiry_list.StoreDailyStatement
 
         protected void btnSave_Click(object sender, EventArgs e)
         {
+            if(totalSalesAmt.Text == "")
+            {
+                ShowMessage("Please fill amounts", "error");
+                return;
+            }
             var payment = new PaymentModel();
 
-            payment.totalSalesAmt = string.IsNullOrWhiteSpace(totalSalesAmt.Text) ? 0 : ParseAmount(totalSalesAmt);
-            //payment.submitAmt = string.IsNullOrWhiteSpace(submitAmt.Text) ? 0 : Convert.ToDecimal(submitAmt.Text);            
+            payment.totalSalesAmt = string.IsNullOrWhiteSpace(totalSalesAmt.Text) ? 0 : ParseAmount(totalSalesAmt);          
             payment.advPayShweAmt = string.IsNullOrWhiteSpace(advPayShweAmt.Text) ? 0 : ParseAmount(advPayShweAmt);
             payment.advPayABankAmt = string.IsNullOrWhiteSpace(advPayABankAmt.Text) ? 0 : ParseAmount(advPayABankAmt);
             payment.advPayKbzAmt = string.IsNullOrWhiteSpace(advPayKbzAmt.Text) ? 0 : ParseAmount(advPayKbzAmt);

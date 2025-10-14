@@ -67,10 +67,10 @@ namespace Expiry_list
                 headerRow.Cells.Add(h5);
 
                 // Group headers
-                TableHeaderCell advPay = new TableHeaderCell { Text = "ယခင်နေ့လက်ကျန်ငွေ", ColumnSpan = 4 };
+                TableHeaderCell advPay = new TableHeaderCell { Text = "ယခင်နေ့လက်ကျန်အပ်ငွေ", ColumnSpan = 4 };
                 headerRow.Cells.Add(advPay);
 
-                TableHeaderCell dailySales = new TableHeaderCell { Text = "Daily Sales", ColumnSpan = 4 };
+                TableHeaderCell dailySales = new TableHeaderCell { Text = "Daily Salesအပ်ငွေ", ColumnSpan = 4 };
                 headerRow.Cells.Add(dailySales);
 
                 TableHeaderCell mmqr = new TableHeaderCell { Text = "Pay Total MMQR", ColumnSpan = 3 };

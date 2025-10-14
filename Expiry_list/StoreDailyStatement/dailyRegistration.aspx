@@ -239,25 +239,25 @@
                             <asp:UpdatePanel runat="server" ID="UpdatePanel1" UpdateMode="Conditional">
                                 <ContentTemplate>
                                     <div id="div_advpay1" class="row g-2 mb-3 hidden" runat="server">
-                                        <label for="<%= advPayShweAmt.ClientID %>" class="col-sm-6 col-form-label">ယခင်နေ့လက်ကျန်ငွေ - ဦးရွှေမြင့်</label>
+                                        <label for="<%= advPayShweAmt.ClientID %>" class="col-sm-6 col-form-label">ယခင်နေ့လက်ကျန်အပ်ငွေ - ဦးရွှေမြင့်</label>
                                         <div class="col-sm-6">
                                             <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="advPayShweAmt" />
                                         </div>
                                     </div>
                                     <div id="div_advpay2" class="row g-2 mb-3 hidden" runat="server">
-                                        <label for="<%= advPayABankAmt.ClientID %>" class="col-sm-6 col-form-label">ယခင်နေ့လက်ကျန်ငွေ - A Bank</label>
+                                        <label for="<%= advPayABankAmt.ClientID %>" class="col-sm-6 col-form-label">ယခင်နေ့လက်ကျန်အပ်ငွေ - A Bank</label>
                                         <div class="col-sm-6">
                                             <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="advPayABankAmt" />
                                         </div>
                                     </div>
                                     <div id="div_advpay3" class="row g-2 mb-3 hidden" runat="server">
-                                        <label for="<%= advPayKbzAmt.ClientID %>" class="col-sm-6 col-form-label">ယခင်နေ့လက်ကျန်ငွေ - KBZ</label>
+                                        <label for="<%= advPayKbzAmt.ClientID %>" class="col-sm-6 col-form-label">ယခင်နေ့လက်ကျန်အပ်ငွေ - KBZ</label>
                                         <div class="col-sm-6">
                                             <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="advPayKbzAmt" />
                                         </div>
                                     </div>
                                     <div id="div_advpay4" class="row g-2 mb-3 hidden" runat="server">
-                                        <label for="<%= advPayUabAmt.ClientID %>" class="col-sm-6 col-form-label">ယခင်နေ့လက်ကျန်ငွေ - UAB</label>
+                                        <label for="<%= advPayUabAmt.ClientID %>" class="col-sm-6 col-form-label">ယခင်နေ့လက်ကျန်အပ်ငွေ - UAB</label>
                                         <div class="col-sm-6">
                                             <asp:TextBox runat="server" CssClass="form-control amount minusAmt" ID="advPayUabAmt" />
                                         </div>
