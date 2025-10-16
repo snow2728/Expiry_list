@@ -304,7 +304,7 @@
                                                            <i class="fa-solid fa-layer-group"></i><span>Topic Via Level List</span>
                                                         </a>
                                                     </li>
-                                            <% }
+                                               <% }
                                                if (perm == "admin" || perm == "edit" || perm == "super" )
                                                { %>
                                                     <li>
@@ -319,13 +319,21 @@
                                         <% if (perm == "admin" || perm == "super" || perm == "edit" || perm == "view")
                                            { %>
                                                 <a href="scheduleList.aspx" class="nav-link <%= (currentPage == "scheduleList.aspx" ? "active3" : "") %>">
-                                                    <i class="fa-solid fa-calendar-check"></i>Training Schedule Dashboard
+                                                    <i class="fa-solid fa-calendar-check pb-1"></i> Schedule Dashboard
                                                 </a>
                                         <% } %>
+
+                                       <% if (perm == "admin" || perm == "super" || perm == "edit" || perm == "approver")
+                                          { %>
+                                              <a href="detailPage.aspx" class="nav-link <%= (currentPage == "detailPage.aspx" ? "active3" : "") %>">
+                                                 <i class="fa-solid fa-info pb-1"></i> Schedule Details
+                                             </a>
+                                       <% } %>
+
                                           <% if (perm == "admin" || perm == "approver")
                                             { %>
                                                  <a href="approve.aspx" class="nav-link <%= (currentPage == "approve.aspx" ? "active3" : "") %>">
-                                                     <i class="fa-solid fa-cancel"></i>Canceled Schedules
+                                                     <i class="fa-solid fa-cancel pb-1"></i>Canceled Schedules
                                                  </a>
                                          <% } %>
                                         <%
@@ -405,7 +413,9 @@
                 "/training/viewtopicwl.aspx",
                 "/training/viewtrainer.aspx",
                 "/training/viewtrainee.aspx",
-                "/training/schedulelist.aspx"
+                "/training/schedulelist.aspx",
+                "/training/approve.aspx",
+                "/training/detailpage.aspx"
             ];
 
             if (reorderPages.includes(path)) {

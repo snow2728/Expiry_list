@@ -15,7 +15,7 @@
 
     $(document).ready(function () {
         initializeDataTableMain();
-        // Reinitialize DataTables after partial postback
+        // Reinitialize DataTables
         if (typeof (Sys) !== 'undefined') {
             Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
                 initializeDataTableMain();
@@ -127,30 +127,90 @@
         });
     });
 
+
+    //For Note Preview
+    $(document).on('click', '.truncated-note', function (e) {
+        e.preventDefault();
+
+        var fullNote = $(this).data('fullnote');
+        $('#noteModal .modal-body').text(fullNote);
+
+        var modal = new bootstrap.Modal(document.getElementById('noteModal'));
+        modal.show();
+    });
+
     document.addEventListener('DOMContentLoaded', function () {
         document.getElementById("link_home").href = "../AdminDashboard.aspx";
     });
 
+    function getRemarkValue(cell) {
+        // Check for input first
+        const input = cell.find('input');
+        if (input.length) return input.val().trim();
+
+        // Check for span or inner content from DataTables render
+        const span = cell.find('span.truncated-note');
+        if (span.length) return span.data('fullnote') || span.text().trim();
+
+        // fallback
+        return cell.text().trim();
+    }
+
     function showCancelSweetAlert(linkBtn) {
+        const row = $(linkBtn).closest("tr");
+        const dataTable = $('#<%= GridView2.ClientID %>').DataTable();
+
+        const dtRow = dataTable.row(row);
+        const rowIndex = dtRow.index();
+
+        const remarkColIndex = dataTable.columns().header().toArray().findIndex(
+            th => $(th).text().trim().toLowerCase() === 'reason'
+        );
+
+        const remarkCell = dataTable.cell(rowIndex, remarkColIndex);
+        const remark = $(remarkCell.node()).text().trim();
+
+        //console.log('Rendered remark:', remark);
+
+        if (!remark) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Cancel Reason Required',
+                text: 'Please fill in the cancel reason before cancelling this schedule.',
+                confirmButtonColor: '#d33'
+            });
+            return false;
+        }
+
         Swal.fire({
             title: 'Cancel Schedule?',
-            text: 'Are you sure you want to cancel this schedule? This action cannot be undone.',
+            text: 'Are you sure you want to cancel this schedule? </br> This schedule might have registered trainees.',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Yes, cancel it',
-            cancelButtonText: 'No, keep it',
+            confirmButtonText: 'Yes, Cancel it!',
+            cancelButtonText: 'No, Keep it',
             confirmButtonColor: '#d33',
             cancelButtonColor: '#3085d6',
             reverseButtons: true,
             focusCancel: true
         }).then((result) => {
             if (result.isConfirmed) {
-                linkBtn.onclick = null; 
-                linkBtn.click();  
+                const currentRemark = $(dataTable.cell(rowIndex, remarkColIndex).node()).text().trim();
+                if (!currentRemark) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Cannot Cancel',
+                        text: 'Schedule cannot be cancelled without reason. Please enter reason in the cancel reason column.',
+                        confirmButtonColor: '#d33'
+                    });
+                    return false;
+                }
+
+                linkBtn.onclick = null;
+                linkBtn.click();
             }
         });
 
-        // Prevent immediate postback
         return false;
     }
 
@@ -172,7 +232,7 @@
             return;
         }
 
-        grid.DataTable({
+        const dataTable = grid.DataTable({
             responsive: false,
             paging: true,
             searching: true,
@@ -183,14 +243,113 @@
             scrollY: '57vh',
             scrollCollapse: true,
             order: [[6, 'desc']],
-            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+            lengthMenu: [[25, 50, 100], [25, 50, 100]],
             columnDefs: [
-                { orderable: false, targets: [6, 7, 8].filter(i => i < headerCols) },
-                { targets: [1, 2], visible: false }
+                { orderable: false, targets: [6, 7, 8, 9, 10].filter(i => i < headerCols) },
+                { targets: [1, 2], visible: false },
+                { targets: '_all', orderSequence: ["asc", "desc", ""] }
             ],
             initComplete: function () {
                 this.api().columns.adjust();
             }
+        });
+
+        enableRemarkEditing(dataTable);
+    }
+
+    function enableRemarkEditing(dataTable) {
+        const gridSelector = '#<%= GridView2.ClientID %>';
+
+        $(gridSelector + ' tbody').off('dblclick').on('dblclick', 'td', function () {
+            const cell = dataTable.cell(this);
+            if (!cell.any()) return;
+
+            const colIndex = cell.index().column;
+            const columnHeader = $(dataTable.column(colIndex).header()).text().trim().toLowerCase();
+
+            const isRemark = columnHeader.includes('remark');
+            const isReason = columnHeader.includes('reason');
+            if (!isRemark && !isReason) return;
+
+            const targetColumn = isRemark ? 'remark' : 'reason';
+
+            const oldValue = $(cell.node()).text().trim();
+            if ($(this).find('input').length > 0) return;
+
+            const editor = $('<input type="text" class="form-control form-control-sm" style="width:100%;">')
+                .val(oldValue);
+
+            $(cell.node()).empty().append(editor);
+            editor.focus().select();
+
+            const saveEdit = function () {
+                const newValue = editor.val().trim();
+
+                if (newValue === oldValue) {
+                    $(cell.node()).text(oldValue);
+                    return;
+                }
+
+                const row = $(cell.node()).closest('tr');
+                const rowId = row.data('id');
+
+                if (!rowId) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Could not identify the record. Please refresh and try again.',
+                        confirmButtonColor: '#d33'
+                    });
+                    $(cell.node()).text(oldValue);
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "scheduleList.aspx/UpdateColumnValue",
+                    contentType: "application/json; charset=utf-8",
+                    data: JSON.stringify({
+                        id: parseInt(rowId),
+                        column: targetColumn,  
+                        value: newValue
+                    }),
+                    success: function (response) {
+                        if (response.d === "Success") {
+                            cell.data(newValue).draw();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Updated!',
+                                text: `${targetColumn.charAt(0).toUpperCase() + targetColumn.slice(1)} has been updated successfully.`,
+                                timer: 1200,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            $(cell.node()).text(oldValue);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Failed to update: ' + response.d,
+                                confirmButtonColor: '#d33'
+                            });
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        $(cell.node()).text(oldValue);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Failed to update. Please try again. Error: ' + error,
+                            confirmButtonColor: '#d33'
+                        });
+                    }
+                });
+            };
+
+            editor.on('blur', saveEdit);
+            editor.on('keydown', function (e) {
+                if (e.key === 'Enter') saveEdit();
+                else if (e.key === 'Escape') $(cell.node()).text(oldValue);
+            });
         });
     }
 
@@ -237,6 +396,7 @@
            var row = $(btn).closest('tr');
            row.addClass('selected-row');
     }
+
 </script>
 
     <style>
@@ -319,6 +479,7 @@
                         DataKeyNames="id"
                         OnRowDeleting="GridView2_RowDeleting"
                         OnRowCommand="GridView2_RowCommand"
+                        OnRowDataBound="GridView2_RowDataBound"
                         AllowPaging="false"
                         ShowHeaderWhenEmpty="true"
                         HeaderStyle-BackColor="#4486ab"
@@ -330,6 +491,12 @@
                         <HeaderStyle CssClass="text-left text-white" />
 
                         <Columns>
+
+                           <asp:TemplateField Visible="false">
+                                <ItemTemplate>
+                                    <asp:HiddenField ID="hfId" runat="server" Value='<%# Eval("id") %>' />
+                                </ItemTemplate>
+                            </asp:TemplateField>
 
                            <asp:TemplateField HeaderText="Topic Name" ItemStyle-Width="18%" ItemStyle-CssClass="text-left" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                                 <ItemTemplate>
@@ -376,10 +543,22 @@
                                 </ItemTemplate>
                             </asp:TemplateField>
 
-                            <asp:TemplateField HeaderText="Training Time" ItemStyle-Width="10%" ItemStyle-CssClass="text-left" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
+                            <asp:TemplateField HeaderText="Training Time" ItemStyle-Width="5%" ItemStyle-CssClass="text-left" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                                 <ItemTemplate>
                                     <asp:Label ID="lblTime" runat="server" Text='<%# Eval("time") %>' CssClass="d-block text-left" />
                                 </ItemTemplate>
+                            </asp:TemplateField>
+
+                            <asp:TemplateField HeaderText="Remark" ItemStyle-Width="5%" ItemStyle-CssClass="text-left" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
+                                <ItemTemplate>
+                                    <asp:Label ID="lblRemark" runat="server" Text='<%# Eval("remark") %>' CssClass="d-block text-left" />
+                                </ItemTemplate>
+                           </asp:TemplateField>
+
+                           <asp:TemplateField HeaderText="Cancel Reason" ItemStyle-Width="5%" ItemStyle-CssClass="text-left" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
+                                 <ItemTemplate>
+                                     <asp:Label ID="lblReason" runat="server" Text='<%# Eval("reason") %>' CssClass="d-block text-left" />
+                                 </ItemTemplate>
                             </asp:TemplateField>
 
                             <asp:TemplateField HeaderText="Actions" ItemStyle-Width="7%" ItemStyle-CssClass="text-center" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
@@ -528,5 +707,23 @@
             </div>
         </div>
     </div>
+
+<!-- Note Modal -->
+ <div class="modal fade" id="noteModal" tabindex="-1" aria-hidden="true">
+     <div class="modal-dialog modal-dialog-centered">
+         <div class="modal-content">
+             <div class="modal-header">
+                 <h5 class="modal-title">Full Remark</h5>
+                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+             </div>
+             <div class="modal-body">
+                 <!-- Full note will appear here -->
+             </div>
+             <div class="modal-footer">
+                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+             </div>
+         </div>
+     </div>
+ </div>
 
 </asp:Content>

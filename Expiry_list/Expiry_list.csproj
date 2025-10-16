@@ -2297,6 +2297,7 @@
     <Content Include="sweetAlert\sweetalert.min.js" />
     <Content Include="sweetAlert\sweetalert2%4011.js" />
     <Content Include="Training\approve.aspx" />
+    <Content Include="Training\detailPage.aspx" />
     <Content Include="Training\rege1.aspx" />
     <Content Include="Training\scheduleList.aspx" />
     <Content Include="Training\viewTopic.aspx" />
@@ -2481,6 +2482,13 @@
       <DependentUpon>approve.aspx</DependentUpon>
     </Compile>
     <Compile Include="Training\DataBind.cs" />
+    <Compile Include="Training\detailPage.aspx.cs">
+      <DependentUpon>detailPage.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Training\detailPage.aspx.designer.cs">
+      <DependentUpon>detailPage.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Training\rege1.aspx.cs">
       <DependentUpon>rege1.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

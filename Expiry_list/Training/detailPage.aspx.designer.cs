@@ -11,7 +11,7 @@ namespace Expiry_list.Training
 {
 
 
-    public partial class approve
+    public partial class detailPage
     {
 
         /// <summary>
@@ -85,33 +85,6 @@ namespace Expiry_list.Training
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button resetBtn;
-
-        /// <summary>
-        /// hfSelectedRows control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.HiddenField hfSelectedRows;
-
-        /// <summary>
-        /// hfSelectedIDs control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.HiddenField hfSelectedIDs;
-
-        /// <summary>
-        /// btnApproveSelected control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnApproveSelected;
 
         /// <summary>
         /// GridView2 control.

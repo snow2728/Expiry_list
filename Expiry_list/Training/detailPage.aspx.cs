@@ -13,7 +13,7 @@ using Newtonsoft.Json;
 
 namespace Expiry_list.Training
 {
-    public partial class approve : System.Web.UI.Page
+    public partial class detailPage : System.Web.UI.Page
     {
         string strcon = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
 
@@ -102,105 +102,41 @@ namespace Expiry_list.Training
             }
         }
 
-        protected void GridView2_RowCommand(object sender, GridViewCommandEventArgs e)
-        {
-            if (e.CommandName == "CancelSchedule")
-            {
-                int scheduleId = Convert.ToInt32(e.CommandArgument);
-                CancelSchedule(scheduleId);
-
-                // Refresh the grid after cancel
-                BindGrid();
-
-                ScriptManager.RegisterStartupScript(this, GetType(), "ApproveSuccess",
-                    "Swal.fire('Approved!', 'The schedule has been cancelled successfully.', 'success');", true);
-            }
-        }
-
-        private void CancelSchedule(int scheduleId)
-        {
-            using (SqlConnection conn = new SqlConnection(strcon))
-            using (SqlCommand cmd = new SqlCommand(
-                "UPDATE scheduleT SET IsApprove = 1, updatedAt = @updatedAt, updatedBy = @updatedBy WHERE id = @id", conn))
-            {
-                cmd.Parameters.AddWithValue("@id", scheduleId);
-                cmd.Parameters.AddWithValue("@updatedAt", DateTime.Now);
-                cmd.Parameters.AddWithValue("@updatedBy", User.Identity.Name);
-                conn.Open();
-                cmd.ExecuteNonQuery();
-            }
-        }
-
-        protected void btnApproveSelected_Click(object sender, EventArgs e)
-        {
-            string selectedIds = hfSelectedIDs.Value;
-            if (!string.IsNullOrEmpty(selectedIds))
-            {
-                var ids = selectedIds.Split(',').Select(int.Parse).ToList();
-
-                using (var conn = new SqlConnection(strcon))
-                {
-                    conn.Open();
-                    foreach (int id in ids)
-                    {
-                        using (var cmd = new SqlCommand("UPDATE scheduleT SET IsApprove = 1, updatedAt = @dt, updatedBy = @user WHERE id = @id", conn))
-                        {
-                            cmd.Parameters.AddWithValue("@id", id);
-                            cmd.Parameters.AddWithValue("@dt", DateTime.Now);
-                            cmd.Parameters.AddWithValue("@user", User.Identity.Name);
-                            cmd.ExecuteNonQuery();
-                        }
-                    }
-                }
-
-                // Show success message
-                ScriptManager.RegisterStartupScript(this, GetType(), "ApproveSuccess",
-                    "Swal.fire('Approved!', 'Selected schedules have been approved successfully.', 'success');", true);
-                BindGrid();
-            }
-        }
-
-        public class TraineeJson
-        {
-            public string Id { get; set; }
-            public string Text { get; set; }
-        }
-
         // Get all items
         private DataTable GetAllItems()
         {
             DataTable dt = new DataTable();
             string query = @"
-        SELECT 
-            s.id,
-            s.tranNo,
-            tw.id as topicWLTId,
-            tw.id AS topicId,
-            t.topicName AS topicName,
-            ISNULL(l.name, '') AS traineeLevel, 
-            ISNULL(tr.name, '') AS trainerName,  
-            s.position AS positionId,
-            ISNULL(l2.name, '') AS position,   
-            lo.name AS room,
-            s.date,
-            s.time,
-            s.IsCancel
-        FROM scheduleT s
-        INNER JOIN topicWLT tw 
-            ON s.topicName = tw.id 
-        INNER JOIN topicT t
-            ON tw.topic = t.id      
-        LEFT JOIN trainerT tr       
-            ON tw.trainerId = tr.id 
-        LEFT JOIN levelT l          
-            ON tw.traineeLevel = l.id  
-        LEFT JOIN levelT l2        
-            ON s.position = l2.id     
-        INNER JOIN locationT lo
-            ON s.room = lo.id
-        WHERE s.IsCancel = 0
-        ORDER BY s.id ASC;
-    ";
+                SELECT 
+                    s.id,
+                    s.tranNo,
+                    tw.id as topicWLTId,
+                    tw.id AS topicId,
+                    t.topicName AS topicName,
+                    ISNULL(l.name, '') AS traineeLevel, 
+                    ISNULL(tr.name, '') AS trainerName,  
+                    s.position AS positionId,
+                    ISNULL(l2.name, '') AS position,   
+                    lo.name AS room,
+                    s.date,
+                    s.time,
+                    s.IsCancel
+                FROM scheduleT s
+                INNER JOIN topicWLT tw 
+                    ON s.topicName = tw.id 
+                INNER JOIN topicT t
+                    ON tw.topic = t.id      
+                LEFT JOIN trainerT tr       
+                    ON tw.trainerId = tr.id 
+                LEFT JOIN levelT l          
+                    ON tw.traineeLevel = l.id  
+                LEFT JOIN levelT l2        
+                    ON s.position = l2.id     
+                INNER JOIN locationT lo
+                    ON s.room = lo.id
+                WHERE s.IsCancel = 0
+                ORDER BY s.id ASC;
+            ";
 
             using (SqlConnection conn = new SqlConnection(strcon))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -221,8 +157,10 @@ namespace Expiry_list.Training
             var whereClauses = new List<string>();
             var parameters = new List<SqlParameter>();
 
-            whereClauses.Add("s.IsCancel = 1");
+            // Add condition to exclude cancelled schedules
+            whereClauses.Add("tt.status <> 'NULL' and tt.exam <> 'NULL'");
 
+            // Month filter (using YEAR + MONTH instead of BETWEEN)
             if (!string.IsNullOrEmpty(filterMonth))
             {
                 if (DateTime.TryParse(filterMonth + "-01", out DateTime monthStart))
@@ -259,31 +197,34 @@ namespace Expiry_list.Training
             string where = whereClauses.Count > 0 ? $"WHERE {string.Join(" AND ", whereClauses)}" : "";
 
             string query = $@"
-                SELECT 
-                    s.id,
-                    s.tranNo,
-                    tw.id as topicWLTId,
-                    tw.topic AS topicId,      
-                    s.position AS positionId,
-                    t.topicName AS topicName,
-                    lo.name AS room,
-                    ISNULL(tr.name, '') AS trainerName,
-                    ISNULL(l.name, '') AS traineeLevel,
-                    ISNULL(l2.name, '') AS position,
-                    s.date,
-                    s.time,
-                    s.IsCancel,
-                    s.IsApprove,
-                    s.remark
-                FROM scheduleT s  
-                LEFT JOIN topicWLT tw ON s.topicName = tw.id  
-                LEFT JOIN topicT t ON tw.topic = t.id     
-                LEFT JOIN trainerT tr ON tw.trainerId = tr.id 
-                LEFT JOIN levelT l ON tw.traineeLevel = l.id 
-                LEFT JOIN levelT l2 ON s.position = l2.id    
-                LEFT JOIN locationT lo ON s.room = lo.id 
-                {where}
-                ORDER BY s.id ASC";
+                  SELECT 
+                  s.id,
+                  s.tranNo,
+                  tw.id as topicWLTId,
+                  tw.topic AS topicId,      
+                  s.position AS positionId,
+                  t.topicName AS topicName,
+                  lo.name AS room,
+                  ISNULL(tr.name, '') AS trainerName,
+                  ISNULL(l.name, '') AS traineeLevel,
+                  ISNULL(l2.name, '') AS position,
+                  s.date,
+                  s.time,
+	              te.name,
+	              tt.status,
+	              tt.exam,
+                  s.IsCancel
+                  FROM scheduleT s
+                  LEFT JOIN topicWLT tw ON s.topicName = tw.id  
+                  LEFT JOIN topicT t ON tw.topic = t.id     
+                  LEFT JOIN trainerT tr ON tw.trainerId = tr.id 
+                  LEFT JOIN levelT l ON tw.traineeLevel = l.id 
+                  LEFT JOIN levelT l2 ON s.position = l2.id    
+                  LEFT JOIN locationT lo ON s.room = lo.id 
+                  LEFT JOIN traineeTopicT TT ON s.id = TT.scheduleId
+                  LEFT Join traineeT te on tt.traineeId = te.id
+                  {where}
+                  ORDER BY s.id ASC";
 
             using (SqlConnection conn = new SqlConnection(strcon))
             using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -335,7 +276,7 @@ namespace Expiry_list.Training
 
             BindGrid();
         }
-        
+
         private static List<string> GetLoggedInUserStoreNames()
         {
             List<string> storeNos = HttpContext.Current.Session["storeListRaw"] as List<string>;

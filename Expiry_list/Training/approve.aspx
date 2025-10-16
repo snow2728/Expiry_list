@@ -14,7 +14,7 @@
 
     $(document).ready(function () {
         initializeDataTableMain();
-        // Reinitialize DataTables after partial postback
+        // Reinitialize DataTables
         if (typeof (Sys) !== 'undefined') {
             Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function () {
                 initializeDataTableMain();
@@ -28,24 +28,25 @@
 
     function showCancelSweetAlert(linkBtn) {
         Swal.fire({
-            title: 'Cancel Schedule?',
-            text: 'Are you sure you want to cancel this schedule? This action cannot be undone.',
+            title: 'Approve to cancel the Schedule?',
+            text: 'Are you sure you want to cancel this schedule?',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Yes, cancel it',
+            confirmButtonText: 'Yes, Approve it',
             cancelButtonText: 'No, keep it',
             confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            reverseButtons: true,
-            focusCancel: true
+            cancelButtonColor: '#3085d6'
         }).then((result) => {
             if (result.isConfirmed) {
-                linkBtn.onclick = null; 
-                linkBtn.click();  
+                const $btn = $(linkBtn);
+                $btn.removeClass('btn-danger');
+                $btn.find('i').removeClass('fa-ban').addClass('fa-check-double');
+                setTimeout(() => {
+                    linkBtn.onclick = null;
+                    linkBtn.click();
+                }, 300);
             }
         });
-
-        // Prevent immediate postback
         return false;
     }
 
@@ -84,8 +85,9 @@
             scrollY: '57vh',
             scrollCollapse: true,
             lengthMenu: [[25, 50, 100], [25, 50, 100]],
+            dom: 'f<"top-toggle">ltip',
             columnDefs: [
-                { orderable: false, targets: [0, 9], width: "50px", className: "text-center align-middle" },
+                { orderable: false, targets: [0, 9], width: "75px", className: "text-center align-middle" },
                 { targets: [2, 3], visible: false }
             ],
             initComplete: function () {
@@ -93,6 +95,48 @@
                 const headerCheckbox = $('#chkAll1');
                 headerCheckbox.off('click').on('click', function () {
                     toggleAllCheckboxes(this);
+                });
+
+                const buttonHtml = `
+                    <div class="text-center me-2">
+                        <button id="btnApproveSelected" type="button" class="btn btn-sm btn-danger round-2 pb-1">
+                            <i class="fa fa-check-circle me-1"></i> Approve
+                        </button>
+                    </div>`;
+
+                            $(".top-toggle").append(buttonHtml);
+
+                            $("#btnApproveSelected").on("click", function () {
+                                const selectedIds = [];
+                                $("#<%= GridView2.ClientID %> input[type='checkbox']:checked").each(function () {
+                                const id = $(this).data("id");
+                                if (id) selectedIds.push(id);
+                            });
+
+                    if (selectedIds.length === 0) {
+                        Swal.fire({
+                            icon: "warning",
+                            title: "No Rows Selected",
+                            text: "Please select at least one schedule to approve.",
+                            confirmButtonColor: "#3085d6"
+                        });
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: "Approve Selected?",
+                        text: "Are you sure you want to approve the selected schedules?",
+                        icon: "question",
+                        showCancelButton: true,
+                        confirmButtonText: "Yes, Approve",
+                        cancelButtonText: "Cancel",
+                        confirmButtonColor: "#28a745"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $("#<%= hfSelectedIDs.ClientID %>").val(selectedIds.join(","));
+                            __doPostBack("<%= btnApproveSelected.UniqueID %>", "");
+                        }
+                    });
                 });
             },
             drawCallback: function () {
@@ -115,24 +159,11 @@
             });
         
                $('#<%= hfSelectedRows.ClientID %>').val(selectedIds.join(','));
-               console.log('Selected IDs:', selectedIds);
-           }
+        }
 
            // Initialize selected rows
            updateSelectedRows();
     }
-
-  <%--  function updateSelectedIDs() {
-        var selectedIDs = [];
-        $('.rowCheckbox:checked').each(function () {
-            var id = $(this).data('id');
-            if (id) {
-                selectedIDs.push(id);
-            }
-        });
-        $('#<%= hfSelectedIDs.ClientID %>').val(selectedIDs.join(','));
-          //console.log('Selected IDs:', selectedIDs);
-      }--%>
 
     function highlightRow(btn) {
         $('#<%= GridView2.ClientID %> tbody tr').removeClass('selected-row');
@@ -166,6 +197,10 @@
             background-color: #dfebf1 !important;
         }
 
+        .top-toggle{
+            padding: 3px;
+        }
+
     </style>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
@@ -175,7 +210,7 @@
       <div class="card mb-3 shadow-sm">
           <div class="card-body">
               <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h4 class="fw-bold mb-0">Schedule List</h4>
+                  <h4 class="fw-bold mb-0">Canceled Schedules List</h4>
               </div>
               <div class="row g-2">
                   <div class="col-md-2">
@@ -209,16 +244,17 @@
 
   <asp:HiddenField ID="hfSelectedRows" runat="server" />
   <asp:HiddenField ID="hfSelectedIDs" runat="server" />
+  <asp:Button ID="btnApproveSelected" runat="server" style="display:none;" OnClick="btnApproveSelected_Click" />
+
 
       <%-- Gridview --%>
-      <div class="card shadow-sm  gridview-container rounded-1" style="height:auto">
+      <div class="card shadow-sm  gridview-container rounded-1" style="height:auto; width: auto;">
           <div class="card-body">
             <div class="table-responsive gridview-container pt-2 pe-2 rounded-1">
                <asp:GridView ID="GridView2" runat="server"
                     CssClass="table table-striped ResizableGrid table-hover border-2 shadow-lg sticky-grid overflow-x-auto display"
                     AutoGenerateColumns="False"
                     DataKeyNames="id"
-                    OnRowDeleting="GridView2_RowDeleting"
                     OnRowCommand="GridView2_RowCommand"
                     AllowPaging="false"
                     ShowHeaderWhenEmpty="true"
@@ -238,7 +274,7 @@
                             </ItemTemplate>
                         </asp:TemplateField>
 
-                        <asp:TemplateField HeaderText="Topic Name" ItemStyle-Width="25%" ItemStyle-CssClass="text-left" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
+                        <asp:TemplateField HeaderText="Topic Name" ItemStyle-Width="20%" ItemStyle-CssClass="text-left" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                             <ItemTemplate>
                                 <asp:Label ID="lblTopicName" runat="server" Text='<%# Eval("topicName") %>' />
                             </ItemTemplate>
@@ -262,7 +298,7 @@
                             </ItemTemplate>
                         </asp:TemplateField>
 
-                        <asp:TemplateField HeaderText="Trainer Name" ItemStyle-Width="15%" ItemStyle-CssClass="text-left" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
+                        <asp:TemplateField HeaderText="Trainer Name" ItemStyle-Width="10%" ItemStyle-CssClass="text-left" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                             <ItemTemplate>
                                 <asp:Label ID="lblTrainerName" runat="server" Text='<%# Eval("trainerName") %>' CssClass="d-block text-left" />
                             </ItemTemplate>
@@ -289,28 +325,53 @@
                             </ItemTemplate>
                         </asp:TemplateField>
 
-                        <asp:TemplateField HeaderText="Actions" ItemStyle-Width="15%" ItemStyle-CssClass="text-center" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
+                        <asp:TemplateField HeaderText="Remark" ItemStyle-Width="15%" ItemStyle-CssClass="text-left" HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
+                            <ItemTemplate>
+                                <asp:Label ID="lblRemark" runat="server" Text='<%# Eval("remark") %>' CssClass="d-block text-left" />
+                            </ItemTemplate>
+                        </asp:TemplateField>
+
+                        <asp:TemplateField HeaderText="Approve" ItemStyle-Width="15%" 
+                            ItemStyle-CssClass="text-center" 
+                            HeaderStyle-CssClass="position-sticky top-0 z-3 sticky-header1">
                             <ItemTemplate>
                                 <div class="text-center">
-                                    <%
-                                        var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
-                                        string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList") ? formPermissions["TrainingList"] : null;
-                                    %>
                                     <div class="btn-group" role="group">
+                                        <% 
+                                            var formPermissions = Session["formPermissions"] as Dictionary<string, string>;
+                                            string perm = formPermissions != null && formPermissions.ContainsKey("TrainingList") ? formPermissions["TrainingList"] : null;
+                                        %>
+
                                         <% if (perm == "admin" || perm == "approve") { %>
-                                            <asp:LinkButton ID="btnApprove" runat="server"
-                                                CssClass="btn btn-sm btn-danger me-1 btnApproveSchedule"
-                                                CommandName="CancelSchedule"
-                                                CommandArgument='<%# Eval("id") %>'
-                                                ToolTip="Approve Schedule"
-                                                OnClientClick="return showCancelSweetAlert(this);">
-                                                <i class="fa fa-ban"></i>
-                                            </asp:LinkButton>
+                                            <asp:Panel ID="pnlButtons" runat="server">
+                                                <asp:LinkButton 
+                                                    ID="btnApprove" 
+                                                    runat="server"
+                                                    CssClass="btn btn-sm btn-danger me-1 btnApproveSchedule"
+                                                    CommandName="CancelSchedule"
+                                                    CommandArgument='<%# Eval("id") %>'
+                                                    ToolTip="Approve Schedule"
+                                                    OnClientClick="return showCancelSweetAlert(this);"
+                                                    Visible='<%# !(Convert.ToBoolean(Eval("IsApprove"))) %>'>
+                                                    <i class="fa fa-ban"></i>
+                                                </asp:LinkButton>
+
+                                                <asp:LinkButton 
+                                                    ID="btnApproved" 
+                                                    runat="server"
+                                                    CssClass="btn btn-sm border-1 border-success me-1 btnApprovedSchedule"
+                                                    ToolTip="Already Approved"
+                                                    Enabled="false" 
+                                                    Visible='<%# Convert.ToBoolean(Eval("IsApprove")) %>'>
+                                                    <i class="fa-solid fa-check text-success"></i>
+                                                </asp:LinkButton>
+                                            </asp:Panel>
                                         <% } %>
                                     </div>
                                 </div>
                             </ItemTemplate>
                         </asp:TemplateField>
+
                     </Columns>
                 </asp:GridView>
             </div>
