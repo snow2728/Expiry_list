@@ -146,7 +146,7 @@ namespace Expiry_list.ReorderForm
                                 vendorName LIKE @search OR 
                                 CONVERT(varchar(10), regeDate, 103) LIKE @search OR 
                                 CONVERT(varchar(10), approveDate, 103) LIKE @search OR owner LIKE @search
-                            )");
+                    )");
 
                 List<string> storeNos = GetLoggedInUserStoreNames();
                 string selectedMonth = Request.Form["month"];
@@ -164,7 +164,7 @@ namespace Expiry_list.ReorderForm
                     where.Append(" AND YEAR(regeDate) = @Year AND MONTH(regeDate) = @Month");
                 }
 
-                    storeNos = storeNos.Select(s => s.Trim().ToUpper()).ToList();
+                storeNos = storeNos.Select(s => s.Trim().ToUpper()).ToList();
                 bool hasHO = storeNos.Contains("HO");
                 if (!hasHO && storeNos.Any())
                 {

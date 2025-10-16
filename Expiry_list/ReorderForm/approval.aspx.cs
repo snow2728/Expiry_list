@@ -86,7 +86,7 @@ namespace Expiry_list.ReorderForm
                     string orderDir = Request["order[0][dir]"] ?? "asc";
                     string searchValue = Request["search[value]"] ?? "";
 
-                    string store = Request["store"] ?? "";
+                    string storeNO = Request["storeNO"] ?? "";
                     string item = Request["item"] ?? "";
                     string vendor = Request["vendor"] ?? "";
                     string status = Request["status"] ?? "";
@@ -107,7 +107,17 @@ namespace Expiry_list.ReorderForm
                     }
 
                     var where = new StringBuilder();
-                    where.Append("(status NOT IN ('Reorder Done', 'No Reordering') OR status IS NULL) AND approved = 'approved'");
+                    where.Append("(status NOT IN ('Reorder Done', 'No Reordering') OR status IS NULL) AND approved != 'approved'");
+
+                    // Permission check
+                    string username = User.Identity.Name;
+                    var permissions = GetAllowedFormsByUser(username);
+                    if (!permissions.TryGetValue("ReorderQuantity", out string perm))
+                    {
+                        Response.Write("{\"error\":\"Unauthorized\"}");
+                        Response.End();
+                        return;
+                    }
 
                     if (!string.IsNullOrEmpty(searchValue))
                         where.Append(@"
@@ -131,15 +141,18 @@ namespace Expiry_list.ReorderForm
                                 CONVERT(varchar(10), approveDate, 103) LIKE @search
                     )");
 
-                    if (!string.IsNullOrEmpty(store))
+
+                    List<string> storeNos = GetLoggedInUserStoreNames();
+                    storeNos = storeNos.Select(s => s.Trim().ToUpper()).ToList();
+                    bool hasHO = storeNos.Contains("HO");
+                    if (!hasHO && storeNos.Any())
                     {
-                        var stores = store.Replace("[", "").Replace("]", "").Replace("\"", "").Split(',');
-                        if (stores.Length > 0)
-                        {
-                            var storeParams = stores.Select((s, i) => "@store" + i).ToArray();
-                            where.Append($" AND storeNo IN ({string.Join(",", storeParams)})");
-                        }
+                        var storeParams = storeNos.Select((s, i) => $"@store{i}").ToArray();
+                        where.Append($" AND UPPER(storeNo) IN ({string.Join(",", storeParams)})");
                     }
+
+                    if (!string.IsNullOrEmpty(storeNO))
+                        where.Append(" AND storeNo = @storeNO");
 
                     if (!string.IsNullOrEmpty(item))
                         where.Append(" AND itemNo = @item");
@@ -176,12 +189,12 @@ namespace Expiry_list.ReorderForm
                         if (!string.IsNullOrEmpty(status)) cmd.Parameters.AddWithValue("@status", status);
                         if (!string.IsNullOrEmpty(division)) cmd.Parameters.AddWithValue("@division", $"%{division}%");
                         if (!string.IsNullOrEmpty(regDate)) cmd.Parameters.AddWithValue("@regDate", regDate);
+                        if (!string.IsNullOrEmpty(storeNO)) cmd.Parameters.AddWithValue("@storeNO", storeNO);
 
-                        if (!string.IsNullOrEmpty(store))
+                        if (!hasHO && storeNos.Any())
                         {
-                            var stores = store.Replace("[", "").Replace("]", "").Replace("\"", "").Split(',');
-                            for (int i = 0; i < stores.Length; i++)
-                                cmd.Parameters.AddWithValue("@store" + i, stores[i]);
+                            for (int i = 0; i < storeNos.Count; i++)
+                                cmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
                         }
 
                         conn.Open();
@@ -199,12 +212,12 @@ namespace Expiry_list.ReorderForm
                         if (!string.IsNullOrEmpty(status)) countCmd.Parameters.AddWithValue("@status", status);
                         if (!string.IsNullOrEmpty(division)) countCmd.Parameters.AddWithValue("@division", $"%{division}%");
                         if (!string.IsNullOrEmpty(regDate)) countCmd.Parameters.AddWithValue("@regDate", regDate);
+                        if (!string.IsNullOrEmpty(storeNO)) countCmd.Parameters.AddWithValue("@storeNO", storeNO);
 
-                        if (!string.IsNullOrEmpty(store))
+                        if (!hasHO && storeNos.Any())
                         {
-                            var stores = store.Replace("[", "").Replace("]", "").Replace("\"", "").Split(',');
-                            for (int i = 0; i < stores.Length; i++)
-                                countCmd.Parameters.AddWithValue("@store" + i, stores[i]);
+                            for (int i = 0; i < storeNos.Count; i++)
+                                countCmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
                         }
 
                         if (conn.State != ConnectionState.Open) conn.Open();
@@ -240,7 +253,7 @@ namespace Expiry_list.ReorderForm
                         debug = new
                         {
                             query,
-                            filters = new { store, item, vendor, status, division, regDate }
+                            filters = new { storeNO, item, vendor, status, division, regDate }
                         }
                     };
 
@@ -1042,6 +1055,37 @@ namespace Expiry_list.ReorderForm
         {
             ScriptManager.RegisterStartupScript(this, GetType(), "alert",
                 $"swal('{title}', '{HttpUtility.JavaScriptStringEncode(message)}', '{type}');", true);
+        }
+
+        private List<string> GetLoggedInUserStoreNames()
+        {
+            List<string> storeNos = Session["storeListRaw"] as List<string>;
+            List<string> storeNames = new List<string>();
+
+            if (storeNos == null || storeNos.Count == 0)
+                return storeNames;
+
+            string query = $"SELECT storeNo FROM Stores WHERE storeNo IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})";
+
+            using (SqlConnection conn = new SqlConnection(strcon))
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                for (int i = 0; i < storeNos.Count; i++)
+                {
+                    cmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
+                }
+
+                conn.Open();
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        storeNames.Add(reader["storeNo"].ToString());
+                    }
+                }
+            }
+
+            return storeNames;
         }
 
         public List<string> GetUOMsByItemNo(string itemNo)

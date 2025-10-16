@@ -173,8 +173,9 @@
                                 draw: d.draw,
                                 start: d.start,
                                 length: d.length,
-                                order: d.order,
-                                search: d.search.value,
+                                "order[0][column]": d.order[0].column,
+                                "order[0][dir]": d.order[0].dir,
+                                "search[value]": d.search.value,
                                 month: $('#monthFilter').val(),
 
                                 action: $('#<%= ddlActionFilter.ClientID %>').val() || "",

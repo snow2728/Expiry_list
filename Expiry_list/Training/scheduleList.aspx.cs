@@ -116,6 +116,46 @@ namespace Expiry_list.Training
             }
         }
 
+        [System.Web.Services.WebMethod]
+        public static string UpdateColumnValue(int id, string column, string value)
+        {
+            try
+            {
+                if (column != "remark" && column != "reason")
+                    return "Invalid column";
+
+                string strcon = ConfigurationManager.ConnectionStrings["con"].ConnectionString;
+                using (SqlConnection conn = new SqlConnection(strcon))
+                {
+                    string sql = $@"
+                UPDATE scheduleT
+                SET {column} = @value,
+                    updatedAt = @updatedAt,
+                    updatedBy = @updatedBy
+                WHERE id = @id";
+
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", id);
+                        cmd.Parameters.AddWithValue("@value",
+                            string.IsNullOrEmpty(value) ? (object)DBNull.Value : value);
+                        cmd.Parameters.AddWithValue("@updatedAt", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@updatedBy",
+                            (HttpContext.Current?.User?.Identity?.Name) ?? "System");
+
+                        conn.Open();
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        return rowsAffected > 0 ? "Success" : "No rows affected";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating {column}: {ex.Message}");
+                return "Error updating " + column + ". Please try again.";
+            }
+        }
+
         protected void LoadScheduleTrainees(int scheduleId)
         {
             try
@@ -128,7 +168,7 @@ namespace Expiry_list.Training
                            lv.name      AS position,
                            t.status,
                            t.exam,
-                           tr.IsActive  -- 🔹 Include trainee IsActive
+                           tr.IsActive
                     FROM traineeTopicT t
                     JOIN traineeT tr ON t.traineeId = tr.id
                     LEFT JOIN stores st ON tr.store = st.id
@@ -250,14 +290,25 @@ namespace Expiry_list.Training
             }
         }
 
+        protected void GridView2_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType == DataControlRowType.DataRow)
+            {
+                var id = DataBinder.Eval(e.Row.DataItem, "id").ToString();
+                e.Row.Attributes["data-id"] = id;
+            }
+        }
+
         protected void GridView2_RowCommand(object sender, GridViewCommandEventArgs e)
         {
+            
+
             if (e.CommandName == "CancelSchedule")
             {
                 int scheduleId = Convert.ToInt32(e.CommandArgument);
                 CancelSchedule(scheduleId);
 
-                // Refresh the grid after cancel
+                // Refresh the grid
                 BindGrid();
 
                 ScriptManager.RegisterStartupScript(this, GetType(), "CancelSuccess",
@@ -468,10 +519,7 @@ namespace Expiry_list.Training
             var whereClauses = new List<string>();
             var parameters = new List<SqlParameter>();
 
-            // Add condition to exclude cancelled schedules
             whereClauses.Add("s.IsCancel = 0");
-
-            // Month filter (using YEAR + MONTH instead of BETWEEN)
             if (!string.IsNullOrEmpty(filterMonth))
             {
                 if (DateTime.TryParse(filterMonth + "-01", out DateTime monthStart))
@@ -508,29 +556,31 @@ namespace Expiry_list.Training
             string where = whereClauses.Count > 0 ? $"WHERE {string.Join(" AND ", whereClauses)}" : "";
 
             string query = $@"
-        SELECT 
-            s.id,
-            s.tranNo,
-            tw.id as topicWLTId,
-            tw.topic AS topicId,      
-            s.position AS positionId,
-            t.topicName AS topicName,
-            lo.name AS room,
-            ISNULL(tr.name, '') AS trainerName,
-            ISNULL(l.name, '') AS traineeLevel,
-            ISNULL(l2.name, '') AS position,
-            s.date,
-            s.time,
-            s.IsCancel
-        FROM scheduleT s
-        LEFT JOIN topicWLT tw ON s.topicName = tw.id  
-        LEFT JOIN topicT t ON tw.topic = t.id     
-        LEFT JOIN trainerT tr ON tw.trainerId = tr.id 
-        LEFT JOIN levelT l ON tw.traineeLevel = l.id 
-        LEFT JOIN levelT l2 ON s.position = l2.id    
-        LEFT JOIN locationT lo ON s.room = lo.id 
-        {where}
-        ORDER BY s.id ASC";
+                SELECT 
+                    s.id,
+                    s.tranNo,
+                    tw.id as topicWLTId,
+                    tw.topic AS topicId,      
+                    s.position AS positionId,
+                    t.topicName AS topicName,
+                    lo.name AS room,
+                    ISNULL(tr.name, '') AS trainerName,
+                    ISNULL(l.name, '') AS traineeLevel,
+                    ISNULL(l2.name, '') AS position,
+                    s.date,
+                    s.time,
+                    s.remark,
+                    s.reason,
+                    s.IsCancel
+                FROM scheduleT s
+                LEFT JOIN topicWLT tw ON s.topicName = tw.id  
+                LEFT JOIN topicT t ON tw.topic = t.id     
+                LEFT JOIN trainerT tr ON tw.trainerId = tr.id 
+                LEFT JOIN levelT l ON tw.traineeLevel = l.id 
+                LEFT JOIN levelT l2 ON s.position = l2.id    
+                LEFT JOIN locationT lo ON s.room = lo.id 
+                {where}
+                ORDER BY s.id ASC";
 
             using (SqlConnection conn = new SqlConnection(strcon))
             using (SqlCommand cmd = new SqlCommand(query, conn))
