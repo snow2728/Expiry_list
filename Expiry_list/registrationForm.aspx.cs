@@ -44,7 +44,7 @@ namespace Expiry_list
                 hiddenStaffName.Value = staff;
 
                 no.Text = GetNextItemNo();
-                storeNo.Text = string.Join(",", GetLoggedInUserStoreNames()); ;
+                storeNo.Text = string.Join(",", Common.GetLoggedInUserStoreNames());
                 tdyDate.Text = DateTime.Now.ToString("dd/MM/yyyy");
 
                 //DisplaySessionData();
@@ -79,43 +79,43 @@ namespace Expiry_list
         protected string GetNextItemNo()
         {
             // Get first store name
-            List<string> stores = GetLoggedInUserStoreNames();
+            List<string> stores = Common.GetLoggedInUserStoreNames();
             string storeName = stores.FirstOrDefault() ?? "DEFAULT";
             int lastNumber = GetLastItemNumber(storeName);
 
             return $"{storeName}-{lastNumber + 1}";
         }
 
-        private List<string> GetLoggedInUserStoreNames()
-        {
-            List<string> storeNos = Session["storeListRaw"] as List<string>;
-            List<string> storeNames = new List<string>();
+        //private List<string> GetLoggedInUserStoreNames()
+        //{
+        //    List<string> storeNos = Session["storeListRaw"] as List<string>;
+        //    List<string> storeNames = new List<string>();
 
-            if (storeNos == null || storeNos.Count == 0)
-                return storeNames;
+        //    if (storeNos == null || storeNos.Count == 0)
+        //        return storeNames;
 
-            string query = $"SELECT storeNo FROM Stores WHERE storeNo IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})";
+        //    string query = $"SELECT storeNo FROM Stores WHERE storeNo IN ({string.Join(",", storeNos.Select((s, i) => $"@store{i}"))})";
 
-            using (SqlConnection conn = new SqlConnection(strcon))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                for (int i = 0; i < storeNos.Count; i++)
-                {
-                    cmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
-                }
+        //    using (SqlConnection conn = new SqlConnection(strcon))
+        //    using (SqlCommand cmd = new SqlCommand(query, conn))
+        //    {
+        //        for (int i = 0; i < storeNos.Count; i++)
+        //        {
+        //            cmd.Parameters.AddWithValue($"@store{i}", storeNos[i]);
+        //        }
 
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        storeNames.Add(reader["storeNo"].ToString());
-                    }
-                }
-            }
+        //        conn.Open();
+        //        using (SqlDataReader reader = cmd.ExecuteReader())
+        //        {
+        //            while (reader.Read())
+        //            {
+        //                storeNames.Add(reader["storeNo"].ToString());
+        //            }
+        //        }
+        //    }
 
-            return storeNames;
-        }
+        //    return storeNames;
+        //}
 
         //Find item
         [WebMethod]
@@ -286,7 +286,7 @@ namespace Expiry_list
                 newRow["UOM"] = hiddenUOM.Value;
                 newRow["BarcodeNo"] = hiddenBarcodeNo.Value;
                 newRow["BatchNo"] = batchNo.Text;
-                newRow["StoreNo"] = GetLoggedInUserStoreNames().FirstOrDefault() ?? "";
+                newRow["StoreNo"] = Common.GetLoggedInUserStoreNames().FirstOrDefault() ?? "";
                 newRow["StaffName"] = staffName.Text;
                 newRow["registrationDate"] = DateTime.Now;
                 newRow["Note"] = note.Text;
@@ -514,7 +514,7 @@ namespace Expiry_list
                 return;
             }
 
-            List<string> storeList = GetLoggedInUserStoreNames();
+            List<string> storeList = Common.GetLoggedInUserStoreNames();
             if (storeList == null || storeList.Count == 0)
             {
                 ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",

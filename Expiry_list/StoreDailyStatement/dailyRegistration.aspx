@@ -98,6 +98,12 @@
         });
 
         document.addEventListener("blur", function (e) {
+            if (e.target.classList.contains("amount")) {
+                let value = e.target.value.replace(/[(),]/g, "");
+                if (value && !isNaN(value)) {
+                    e.target.value = Number(value).toLocaleString();
+                }
+            }
             if (e.target.classList.contains("minusAmt")) {
                 let value = e.target.value.replace(/[()]/g, "").trim();
                 if (value) {
@@ -138,9 +144,6 @@
             const deliCodElem = document.getElementById('<%= deliCodAmt.ClientID %>');
             document.querySelectorAll(".amount").forEach(input => {
                 const val = getNumericValue(input); 
-                console.log("val ", val);
-                //const cleaned = input.value.replace(/,/g, "");  // strip commas
-                //const val = parseFloat(cleaned);
                 if (!isNaN(val) && input !== submitElem && input !== netElem && input !== advPayShweElem && input !== advPayABankElem
                     && input !== advPayKbzElem && input !== advPayUabElem && input !== deliPayElem && input !== deliCodElem) {
                     total += val;
@@ -149,15 +152,6 @@
             document.getElementById('<%= netAmt.ClientID %>').value = total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             document.getElementById('<%= submitAmt.ClientID %>').value = total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
-
-        document.addEventListener("input", function (e) {
-            if (e.target.classList.contains("amount")) {
-                let value = e.target.value.replace(/,/g, "");
-                if (!isNaN(value) && value.length > 0) {
-                    e.target.value = Number(value).toLocaleString();
-                }
-            }
-        });
 
         history.pushState(null, null, location.href);
 
