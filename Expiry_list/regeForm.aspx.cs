@@ -127,8 +127,16 @@ namespace Expiry_list
 
             if (chkExpiryList_Enable.Checked)
             {
-                string level = GetSelectedPermission(rdoExpiryList_View, rdoExpiryList_Edit, rdoExpiryList_Admin, rdoExpiryList_Super);
-                permissions.Add(("ExpiryList", level));
+                string level;
+                if (rdoExpiryList_Super1.Checked)
+                {
+                    level = "5";
+                }
+                else
+                {
+                    level = GetSelectedPermission(rdoExpiryList_View, rdoExpiryList_Edit, rdoExpiryList_Admin, rdoExpiryList_Super);
+                }
+                    permissions.Add(("ExpiryList", level));
             }
 
             if (chkNegativeInventory_Enable.Checked)
@@ -151,7 +159,15 @@ namespace Expiry_list
 
             if (chkReorderQuantity_Enable.Checked)
             {
-                string level = GetSelectedPermission(rdoReorderQuantity_View, rdoReorderQuantity_Edit, rdoReorderQuantity_Admin, rdoReorderQuantity_Super);
+                string level;
+                if (rdoReorderQuantity_Super1.Checked)
+                {
+                    level = "5";
+                }
+                else
+                {
+                    level = GetSelectedPermission(rdoReorderQuantity_View, rdoReorderQuantity_Edit, rdoReorderQuantity_Admin, rdoReorderQuantity_Super);
+                }
                 permissions.Add(("ReorderQuantity", level));
             }
 
