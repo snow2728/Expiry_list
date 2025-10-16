@@ -411,6 +411,51 @@ namespace Expiry_list
         protected global::System.Web.UI.WebControls.RadioButton rdoTrainingList_Super;
 
         /// <summary>
+        /// chkDailyStatement_Enable control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.CheckBox chkDailyStatement_Enable;
+
+        /// <summary>
+        /// rdoDailyStatement_View control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RadioButton rdoDailyStatement_View;
+
+        /// <summary>
+        /// rdoDailyStatement_Edit control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RadioButton rdoDailyStatement_Edit;
+
+        /// <summary>
+        /// rdoDailyStatement_Admin control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RadioButton rdoDailyStatement_Admin;
+
+        /// <summary>
+        /// rdoDailyStatement_Super control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.RadioButton rdoDailyStatement_Super;
+
+        /// <summary>
         /// Button1 control.
         /// </summary>
         /// <remarks>

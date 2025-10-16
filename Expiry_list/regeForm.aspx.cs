@@ -183,6 +183,12 @@ namespace Expiry_list
                 permissions.Add(("TrainingList", level));
             }
 
+            if (chkDailyStatement_Enable.Checked)
+            {
+                string level = GetSelectedPermission(rdoDailyStatement_View, rdoDailyStatement_Edit, rdoDailyStatement_Admin, rdoDailyStatement_Super);
+                permissions.Add(("DailyStatement", level));
+            }
+
             foreach (var (formName, permission) in permissions)
             {
                 int? formId = GetFormId(con, tran, formName);

@@ -33,7 +33,8 @@
                 { checkboxId: '<%= chkCarWayPlan_Enable.ClientID %>', sectionId: 'permissionCarWayPlan' },
                 { checkboxId: '<%= chkReorderQuantity_Enable.ClientID %>', sectionId: 'permissionReorderQuantity' },
                 { checkboxId: '<%= chkConsignmentList_Enable.ClientID %>', sectionId: 'permissionConsignmentList' },
-                { checkboxId: '<%= chkTrainingList_Enable.ClientID %>', sectionId: 'permissionTrainingList' }
+                { checkboxId: '<%= chkTrainingList_Enable.ClientID %>', sectionId: 'permissionTrainingList' },
+                { checkboxId: '<%= chkDailyStatement_Enable.ClientID %>', sectionId: 'permissionDailyStatement' }
             ];
 
             pairs.forEach(({ checkboxId, sectionId }) => {
@@ -452,9 +453,6 @@
     </script>
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-
-    <a href="../AdminDashboard.aspx" class="btn text-white ms-2" style="background-color: #158396;"><i class="fa-solid fa-left-long"></i>Home</a>
-
     <div class="container-fluid">
         <div class="row justify-content-center">
             <div class="col-lg-8">
@@ -732,6 +730,34 @@
                                 </div>
                             </div>
                         </div>
+
+                        <%-- Store Daily Statement --%>
+                        <div class="border border-info rounded p-3 mb-3">
+                            <div class="form-check">
+                                <asp:CheckBox ID="chkDailyStatement_Enable" runat="server" CssClass="form-check-input" />
+                                <label class="form-check-label" for="<%= chkDailyStatement_Enable.ClientID %>">Daily Statement</label>
+                            </div>
+
+                            <div id="permissionDailyStatement" class="row g-3 ms-3 mt-2" style="display: none;">
+                                <div class="col-auto form-check">
+                                    <asp:RadioButton ID="rdoDailyStatement_View" GroupName="DailyStatement" runat="server" CssClass="form-check-input" />
+                                    <label class="form-check-label" for="<%= rdoDailyStatement_View.ClientID %>">View</label>
+                                </div>
+                                <div class="col-auto form-check">
+                                    <asp:RadioButton ID="rdoDailyStatement_Edit" GroupName="DailyStatement" runat="server" CssClass="form-check-input" />
+                                    <label class="form-check-label" for="<%= rdoDailyStatement_Edit.ClientID %>">Edit</label>
+                                </div>
+                                <div class="col-auto form-check">
+                                    <asp:RadioButton ID="rdoDailyStatement_Admin" GroupName="DailyStatement" runat="server" CssClass="form-check-input" />
+                                    <label class="form-check-label" for="<%= rdoDailyStatement_Admin.ClientID %>">Admin</label>
+                                </div>
+                                <div class="col-auto form-check">
+                                    <asp:RadioButton ID="rdoDailyStatement_Super" GroupName="DailyStatement" runat="server" CssClass="form-check-input" />
+                                    <label class="form-check-label" for="<%= rdoDailyStatement_Super.ClientID %>">Super</label>
+                                </div>
+                            </div>
+                        </div>
+
 
                         <!-- Register Button -->
                         <div>
