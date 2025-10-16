@@ -410,6 +410,13 @@ input[type=number].no-spinners {
         box-shadow: none;
     }
 
+    .nav-link.active4 {
+        background: #67a3d3;
+        border-bottom: 3px solid #fff;
+        font-weight: 500;
+        box-shadow: none;
+    }
+
 /* Active state styling */
 .active3 {
     background-color: #488DB4 !important;

@@ -48,6 +48,8 @@ namespace Expiry_list
                 if (permissions.TryGetValue("TrainingList", out string trainingPerm))
                     pnlScheduleList.Style["display"] = "block";
 
+                if (permissions.TryGetValue("DailyStatement", out string dailyStatementPerm))
+                    pnlStoreDailyStatement.Style["display"] = "block";
             }
         }
 
@@ -337,6 +339,48 @@ namespace Expiry_list
             else if (allowedForms.ContainsKey("TrainingList") && perm == "view")
             {
                 redirectUrl = "~/Training/scheduleList.aspx";
+            }
+            else
+            {
+                redirectUrl = "~/AdminDashboard.aspx";
+            }
+
+            if (!string.IsNullOrEmpty(redirectUrl))
+            {
+                Response.Redirect(redirectUrl);
+            }
+            else
+            {
+                ClientScript.RegisterClientScriptBlock(this.GetType(), "alert",
+                    "swal('Access Denied!', 'You do not have permission to access any valid page.', 'error');", true);
+            }
+        }
+        protected void ds_Click1(object sender, EventArgs e)
+        {
+            if (!User.Identity.IsAuthenticated)
+            {
+                Response.Redirect("~/loginPage.aspx");
+                return;
+            }
+
+            string username = User.Identity.Name;
+            var allowedForms = GetAllowedFormsByUser(username);
+
+            Session["formPermissions"] = allowedForms;
+            Session["activeModule"] = "DailyStatement";
+
+            var permissions = Session["formPermissions"] as Dictionary<string, string>;
+            string perm = permissions["DailyStatement"];
+
+            string redirectUrl = null;
+
+            if (allowedForms.ContainsKey("DailyStatement") && (perm == "edit" || perm == "admin"))
+            {
+                redirectUrl = "~/StoreDailyStatement/dailyRegistration.aspx";
+            }
+            else if (allowedForms.ContainsKey("DailyStatement") && perm == "view")
+            {
+                redirectUrl = "~/StoreDailyStatement/dailyStatementList.aspx";
             }
             else
             {
